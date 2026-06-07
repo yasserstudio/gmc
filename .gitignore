@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+coverage/
+
+# Private docs (engineering, strategy, marketing) -- mirrors GPC
+.dev/
+
+# Env and credentials -- never commit
+.env
+.env.*
+*.key
+*.pem
+*-key.json
+service-account*.json
+gcp-*.json
+credentials.json
+*credentials*.json
+client_secret*.json
+
+# OS and editor
+.DS_Store
+.idea/
+.vscode/
+*.log
