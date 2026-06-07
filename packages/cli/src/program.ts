@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { createContext } from "@gmc-cli/core";
 import { getConfigDir } from "@gmc-cli/config";
+import { registerAuthCommands } from "./commands/auth.js";
 
 /**
  * Build the root `gmc` command tree.
@@ -19,6 +20,8 @@ export function createProgram(): Command {
     .option("-p, --profile <name>", "Auth/account profile to use")
     .option("--no-color", "Disable colored output")
     .showSuggestionAfterError(false);
+
+  registerAuthCommands(program);
 
   program
     .command("doctor")
