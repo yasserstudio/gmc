@@ -7,6 +7,21 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.8.0 — Phase 3: data sources
+
+Feeds as code begins. The container every product feed lives in.
+
+- **datasources** — `gmc datasources list / get / create / delete`. Create a
+  primary product feed from flags (API push or scheduled file fetch) or a full
+  DataSource JSON via `--file`/stdin.
+- **Closes the v0.7 loop** — create an API data source, then
+  `gmc products insert --data-source <id>` against it, with no Merchant Center UI.
+- **api** — typed `DataSourcesService` on a per-account client, plus a dedicated
+  `datasources` rate-limit bucket.
+
+_First release cut through Changesets: `@gmc-cli/cli` and `@gmc-cli/api` → 0.8.0;
+`@gmc-cli/core` → 0.7.1._
+
 ## v0.7.0 — Phase 2 spike: accounts + products
 
 The MVP proof and Phase 2 decision gate: authenticate, diagnose, and round-trip

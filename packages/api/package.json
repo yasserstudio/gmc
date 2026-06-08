@@ -1,6 +1,6 @@
 {
   "name": "@gmc-cli/api",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "TypeScript client for the Google Merchant API (Products, Inventories, Reports, Accounts, Promotions, Quota). Typed requests and responses, rate limiting.",
   "type": "module",
   "main": "./dist/index.js",
