@@ -1,5 +1,11 @@
 # @gmc-cli/api
 
+## 0.9.0
+
+### Minor Changes
+
+- bb24c04: feat: `gmc feeds pull` — export your catalog to a directory of version-controllable, push-ready product files (one JSON per product). Adds `toProductInput` to map a processed product to a writable input.
+
 ## 0.8.0
 
 ### Minor Changes
