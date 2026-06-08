@@ -9,6 +9,18 @@ export { SUB_APIS } from "./types.js";
 export { MerchantClient } from "./client.js";
 export type { MerchantClientOptions, RequestOptions } from "./client.js";
 
+export { AccountsService, accountResourceName } from "./accounts.js";
+export type {
+  Account,
+  BusinessInfo,
+  Homepage,
+  AccountInfo,
+  PostalAddress,
+  Phone,
+  CustomerService,
+  TimeZone,
+} from "./accounts.js";
+
 export { MerchantApiError } from "./errors.js";
 
 export {

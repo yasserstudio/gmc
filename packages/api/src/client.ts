@@ -19,8 +19,12 @@ const MAX_RETRY_AFTER_MS = 30_000;
 export interface MerchantClientOptions {
   /** Authenticated client supplying bearer tokens. */
   auth: AuthClient;
-  /** Merchant Center account id (numeric). */
-  accountId: string;
+  /**
+   * Merchant Center account id (numeric). Optional: commands that don't target a
+   * single account (e.g. `accounts list`) leave it unset. Reading
+   * {@link MerchantClient.accountResource} without it throws.
+   */
+  accountId?: string;
   /** API base URL override (defaults to the Merchant API endpoint). */
   baseUrl?: string;
   /** Per-sub-API rate-limit overrides, merged over the defaults. */
@@ -72,8 +76,8 @@ export class MerchantClient {
   private readonly fetchImpl: typeof fetch;
   private readonly timeoutMs: number;
 
-  /** The Merchant Center account this client targets. */
-  readonly accountId: string;
+  /** The Merchant Center account this client targets, if one was configured. */
+  readonly accountId: string | undefined;
 
   constructor(options: MerchantClientOptions) {
     this.auth = options.auth;
@@ -90,6 +94,11 @@ export class MerchantClient {
 
   /** The `accounts/{id}` path segment most Merchant API resources hang off. */
   get accountResource(): string {
+    if (!this.accountId) {
+      throw new Error(
+        "No Merchant Center account id configured. Pass --account, set GMC_ACCOUNT_ID, or select a profile with one.",
+      );
+    }
     return `accounts/${this.accountId}`;
   }
 
