@@ -21,11 +21,12 @@ export type {
   TimeZone,
 } from "./accounts.js";
 
-export { ProductsService, productSegment } from "./products.js";
+export { ProductsService, productSegment, toProductInput } from "./products.js";
 export type {
   Product,
   ProductInput,
   ProductAttributes,
+  CustomAttribute,
   Price,
   ProductStatus,
   ItemLevelIssue,

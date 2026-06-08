@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { MerchantClient } from "../src/client.js";
-import { ProductsService, productSegment } from "../src/products.js";
+import { ProductsService, productSegment, toProductInput } from "../src/products.js";
 import type { Clock } from "../src/rate-limiter.js";
 
 const auth = {
@@ -114,5 +114,38 @@ describe("ProductsService", () => {
     expect(productSegment("online~en~US~SKU1")).toBe("online~en~US~SKU1");
     expect(productSegment("accounts/123/products/online~en~US~SKU1")).toBe("online~en~US~SKU1");
     expect(productSegment("accounts/123/productInputs/online~en~US~SKU1")).toBe("online~en~US~SKU1");
+  });
+});
+
+describe("toProductInput", () => {
+  it("keeps writable fields and strips output-only ones", () => {
+    const input = toProductInput({
+      name: "accounts/123/products/online~en~US~SKU1",
+      offerId: "SKU1",
+      contentLanguage: "en",
+      feedLabel: "US",
+      channel: "ONLINE",
+      dataSource: "accounts/123/dataSources/55",
+      attributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
+      customAttributes: [{ name: "x", value: "y" }],
+      productStatus: { itemLevelIssues: [{ code: "image_link" }] },
+    });
+
+    expect(input).toEqual({
+      offerId: "SKU1",
+      contentLanguage: "en",
+      feedLabel: "US",
+      channel: "ONLINE",
+      attributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
+      customAttributes: [{ name: "x", value: "y" }],
+    });
+    // Output-only fields must not survive into a push-ready input.
+    expect("name" in input).toBe(false);
+    expect("productStatus" in input).toBe(false);
+    expect("dataSource" in input).toBe(false);
+  });
+
+  it("omits absent fields", () => {
+    expect(toProductInput({ name: "accounts/123/products/x", offerId: "SKU2" })).toEqual({ offerId: "SKU2" });
   });
 });

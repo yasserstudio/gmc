@@ -32,6 +32,13 @@ export interface ProductAttributes {
   mpn?: string;
 }
 
+/** A custom (non-standard) product attribute. */
+export interface CustomAttribute {
+  name?: string;
+  value?: string;
+  groupValues?: CustomAttribute[];
+}
+
 /** A writable product input (`accounts/{account}/productInputs/{productInput}`). */
 export interface ProductInput {
   name?: string;
@@ -41,6 +48,7 @@ export interface ProductInput {
   feedLabel?: string;
   channel?: string;
   attributes?: ProductAttributes;
+  customAttributes?: CustomAttribute[];
 }
 
 /** A single item-level issue from product processing. */
@@ -72,6 +80,7 @@ export interface Product {
   feedLabel?: string;
   dataSource?: string;
   attributes?: ProductAttributes;
+  customAttributes?: CustomAttribute[];
   productStatus?: ProductStatus;
 }
 
@@ -88,6 +97,24 @@ interface ProductsListPage {
  */
 export function productSegment(idOrName: string): string {
   return idOrName.replace(/^.*\/(?:products|productInputs)\//, "");
+}
+
+/**
+ * Map a processed Product to a push-ready ProductInput. Intentional allowlist:
+ * output-only data (`name`, `productStatus`, `dataSource`, …) can never leak into
+ * a file that will later be pushed, at the cost of dropping edge writable fields
+ * (e.g. `versionNumber`). `attributes`/`customAttributes` are kept by reference —
+ * the caller must not mutate the result.
+ */
+export function toProductInput(product: Product): ProductInput {
+  const input: ProductInput = {};
+  if (product.offerId !== undefined) input.offerId = product.offerId;
+  if (product.contentLanguage !== undefined) input.contentLanguage = product.contentLanguage;
+  if (product.feedLabel !== undefined) input.feedLabel = product.feedLabel;
+  if (product.channel !== undefined) input.channel = product.channel;
+  if (product.attributes !== undefined) input.attributes = product.attributes;
+  if (product.customAttributes !== undefined) input.customAttributes = product.customAttributes;
+  return input;
 }
 
 // Build the data source resource name (`accounts/{account}/dataSources/{id}`) for
