@@ -15,7 +15,7 @@ export default defineConfig({
       { text: "Reference", link: "/reference/" },
       { text: "Devlog", link: "/devlog/" },
       {
-        text: "v0.7.0",
+        text: "v0.9.0",
         items: [
           { text: "Changelog", link: "https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md" },
           { text: "Roadmap", link: "/guide/roadmap" },

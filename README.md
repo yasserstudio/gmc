@@ -9,7 +9,7 @@ It is built for the **Content API → Merchant API migration** (the Content API 
 <p align="center">
   <img src="https://img.shields.io/badge/status-0.x_pre--release-9a6700?style=for-the-badge" alt="Status: 0.x pre-release">
   <a href="https://yasserstudio.github.io/gmc/"><img src="https://img.shields.io/badge/docs-yasserstudio.github.io%2Fgmc-1a73e8?style=for-the-badge" alt="Documentation"></a>
-  <img src="https://img.shields.io/badge/tests-146_passing-1a7f37?style=for-the-badge" alt="Tests: 146 passing">
+  <img src="https://img.shields.io/badge/tests-passing-1a7f37?style=for-the-badge" alt="Tests passing">
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js" alt="Node.js 20+">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/yasserstudio/gmc?style=for-the-badge&color=1a73e8" alt="MIT License"></a>
@@ -43,6 +43,7 @@ gmc auth login                       # 1. sign in with your Google account (or a
 gmc doctor                           # 2. diagnose auth, GCP registration, and Merchant API access
 gmc accounts list                    # 3. see the accounts your credential can reach
 gmc --account 123456789 products list   # 4. read the catalog
+gmc --account 123456789 feeds pull      # 5. export it to version-controllable files
 ```
 
 Set an account once in a [profile](https://yasserstudio.github.io/gmc/guide/configuration) and drop the `--account` flag.
@@ -108,6 +109,24 @@ cat product.json | gmc products insert --data-source 11223344    # …or from st
 gmc products delete online~en~US~SKU1 --data-source 11223344
 ```
 
+## Data sources
+
+A data source is the feed your products live in. Create a primary feed (API push or scheduled fetch), then insert against it.
+
+```bash
+gmc datasources create --name "API feed" --content-language en --feed-label US
+gmc datasources list
+gmc datasources delete <id>
+```
+
+## Feeds as code
+
+Pull your catalog to version-controllable files — one push-ready product per file — to commit, diff, review, and (soon) push back.
+
+```bash
+gmc feeds pull --dir feeds      # one JSON file per product
+```
+
 ---
 
 ## CI/CD
@@ -161,7 +180,7 @@ gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0`
 | 0 | v0.0 | Scaffold — monorepo, `gmc` shell, docs site | ✅ |
 | 1 | v0.1–v0.4 | Spike pt 1 — auth, CLI shell, `doctor` | ✅ |
 | 2 | v0.5–v0.7 | Spike pt 2 — typed client, accounts, products | ✅ |
-| 3 | v0.8–v0.11 | Feeds as code — data sources, pull / push / diff | ⏳ Next |
+| 3 | v0.8–v0.11 | Feeds as code — data sources ✓, feeds pull ✓, push / diff next | 🚧 |
 | 4 | v0.12–v0.14 | **Preflight** — offline feed-compliance scanner | |
 | 5 | v0.15–v0.17 | **Migrate** — Content API → Merchant API assistant | |
 | 6–9 | v0.18–v0.28 | Inventories, promotions, reports, CI/CD, launch → **v1.0.0** | |

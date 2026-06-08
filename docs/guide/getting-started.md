@@ -59,6 +59,9 @@ gmc accounts info 123456789
 
 # List products for the configured account
 gmc --account 123456789 products list
+
+# Export the catalog to version-controllable files
+gmc --account 123456789 feeds pull
 ```
 
 Set an account once via a [profile](/guide/configuration) so you can drop the `--account` flag.
@@ -67,4 +70,4 @@ Set an account once via a [profile](/guide/configuration) so you can drop the `-
 
 - [Authentication](/guide/authentication) — service account, OAuth, ADC
 - [Configuration & profiles](/guide/configuration) — config file, env vars, exit codes
-- [CLI reference](/reference/) — every command and flag
+- [CLI reference](/reference/) — every command and flag, including [`datasources`](/reference/datasources) and [`feeds`](/reference/feeds)
