@@ -2,7 +2,9 @@
 // the Accounts sub-API with a bearer token and interprets the response — the
 // status-code interpretation (especially the SERVICE_DISABLED "API not enabled"
 // trap and the empty-result "not linked" trap) is the diagnostic value, not the
-// body schema. The full typed client lands in Phase 2 and can absorb this.
+// body schema. Shares Google-error parsing with the typed client (Phase 2).
+
+import { apiMessageSuffix, findErrorInfo, type GoogleErrorBody } from "./google-error.js";
 
 const DEFAULT_BASE_URL = "https://merchantapi.googleapis.com";
 const ACTIVATION_FALLBACK =
@@ -34,24 +36,7 @@ export interface ProbeResult {
   accountCount?: number;
 }
 
-interface GoogleErrorDetail {
-  "@type"?: string;
-  reason?: string;
-  metadata?: Record<string, string>;
-}
-
-interface MerchantApiBody {
-  error?: { code?: number; message?: string; status?: string; details?: GoogleErrorDetail[] };
-  accounts?: unknown[];
-}
-
-// Bounded ": <api message>" suffix so a hostile/huge error.message can't flood
-// the terminal or a CI log line.
-function apiMessageSuffix(body: MerchantApiBody | undefined): string {
-  const message = body?.error?.message;
-  if (!message) return "";
-  return `: ${message.length > 200 ? message.slice(0, 200) + "…" : message}`;
-}
+type ProbeBody = GoogleErrorBody & { accounts?: unknown[] };
 
 /**
  * Probe the Merchant API with an access token and classify the result into a
@@ -82,7 +67,7 @@ export async function probeMerchantApi(
     };
   }
 
-  const body = (await res.json().catch(() => undefined)) as MerchantApiBody | undefined;
+  const body = (await res.json().catch(() => undefined)) as ProbeBody | undefined;
 
   if (res.ok) {
     const accounts = body?.accounts;
@@ -110,12 +95,7 @@ export async function probeMerchantApi(
     };
   }
 
-  // Prefer the ErrorInfo detail (it carries reason + metadata); fall back to any
-  // detail with a reason so a payload-shape change doesn't blank the diagnosis.
-  const details = body?.error?.details;
-  const detail =
-    details?.find((d) => d["@type"]?.includes("ErrorInfo") && d.reason) ??
-    details?.find((d) => d.reason);
+  const detail = findErrorInfo(body);
   const reason = detail?.reason;
   const failResult = (message: string, suggestion: string): ProbeResult => ({
     status: "fail",
