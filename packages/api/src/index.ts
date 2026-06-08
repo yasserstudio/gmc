@@ -21,6 +21,16 @@ export type {
   TimeZone,
 } from "./accounts.js";
 
+export { ProductsService, productSegment } from "./products.js";
+export type {
+  Product,
+  ProductInput,
+  ProductAttributes,
+  Price,
+  ProductStatus,
+  ItemLevelIssue,
+} from "./products.js";
+
 export { MerchantApiError } from "./errors.js";
 
 export {
