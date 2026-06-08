@@ -1,43 +1,14 @@
 import type { Command } from "commander";
-import {
-  createMerchantClient,
-  emitJson,
-  reportError,
-  UsageError,
-  type CommandContext,
-} from "@gmc-cli/core";
+import { emitJson, reportError } from "@gmc-cli/core";
 import {
   AccountsService,
-  type MerchantClient,
   type Account,
   type AccountInfo,
   type PostalAddress,
   type CustomerService,
 } from "@gmc-cli/api";
-import { getConfigDir } from "@gmc-cli/config";
 import { contextFrom, wantsJson } from "../context.js";
-
-/** Resolve the target account from a positional arg or the context, validating it. */
-function resolveAccount(positional: string | undefined, ctx: CommandContext): string {
-  const account = positional ?? ctx.accountId;
-  if (!account) {
-    throw new UsageError(
-      "No Merchant Center account id given.",
-      "Pass one as an argument (e.g. `gmc accounts get 123456789`), or set --account / GMC_ACCOUNT_ID / a profile.",
-    );
-  }
-  // Merchant Center account ids are numeric (same rule @gmc-cli/config enforces).
-  if (!/^\d+$/.test(account)) {
-    throw new UsageError(`Invalid account id "${account}".`, "Account ids are numeric, e.g. 123456789.");
-  }
-  return account;
-}
-
-// The Accounts service targets each account explicitly per call, so the client
-// itself is built unscoped (no accountId).
-function clientFor(ctx: CommandContext): Promise<MerchantClient> {
-  return createMerchantClient({ configDir: getConfigDir(), profile: ctx.profile });
-}
+import { clientFor, resolveAccount } from "./_shared.js";
 
 function accountIdOf(account: Account): string {
   return account.accountId ?? account.name.replace(/^accounts\//, "");
