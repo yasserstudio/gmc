@@ -47,7 +47,10 @@ export async function loadStoredCredential(
   profile: string = DEFAULT_PROFILE,
 ): Promise<StoredOAuthCredential | null> {
   const store = await readJsonFile<Store>(storePath(configDir));
-  return store?.[profile] ?? null;
+  // Own-property check so an inherited key (e.g. a "__proto__" profile name)
+  // can't return a prototype object instead of null.
+  if (!store || !Object.hasOwn(store, profile)) return null;
+  return store[profile] ?? null;
 }
 
 /** Persist (or replace) the OAuth credential for a profile. */
@@ -76,7 +79,7 @@ export async function clearStoredCredential(configDir: string, profile?: string)
   }
 
   const store = await readJsonFile<Store>(path);
-  if (!store || !(profile in store)) {
+  if (!store || !Object.hasOwn(store, profile)) {
     return false;
   }
   const next = Object.fromEntries(Object.entries(store).filter(([key]) => key !== profile));
