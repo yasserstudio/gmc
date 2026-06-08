@@ -17,14 +17,22 @@ describe("createProgram", () => {
     expect(subs).toContain("test");
   });
 
+  it("registers the config command group with path, list and current", () => {
+    const program = createProgram();
+    const config = program.commands.find((c) => c.name() === "config");
+    expect(config).toBeDefined();
+    const subs = (config?.commands ?? []).map((c) => c.name());
+    expect(subs).toEqual(expect.arrayContaining(["path", "list", "current"]));
+  });
+
   it("still registers the doctor command", () => {
     const program = createProgram();
     expect(program.commands.find((c) => c.name() === "doctor")).toBeDefined();
   });
 
-  it("exposes the --json global flag", () => {
+  it("exposes the global flags (--json, --profile, --account, --no-color)", () => {
     const program = createProgram();
     const flags = program.options.map((o) => o.long);
-    expect(flags).toContain("--json");
+    expect(flags).toEqual(expect.arrayContaining(["--json", "--profile", "--account", "--no-color"]));
   });
 });

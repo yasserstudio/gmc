@@ -1,12 +1,14 @@
 import { Command } from "commander";
-import { createContext } from "@gmc-cli/core";
+import { ExitCode, emitJson, reportError } from "@gmc-cli/core";
 import { getConfigDir } from "@gmc-cli/config";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerConfigCommands } from "./commands/config.js";
+import { contextFrom, wantsJson } from "./context.js";
 
 /**
  * Build the root `gmc` command tree.
- * Phase 0 scaffold: global options plus a placeholder `doctor` command.
- * Phase 1 registers real `auth` and `doctor`; Phase 2 adds `accounts` and `products`.
+ * Phase 1: global options, `auth`, `config`, and a placeholder `doctor`.
+ * Phase 2 adds `accounts` and `products`.
  */
 export function createProgram(): Command {
   // `__GMC_VERSION` is injected at build time by tsup's `define` (see tsup.config.ts).
@@ -18,36 +20,39 @@ export function createProgram(): Command {
     .version(process.env["__GMC_VERSION"] || "0.0.0", "-V, --version")
     .option("-j, --json", "Output machine-readable JSON")
     .option("-p, --profile <name>", "Auth/account profile to use")
+    .option("-a, --account <id>", "Merchant Center account id (overrides the profile)")
     .option("--no-color", "Disable colored output")
     .showSuggestionAfterError(false);
 
   registerAuthCommands(program);
+  registerConfigCommands(program);
 
   program
     .command("doctor")
     .description("Diagnose auth and GCP registration (Phase 1 — not yet implemented)")
     .action(() => {
-      const opts = program.opts();
-      const profile = typeof opts["profile"] === "string" ? opts["profile"] : undefined;
-      const ctx = createContext({
-        json: Boolean(opts["json"]),
-        profile,
-      });
-      const payload = {
-        ok: false,
-        unimplemented: true,
-        message: "gmc doctor is not implemented yet — Phase 1",
-        configDir: getConfigDir(),
-        profile: ctx.profile ?? null,
-      };
-      if (ctx.json) {
-        process.stdout.write(`${JSON.stringify(payload)}\n`);
-      } else {
-        process.stderr.write(
-          `gmc doctor: not implemented yet (Phase 1) — config dir ${payload.configDir}\n`,
-        );
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const payload = {
+          ok: false,
+          unimplemented: true,
+          message: "gmc doctor is not implemented yet — Phase 1",
+          configDir: getConfigDir(),
+          profile: ctx.profile,
+        };
+        if (ctx.json) {
+          emitJson(payload);
+        } else {
+          process.stderr.write(
+            `gmc doctor: not implemented yet (Phase 1) — config dir ${payload.configDir}\n`,
+          );
+        }
+        process.exitCode = ExitCode.Error;
+      } catch (err) {
+        // Surface a config error (exit 4) rather than crashing the placeholder.
+        reportError(err, { json }, "gmc doctor");
       }
-      process.exitCode = 1;
     });
 
   return program;

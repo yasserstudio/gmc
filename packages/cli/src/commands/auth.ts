@@ -5,61 +5,20 @@ import {
   loadStoredCredential,
   clearStoredCredential,
   clearTokenCache,
-  AuthError,
-  DEFAULT_PROFILE,
 } from "@gmc-cli/auth";
 import type { AuthClient } from "@gmc-cli/auth";
 import { getConfigDir } from "@gmc-cli/config";
-import { createContext } from "@gmc-cli/core";
-import type { CommandContext } from "@gmc-cli/core";
-
-interface GlobalOpts {
-  json?: unknown;
-  profile?: unknown;
-}
-
-function contextFrom(program: Command): CommandContext {
-  const opts = program.opts() as GlobalOpts;
-  return createContext({
-    json: Boolean(opts.json),
-    profile: typeof opts.profile === "string" ? opts.profile : undefined,
-  });
-}
+import { emitJson, reportError, type CommandContext } from "@gmc-cli/core";
+import { contextFrom, wantsJson } from "../context.js";
 
 function printIdentity(client: AuthClient, ctx: CommandContext, successText: string): void {
   const identity = { email: client.getClientEmail(), projectId: client.getProjectId() ?? null };
   if (ctx.json) {
-    process.stdout.write(`${JSON.stringify({ ok: true, ...identity })}\n`);
+    emitJson({ ok: true, ...identity });
   } else {
     const project = identity.projectId ? ` (project ${identity.projectId})` : "";
     process.stdout.write(`${successText} ${identity.email}${project}\n`);
   }
-}
-
-// Consistent `{ ok }` envelope for both success and error. In JSON mode, errors
-// also go to stdout so machine consumers can parse a single stream.
-function reportAuthError(err: unknown, json: boolean): void {
-  if (err instanceof AuthError) {
-    if (json) {
-      const body = {
-        ok: false,
-        error: { code: err.code, message: err.message, suggestion: err.suggestion },
-      };
-      process.stdout.write(`${JSON.stringify(body)}\n`);
-    } else {
-      process.stderr.write(`${err.message}\n`);
-      if (err.suggestion) process.stderr.write(`\n${err.suggestion}\n`);
-    }
-    process.exitCode = err.exitCode;
-    return;
-  }
-  const message = err instanceof Error ? err.message : String(err);
-  if (json) {
-    process.stdout.write(`${JSON.stringify({ ok: false, error: { message } })}\n`);
-  } else {
-    process.stderr.write(`gmc auth: ${message}\n`);
-  }
-  process.exitCode = 1;
 }
 
 /** Register the `gmc auth` command group. */
@@ -71,8 +30,9 @@ export function registerAuthCommands(program: Command): void {
     .description("Sign in with your Google account in the browser (OAuth)")
     .option("--no-browser", "Print the authorization URL instead of opening a browser")
     .action(async (opts: { browser?: boolean }) => {
-      const ctx = contextFrom(program);
+      const json = wantsJson(program);
       try {
+        const ctx = contextFrom(program);
         if (!ctx.json) process.stderr.write("Opening your browser to authorize gmc…\n");
         const cred = await loginWithOAuth({
           configDir: getConfigDir(),
@@ -83,12 +43,12 @@ export function registerAuthCommands(program: Command): void {
           },
         });
         if (ctx.json) {
-          process.stdout.write(`${JSON.stringify({ ok: true, email: cred.email, projectId: null })}\n`);
+          emitJson({ ok: true, email: cred.email, projectId: null });
         } else {
           process.stdout.write(`✓ Logged in as ${cred.email}\n`);
         }
       } catch (err) {
-        reportAuthError(err, ctx.json);
+        reportError(err, { json }, "gmc auth login");
       }
     });
 
@@ -96,23 +56,23 @@ export function registerAuthCommands(program: Command): void {
     .command("logout")
     .description("Remove the stored OAuth login for the current profile")
     .action(async () => {
-      const ctx = contextFrom(program);
-      const profile = ctx.profile ?? DEFAULT_PROFILE;
+      const json = wantsJson(program);
       try {
+        const ctx = contextFrom(program);
         const configDir = getConfigDir();
-        const stored = await loadStoredCredential(configDir, profile);
-        const removed = await clearStoredCredential(configDir, profile);
+        const stored = await loadStoredCredential(configDir, ctx.profile);
+        const removed = await clearStoredCredential(configDir, ctx.profile);
         if (stored) await clearTokenCache(configDir, stored.email).catch(() => {});
         if (ctx.json) {
-          process.stdout.write(`${JSON.stringify({ ok: true, removed, profile })}\n`);
+          emitJson({ ok: true, removed, profile: ctx.profile });
         } else if (removed) {
           const who = stored ? ` (${stored.email})` : "";
-          process.stdout.write(`✓ Logged out${who} — profile "${profile}"\n`);
+          process.stdout.write(`✓ Logged out${who} — profile "${ctx.profile}"\n`);
         } else {
-          process.stdout.write(`No stored login for profile "${profile}".\n`);
+          process.stdout.write(`No stored login for profile "${ctx.profile}".\n`);
         }
       } catch (err) {
-        reportAuthError(err, ctx.json);
+        reportError(err, { json }, "gmc auth logout");
       }
     });
 
@@ -120,12 +80,13 @@ export function registerAuthCommands(program: Command): void {
     .command("whoami")
     .description("Show the resolved credential identity (no network call)")
     .action(async () => {
-      const ctx = contextFrom(program);
+      const json = wantsJson(program);
       try {
+        const ctx = contextFrom(program);
         const client = await resolveAuth({ cachePath: getConfigDir(), profile: ctx.profile });
         printIdentity(client, ctx, "Authenticated as");
       } catch (err) {
-        reportAuthError(err, ctx.json);
+        reportError(err, { json }, "gmc auth whoami");
       }
     });
 
@@ -133,13 +94,14 @@ export function registerAuthCommands(program: Command): void {
     .command("test")
     .description("Verify credentials by requesting an access token")
     .action(async () => {
-      const ctx = contextFrom(program);
+      const json = wantsJson(program);
       try {
+        const ctx = contextFrom(program);
         const client = await resolveAuth({ cachePath: getConfigDir(), profile: ctx.profile });
         await client.getAccessToken();
         printIdentity(client, ctx, "✓ Credentials valid —");
       } catch (err) {
-        reportAuthError(err, ctx.json);
+        reportError(err, { json }, "gmc auth test");
       }
     });
 }

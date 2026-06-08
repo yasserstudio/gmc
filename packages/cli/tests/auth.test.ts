@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // Mock the auth package so no credentials are read and no network call happens.
-// The mocked AuthError must be the same class the command imports, so that
-// `err instanceof AuthError` in reportAuthError matches.
+// The mocked AuthError carries a numeric `exitCode`, so core.reportError's
+// structural `isStructuredError` check treats it as a domain error (exit 3).
 vi.mock("@gmc-cli/auth", () => {
   class AuthError extends Error {
     public readonly exitCode = 3;
@@ -48,10 +50,20 @@ function run(args: string[]): Promise<unknown> {
 
 describe("gmc auth (JSON output)", () => {
   let writes: string[];
+  let savedEnv: Record<string, string | undefined>;
+  const ENV = ["GMC_CONFIG_DIR", "GMC_PROFILE", "GMC_ACCOUNT_ID"] as const;
 
   beforeEach(() => {
     vi.clearAllMocks();
     process.exitCode = 0;
+    // Isolate config resolution (contextFrom -> loadConfig) from the host: point
+    // at an empty dir and clear profile env so the profile resolves to "default".
+    savedEnv = {};
+    for (const key of ENV) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    process.env["GMC_CONFIG_DIR"] = join(tmpdir(), "gmc-auth-test-no-config");
     writes = [];
     vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
       writes.push(String(chunk));
@@ -62,6 +74,11 @@ describe("gmc auth (JSON output)", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    for (const key of ENV) {
+      const value = savedEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     process.exitCode = 0;
   });
 
