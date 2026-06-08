@@ -38,6 +38,14 @@ describe("createProgram", () => {
     expect(subs).toEqual(expect.arrayContaining(["list", "get", "info"]));
   });
 
+  it("registers the products command group with insert, get, list and delete", () => {
+    const program = createProgram();
+    const products = program.commands.find((c) => c.name() === "products");
+    expect(products).toBeDefined();
+    const subs = (products?.commands ?? []).map((c) => c.name());
+    expect(subs).toEqual(expect.arrayContaining(["insert", "get", "list", "delete"]));
+  });
+
   it("exposes the global flags (--json, --profile, --account, --no-color)", () => {
     const program = createProgram();
     const flags = program.options.map((o) => o.long);
