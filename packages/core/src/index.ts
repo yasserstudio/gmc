@@ -12,6 +12,9 @@ export type {
   CheckStatus,
 } from "./doctor.js";
 
+export { createMerchantClient } from "./client.js";
+export type { CreateMerchantClientOptions } from "./client.js";
+
 /**
  * Canonical process exit codes. Commands set `process.exitCode` to one of these
  * so CI can branch on the failure class.
@@ -73,6 +76,23 @@ export interface StructuredError {
 /** Type guard for an error that carries a numeric `exitCode`. */
 export function isStructuredError(err: unknown): err is StructuredError {
   return err instanceof Error && typeof (err as { exitCode?: unknown }).exitCode === "number";
+}
+
+/**
+ * Invalid CLI usage (a missing or malformed argument). A real error class — like
+ * AuthError/ConfigError/MerchantApiError — so reportError maps it to
+ * {@link ExitCode.Usage} with a remediation hint, and tests can assert on it.
+ */
+export class UsageError extends Error implements StructuredError {
+  readonly exitCode = ExitCode.Usage;
+  readonly code = "USAGE";
+  constructor(
+    message: string,
+    readonly suggestion: string,
+  ) {
+    super(message);
+    this.name = "UsageError";
+  }
 }
 
 /** Write one line of JSON to stdout. */
