@@ -7,6 +7,18 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.0 — Phase 3: feeds pull
+
+Feeds as code, part 1.
+
+- **feeds** — `gmc feeds pull` exports the catalog to a directory of
+  version-controllable files, one push-ready product per file (named by composite
+  id), ready to commit, diff, and (v0.10) push back.
+- **api** — `toProductInput` maps a processed product to a writable input,
+  stripping output-only fields so the files round-trip cleanly.
+
+_`@gmc-cli/cli` and `@gmc-cli/api` → 0.9.0; `@gmc-cli/core` → 0.7.2._
+
 ## v0.8.0 — Phase 3: data sources
 
 Feeds as code begins. The container every product feed lives in.
