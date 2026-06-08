@@ -13,6 +13,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc config`](/reference/config) | Inspect configuration and profiles (`path` / `list` / `current`) |
 | [`gmc accounts`](/reference/accounts) | Inspect accounts (`list` / `get` / `info`) |
 | [`gmc products`](/reference/products) | Manage products (`list` / `get` / `insert` / `delete`) |
+| [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`) |
 
 ## Global options
 
