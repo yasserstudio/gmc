@@ -1,6 +1,16 @@
 // @gmc-cli/core — command orchestration, shared context, and CLI output/exit
-// conventions. Phase 1 adds exit codes, the structured-error contract, and the
-// JSON/error output helpers every command shares. Phase 4 adds the preflight scanner.
+// conventions. Phase 1 adds exit codes, the structured-error contract, the
+// JSON/error output helpers every command shares, and the doctor diagnosis.
+// Phase 4 adds the preflight scanner.
+
+export { runDoctor } from "./doctor.js";
+export type {
+  DoctorOptions,
+  DoctorReport,
+  DoctorCheck,
+  DoctorIdentity,
+  CheckStatus,
+} from "./doctor.js";
 
 /**
  * Canonical process exit codes. Commands set `process.exitCode` to one of these
