@@ -9,6 +9,10 @@ build/
 .turbo/
 coverage/
 
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
 # Private docs (engineering, strategy, marketing) -- mirrors GPC
 .dev/
 
