@@ -8,7 +8,7 @@ import {
   type Price,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, readJsonObject, line } from "./_shared.js";
+import { clientFor, resolveAccount, readJsonObject, line, parsePageSize } from "./_shared.js";
 
 function requireDataSource(dataSource?: string): string {
   if (!dataSource) {
@@ -18,15 +18,6 @@ function requireDataSource(dataSource?: string): string {
     );
   }
   return dataSource;
-}
-
-function parsePageSize(raw?: string): number | undefined {
-  if (raw === undefined) return undefined;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n <= 0) {
-    throw new UsageError(`Invalid --page-size "${raw}".`, "Use a positive integer.");
-  }
-  return n;
 }
 
 function offerIdOf(product: Product): string {

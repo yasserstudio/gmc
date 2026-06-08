@@ -54,6 +54,13 @@ describe("createProgram", () => {
     expect(subs).toEqual(expect.arrayContaining(["list", "get", "create", "delete"]));
   });
 
+  it("registers the feeds command group with pull", () => {
+    const program = createProgram();
+    const feeds = program.commands.find((c) => c.name() === "feeds");
+    expect(feeds).toBeDefined();
+    expect((feeds?.commands ?? []).map((c) => c.name())).toContain("pull");
+  });
+
   it("exposes the global flags (--json, --profile, --account, --no-color)", () => {
     const program = createProgram();
     const flags = program.options.map((o) => o.long);

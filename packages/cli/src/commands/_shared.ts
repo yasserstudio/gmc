@@ -12,6 +12,16 @@ export function line(label: string, value: string): void {
   process.stdout.write(`${label.padEnd(14)}${value}\n`);
 }
 
+/** Parse a positive-integer `--page-size` flag, or throw a UsageError. */
+export function parsePageSize(raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new UsageError(`Invalid --page-size "${raw}".`, "Use a positive integer.");
+  }
+  return n;
+}
+
 /**
  * Resolve the target account from a positional arg or the context, validating it.
  * `positional` is undefined for commands that take the account only from
