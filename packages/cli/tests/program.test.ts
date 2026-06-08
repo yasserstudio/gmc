@@ -11,6 +11,8 @@ describe("createProgram", () => {
     const auth = program.commands.find((c) => c.name() === "auth");
     expect(auth).toBeDefined();
     const subs = (auth?.commands ?? []).map((c) => c.name());
+    expect(subs).toContain("login");
+    expect(subs).toContain("logout");
     expect(subs).toContain("whoami");
     expect(subs).toContain("test");
   });
