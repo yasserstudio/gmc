@@ -27,6 +27,8 @@ export const ExitCode = {
   Auth: 3,
   /** Configuration failure (see @gmc-cli/config ConfigError). */
   Config: 4,
+  /** Merchant API failure (see @gmc-cli/api MerchantApiError). */
+  Api: 5,
 } as const;
 
 export type ExitCodeValue = (typeof ExitCode)[keyof typeof ExitCode];
