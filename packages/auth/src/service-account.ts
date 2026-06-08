@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { JWT } from "google-auth-library";
-import { AuthError } from "./errors.js";
+import { AuthError, safeErrorMessage } from "./errors.js";
 import { acquireToken } from "./token-cache.js";
 import { DEFAULT_SCOPES } from "./scopes.js";
 import type { AuthClient, ServiceAccountKey } from "./types.js";
@@ -123,10 +123,8 @@ export function createServiceAccountAuth(
         });
       } catch (err) {
         if (err instanceof AuthError) throw err;
-        const rawMsg = err instanceof Error ? err.message : String(err);
-        const safeMsg = rawMsg.length > 150 ? rawMsg.slice(0, 150) + "..." : rawMsg;
         throw new AuthError(
-          `Failed to obtain access token: ${safeMsg}`,
+          `Failed to obtain access token: ${safeErrorMessage(err)}`,
           "AUTH_TOKEN_FAILED",
           "Verify that the service account key is valid and not expired. Check that the private key has not been revoked.",
         );
