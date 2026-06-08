@@ -30,6 +30,14 @@ describe("createProgram", () => {
     expect(program.commands.find((c) => c.name() === "doctor")).toBeDefined();
   });
 
+  it("registers the accounts command group with list, get and info", () => {
+    const program = createProgram();
+    const accounts = program.commands.find((c) => c.name() === "accounts");
+    expect(accounts).toBeDefined();
+    const subs = (accounts?.commands ?? []).map((c) => c.name());
+    expect(subs).toEqual(expect.arrayContaining(["list", "get", "info"]));
+  });
+
   it("exposes the global flags (--json, --profile, --account, --no-color)", () => {
     const program = createProgram();
     const flags = program.options.map((o) => o.long);

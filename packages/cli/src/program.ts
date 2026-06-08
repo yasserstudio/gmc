@@ -2,11 +2,12 @@ import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerConfigCommands } from "./commands/config.js";
 import { registerDoctorCommand } from "./commands/doctor.js";
+import { registerAccountsCommands } from "./commands/accounts.js";
 
 /**
  * Build the root `gmc` command tree.
  * Phase 1: global options, `auth`, `config`, and `doctor`.
- * Phase 2 adds `accounts` and `products`.
+ * Phase 2 (v0.6) adds `accounts`; v0.7 adds `products`.
  */
 export function createProgram(): Command {
   // `__GMC_VERSION` is injected at build time by tsup's `define` (see tsup.config.ts).
@@ -25,6 +26,7 @@ export function createProgram(): Command {
   registerAuthCommands(program);
   registerConfigCommands(program);
   registerDoctorCommand(program);
+  registerAccountsCommands(program);
 
   return program;
 }
