@@ -18,6 +18,6 @@ Most Merchant Center work is still done by hand in the web UI. A CLI makes it:
 
 ## Status
 
-gmc is in the **`0.x` pre-release series**. The current release, **v0.7.0**, completes the Phase 2 spike: authentication, `doctor`, and read/write access to accounts and products. See the [roadmap](/guide/roadmap) for what is next and the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for what has shipped.
+gmc is in the **`0.x` pre-release series**. The current release, **v0.9.0**, completes the Phase 2 spike (authentication, `doctor`, accounts, products) and is partway through Phase 3 — feeds as code: data sources and `feeds pull` have shipped. See the [roadmap](/guide/roadmap) for what is next and the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for what has shipped.
 
 Ready to try it? Head to [Getting started](/guide/getting-started).
