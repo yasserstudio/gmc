@@ -8,7 +8,7 @@ import {
   type CustomerService,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount } from "./_shared.js";
+import { clientFor, resolveAccount, line } from "./_shared.js";
 
 function accountIdOf(account: Account): string {
   return account.accountId ?? account.name.replace(/^accounts\//, "");
@@ -29,10 +29,6 @@ function renderAccounts(accounts: Account[]): void {
   for (const r of rows) {
     process.stdout.write(`  ${r.id.padEnd(idWidth)}  ${r.label}${r.test ? " (test)" : ""}\n`);
   }
-}
-
-function line(label: string, value: string): void {
-  process.stdout.write(`${label.padEnd(13)}${value}\n`);
 }
 
 function renderAccount(account: Account): void {
