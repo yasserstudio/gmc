@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import { readFileSync } from "node:fs";
 import { emitJson, reportError, UsageError } from "@gmc-cli/core";
 import {
   ProductsService,
@@ -9,13 +8,13 @@ import {
   type Price,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount } from "./_shared.js";
+import { clientFor, resolveAccount, readJsonObject, line } from "./_shared.js";
 
 function requireDataSource(dataSource?: string): string {
   if (!dataSource) {
     throw new UsageError(
       "--data-source is required to insert or delete a product.",
-      "Pass --data-source <id> (a primary API data source); data-source management arrives in v0.8.",
+      "Pass --data-source <id> (a primary API data source) — create one with `gmc datasources create`.",
     );
   }
   return dataSource;
@@ -28,52 +27,6 @@ function parsePageSize(raw?: string): number | undefined {
     throw new UsageError(`Invalid --page-size "${raw}".`, "Use a positive integer.");
   }
   return n;
-}
-
-async function readStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  // Chunks are Buffers unless an upstream caller set an encoding (then strings).
-  for await (const chunk of process.stdin) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string));
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}
-
-/** Read a ProductInput JSON from a file or stdin, validating it parses to an object. */
-async function readProductInput(file?: string): Promise<ProductInput> {
-  let raw: string;
-  if (file) {
-    try {
-      raw = readFileSync(file, "utf8");
-    } catch {
-      throw new UsageError(`Could not read product input file "${file}".`, "Check the path is correct and readable.");
-    }
-  } else if (process.stdin.isTTY) {
-    throw new UsageError(
-      "No product input provided.",
-      "Pass a JSON ProductInput via --file <path>, or pipe it to stdin.",
-    );
-  } else {
-    raw = await readStdin();
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new UsageError("Product input is not valid JSON.", "Provide a JSON ProductInput via --file or stdin.");
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new UsageError(
-      "Product input must be a JSON object.",
-      'Provide a single ProductInput, e.g. { "offerId": "SKU1", "attributes": { ... } }.',
-    );
-  }
-  return parsed as ProductInput;
-}
-
-function line(label: string, value: string): void {
-  process.stdout.write(`${label.padEnd(14)}${value}\n`);
 }
 
 function offerIdOf(product: Product): string {
@@ -177,7 +130,7 @@ export function registerProductsCommands(program: Command): void {
         const ctx = contextFrom(program);
         const account = resolveAccount(undefined, ctx);
         const dataSource = requireDataSource(opts.dataSource);
-        const input = await readProductInput(opts.file);
+        const input = (await readJsonObject(opts.file, "product input")) as ProductInput;
         const service = new ProductsService(await clientFor(ctx, account));
         const result = await service.insertProductInput(input, dataSource);
         if (ctx.json) emitJson(result);

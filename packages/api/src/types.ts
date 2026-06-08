@@ -7,6 +7,7 @@ export type SubApi =
   | "inventories"
   | "reports"
   | "accounts"
+  | "datasources"
   | "promotions"
   | "quota";
 
@@ -16,6 +17,7 @@ export const SUB_APIS: readonly SubApi[] = [
   "inventories",
   "reports",
   "accounts",
+  "datasources",
   "promotions",
   "quota",
 ];

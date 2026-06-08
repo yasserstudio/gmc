@@ -46,6 +46,14 @@ describe("createProgram", () => {
     expect(subs).toEqual(expect.arrayContaining(["insert", "get", "list", "delete"]));
   });
 
+  it("registers the datasources command group with list, get, create and delete", () => {
+    const program = createProgram();
+    const datasources = program.commands.find((c) => c.name() === "datasources");
+    expect(datasources).toBeDefined();
+    const subs = (datasources?.commands ?? []).map((c) => c.name());
+    expect(subs).toEqual(expect.arrayContaining(["list", "get", "create", "delete"]));
+  });
+
   it("exposes the global flags (--json, --profile, --account, --no-color)", () => {
     const program = createProgram();
     const flags = program.options.map((o) => o.long);

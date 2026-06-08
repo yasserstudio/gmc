@@ -130,8 +130,8 @@ export class ProductsService {
   /**
    * Insert (create or replace) a product input under the given data source.
    * Uses `client.request` directly (not `post`) to attach the required
-   * `dataSource` query param. TODO(v0.8): resolve the data source via the
-   * datasources service once it exists, instead of taking a raw id.
+   * `dataSource` query param. The data source is taken as a raw id or resource
+   * name (create one with the datasources service / `gmc datasources create`).
    */
   insertProductInput(input: ProductInput, dataSource: string): Promise<ProductInput> {
     return this.client.request<ProductInput>("products", "POST", `${this.base}/productInputs:insert`, {

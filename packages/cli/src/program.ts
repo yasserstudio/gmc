@@ -4,11 +4,13 @@ import { registerConfigCommands } from "./commands/config.js";
 import { registerDoctorCommand } from "./commands/doctor.js";
 import { registerAccountsCommands } from "./commands/accounts.js";
 import { registerProductsCommands } from "./commands/products.js";
+import { registerDataSourcesCommands } from "./commands/datasources.js";
 
 /**
  * Build the root `gmc` command tree.
  * Phase 1: global options, `auth`, `config`, and `doctor`.
  * Phase 2: `accounts` (v0.6) and `products` (v0.7) — the spike's MVP surface.
+ * Phase 3: `datasources` (v0.8) — feeds as code.
  */
 export function createProgram(): Command {
   // `__GMC_VERSION` is injected at build time by tsup's `define` (see tsup.config.ts).
@@ -29,6 +31,7 @@ export function createProgram(): Command {
   registerDoctorCommand(program);
   registerAccountsCommands(program);
   registerProductsCommands(program);
+  registerDataSourcesCommands(program);
 
   return program;
 }
