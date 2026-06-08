@@ -31,6 +31,14 @@ export type {
   ItemLevelIssue,
 } from "./products.js";
 
+export { DataSourcesService, dataSourceSegment } from "./datasources.js";
+export type {
+  DataSource,
+  PrimaryProductDataSource,
+  FileInput,
+  FetchSettings,
+} from "./datasources.js";
+
 export { MerchantApiError } from "./errors.js";
 
 export {
