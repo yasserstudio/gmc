@@ -1,0 +1,192 @@
+<p align="center"><sub>by <a href="https://yasser.studio">Yasser's Studio</a></sub></p>
+
+# gmc — Google Merchant Center CLI
+
+**gmc** is a command-line interface for the [Google Merchant API](https://developers.google.com/merchant/api) — the successor to the Content API for Shopping. It gives you typed, scriptable, CI-friendly access to your Merchant Center accounts and product catalog from a single binary, without a browser.
+
+It is built for the **Content API → Merchant API migration** (the Content API is being retired), and around the three things that API makes harder than it should: catching the *silent* setup failures (`doctor`), validating feeds offline before they get disapproved (preflight), and moving off the Content API cleanly (migrate).
+
+<p align="center">
+  <img src="https://img.shields.io/badge/status-0.x_pre--release-9a6700?style=for-the-badge" alt="Status: 0.x pre-release">
+  <a href="https://yasserstudio.github.io/gmc/"><img src="https://img.shields.io/badge/docs-yasserstudio.github.io%2Fgmc-1a73e8?style=for-the-badge" alt="Documentation"></a>
+  <img src="https://img.shields.io/badge/tests-146_passing-1a7f37?style=for-the-badge" alt="Tests: 146 passing">
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js" alt="Node.js 20+">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/yasserstudio/gmc?style=for-the-badge&color=1a73e8" alt="MIT License"></a>
+</p>
+
+<p align="center"><a href="#install"><strong>Install</strong></a> · <a href="https://yasserstudio.github.io/gmc/guide/getting-started">Getting Started</a> · <a href="https://yasserstudio.github.io/gmc/reference/">CLI Reference</a> · <a href="#roadmap">Roadmap</a></p>
+
+---
+
+## Install
+
+> [!NOTE]
+> **Pre-release.** The `@gmc-cli/*` packages aren't published to npm yet — that lands later in the `0.x` series. For now, run from source.
+
+```bash
+# From source (today)
+git clone https://github.com/yasserstudio/gmc.git
+cd gmc && pnpm install && pnpm build
+node packages/cli/dist/bin.js --help
+
+# Once published (coming in the 0.x series)
+npm install -g @gmc-cli/cli
+```
+
+---
+
+## Get started
+
+```bash
+gmc auth login                       # 1. sign in with your Google account (or a service-account key for CI)
+gmc doctor                           # 2. diagnose auth, GCP registration, and Merchant API access
+gmc accounts list                    # 3. see the accounts your credential can reach
+gmc --account 123456789 products list   # 4. read the catalog
+```
+
+Set an account once in a [profile](https://yasserstudio.github.io/gmc/guide/configuration) and drop the `--account` flag.
+
+---
+
+## Why gmc?
+
+Most Merchant Center work is still done by hand in the web UI, and the Content API that powered automation is being retired. gmc makes the move scriptable.
+
+|  | **gmc** | Merchant Center UI | Raw API / client libs |
+| --- | :---: | :---: | :---: |
+| Typed CLI, one binary | ✅ | — | you write the code |
+| `--json` + classed exit codes | ✅ | — | DIY |
+| Diagnoses the silent GCP-registration trap | ✅ `doctor` | — | — |
+| Catalog as version-controllable files | ✅ | — | DIY |
+| Offline feed-compliance preflight | 🚧 _roadmap_ | — | — |
+| Content API → Merchant API migrate | 🚧 _roadmap_ | — | — |
+
+The differentiators — `doctor` (shipped), `preflight`, and `migrate` — are front-loaded over breadth. See the [roadmap](#roadmap).
+
+---
+
+## Authenticate
+
+Four ways in, resolved in order. See [Authentication](https://yasserstudio.github.io/gmc/guide/authentication).
+
+```bash
+gmc auth login                 # interactive OAuth (browser)
+gmc auth login --no-browser    # headless / remote — prints the URL
+gmc auth whoami                # resolved identity (no network call)
+gmc auth test                  # confirm the credential mints a token
+```
+
+For CI, point gmc at a service-account key: `export GMC_SERVICE_ACCOUNT=/path/to/key.json` (or the standard `GOOGLE_APPLICATION_CREDENTIALS`). Application Default Credentials (`gcloud auth application-default login`) also work.
+
+## Diagnose
+
+`gmc doctor` validates your credential, mints a token, and probes the Merchant API — catching the trap where a credential authenticates fine but the Cloud project was never registered, so every call returns a cryptic empty result.
+
+```bash
+gmc doctor
+gmc doctor --json | jq '.checks[] | select(.status != "pass")'
+```
+
+## Accounts
+
+```bash
+gmc accounts list                  # accounts your credential can access
+gmc accounts get 123456789         # the raw account resource
+gmc accounts info 123456789        # a profile: account + business info + homepage
+```
+
+## Products
+
+The Merchant API splits products into a read-only **processed** resource and a writable **product input**. gmc presents both under `gmc products`.
+
+```bash
+gmc products list --page-size 50              # processed products (status + issues)
+gmc products get online~en~US~SKU1            # one product, with item-level issues
+gmc products insert --data-source 11223344 --file product.json   # create/replace
+cat product.json | gmc products insert --data-source 11223344    # …or from stdin
+gmc products delete online~en~US~SKU1 --data-source 11223344
+```
+
+---
+
+## CI/CD
+
+Every command supports `--json` and uses classed exit codes, so pipelines can branch on the failure type.
+
+```yaml
+# GitHub Actions
+- run: npm install -g @gmc-cli/cli   # (once published)
+- env:
+    GMC_SERVICE_ACCOUNT: ${{ secrets.GMC_SERVICE_ACCOUNT }}
+    GMC_ACCOUNT_ID: "123456789"
+  run: |
+    gmc doctor --json                # fail the job on a broken setup
+    gmc products list --json | jq '.products | length'
+```
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Success |
+| `1` | General error |
+| `2` | Usage (bad arguments) |
+| `3` | Authentication error |
+| `4` | Configuration error |
+| `5` | Merchant API error |
+
+A dedicated GitHub Action and a preflight CI gate arrive in [Phase 8](#roadmap).
+
+---
+
+## Packages
+
+A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the packages as a typed Merchant API SDK. _(Not yet on npm — links point to the source.)_
+
+| Package | Description |
+| --- | --- |
+| [`@gmc-cli/cli`](packages/cli) | CLI entry point — the `gmc` command |
+| [`@gmc-cli/core`](packages/core) | Command orchestration, `doctor`, exit-code conventions |
+| [`@gmc-cli/api`](packages/api) | Typed Merchant API client (rate limiter, retry, pagination) |
+| [`@gmc-cli/auth`](packages/auth) | Authentication — service account, OAuth, ADC |
+| [`@gmc-cli/config`](packages/config) | Configuration loading and profiles |
+
+---
+
+## Roadmap
+
+gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0` at launch.
+
+| Phase | Versions | Theme | Status |
+| --- | --- | --- | :---: |
+| 0 | v0.0 | Scaffold — monorepo, `gmc` shell, docs site | ✅ |
+| 1 | v0.1–v0.4 | Spike pt 1 — auth, CLI shell, `doctor` | ✅ |
+| 2 | v0.5–v0.7 | Spike pt 2 — typed client, accounts, products | ✅ |
+| 3 | v0.8–v0.11 | Feeds as code — data sources, pull / push / diff | ⏳ Next |
+| 4 | v0.12–v0.14 | **Preflight** — offline feed-compliance scanner | |
+| 5 | v0.15–v0.17 | **Migrate** — Content API → Merchant API assistant | |
+| 6–9 | v0.18–v0.28 | Inventories, promotions, reports, CI/CD, launch → **v1.0.0** | |
+
+Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
+
+---
+
+## Documentation
+
+Full docs at **[yasserstudio.github.io/gmc](https://yasserstudio.github.io/gmc/)**:
+
+- [Getting started](https://yasserstudio.github.io/gmc/guide/getting-started)
+- [Authentication](https://yasserstudio.github.io/gmc/guide/authentication)
+- [Configuration & profiles](https://yasserstudio.github.io/gmc/guide/configuration)
+- [CLI reference](https://yasserstudio.github.io/gmc/reference/)
+
+---
+
+## License
+
+Free to use. Released under the [MIT License](LICENSE).
+
+---
+
+<p align="center"><sub>Made by <a href="https://yasser.studio">Yasser's Studio</a> · <a href="https://www.linkedin.com/in/yasserberrehail/">LinkedIn</a> · <a href="https://x.com/yassersstudio">X</a> · <a href="mailto:hello@yasser.studio">hello@yasser.studio</a></sub></p>
+
+<p align="center"><sub>gmc is an independent project. Not affiliated with, endorsed by, or sponsored by Google LLC. "Google Merchant Center", "Google Shopping", and "Google" are trademarks of Google LLC.</sub></p>
