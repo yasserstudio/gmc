@@ -3,10 +3,16 @@ export interface AuthOptions {
   serviceAccountPath?: string;
   /** Raw service-account JSON (or a file path) — useful for env-var credentials. */
   serviceAccountJson?: string;
-  /** Absolute directory for the on-disk token cache. Omit to skip disk caching. */
+  /**
+   * Absolute directory for the on-disk token cache. Also where a stored OAuth
+   * login (`gmc auth login`) is looked up, so omitting it skips both disk
+   * caching and stored-OAuth resolution.
+   */
   cachePath?: string;
   /** OAuth scopes to request. Defaults to the Merchant API content scope. */
   scopes?: string[];
+  /** Profile to resolve a stored OAuth login under (from `gmc auth login`). */
+  profile?: string;
 }
 
 export interface AuthClient {

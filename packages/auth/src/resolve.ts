@@ -4,6 +4,8 @@ import { AuthError } from "./errors.js";
 import { createServiceAccountAuth, loadServiceAccountKey } from "./service-account.js";
 import { acquireToken } from "./token-cache.js";
 import { DEFAULT_SCOPES } from "./scopes.js";
+import { loadStoredCredential } from "./oauth-store.js";
+import { createOAuthAuth } from "./oauth.js";
 import type { AuthClient, AuthOptions } from "./types.js";
 
 async function tryApplicationDefaultCredentials(options?: AuthOptions): Promise<AuthClient | null> {
@@ -91,7 +93,17 @@ export async function resolveAuth(options?: AuthOptions): Promise<AuthClient> {
     }
   }
 
-  // 4. Application Default Credentials
+  // 4. Stored OAuth login (from `gmc auth login`). A deliberate interactive
+  // login wins over ambient ADC, but explicit service-account env vars above
+  // still take precedence.
+  if (options?.cachePath) {
+    const stored = await loadStoredCredential(options.cachePath, options.profile);
+    if (stored) {
+      return createOAuthAuth(stored, { cachePath: options.cachePath });
+    }
+  }
+
+  // 5. Application Default Credentials
   const adcClient = await tryApplicationDefaultCredentials(options);
   if (adcClient) {
     return adcClient;
@@ -102,10 +114,11 @@ export async function resolveAuth(options?: AuthOptions): Promise<AuthClient> {
     "AUTH_NO_CREDENTIALS",
     [
       "Provide credentials using one of these methods:",
-      "  1. Pass serviceAccountPath or serviceAccountJson in options",
-      "  2. Set the GMC_SERVICE_ACCOUNT environment variable to a file path or raw JSON",
-      "  3. Set GOOGLE_APPLICATION_CREDENTIALS to a service account key file",
-      "  4. Configure Application Default Credentials: gcloud auth application-default login",
+      "  1. Run `gmc auth login` to sign in with your Google account (OAuth)",
+      "  2. Pass serviceAccountPath or serviceAccountJson in options",
+      "  3. Set the GMC_SERVICE_ACCOUNT environment variable to a file path or raw JSON",
+      "  4. Set GOOGLE_APPLICATION_CREDENTIALS to a service account key file",
+      "  5. Configure Application Default Credentials: gcloud auth application-default login",
     ].join("\n"),
   );
 }

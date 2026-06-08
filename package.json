@@ -14,7 +14,13 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "prettier": {
     "semi": true,
@@ -24,6 +30,7 @@
     "printWidth": 100
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.0",
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.4.1",
@@ -33,6 +40,7 @@
     "turbo": "^2.9.16",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.60.1",
+    "vitepress": "^1.6.3",
     "vitest": "^4.1.8"
   }
 }
