@@ -45,6 +45,7 @@ export default defineConfig({
             { text: "gmc config", link: "/reference/config" },
             { text: "gmc accounts", link: "/reference/accounts" },
             { text: "gmc products", link: "/reference/products" },
+            { text: "gmc datasources", link: "/reference/datasources" },
           ],
         },
       ],
