@@ -1,6 +1,6 @@
 {
   "name": "@gmc-cli/config",
-  "version": "0.0.0",
+  "version": "0.7.0",
   "description": "Configuration loading, validation, profiles, and environment variable support for the Google Merchant Center CLI.",
   "type": "module",
   "main": "./dist/index.js",
