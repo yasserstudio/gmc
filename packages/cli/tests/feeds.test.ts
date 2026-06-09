@@ -305,3 +305,166 @@ describe("gmc feeds push", () => {
     expect(process.exitCode).toBe(5);
   });
 });
+
+describe("gmc feeds diff", () => {
+  let writes: string[];
+  let errs: string[];
+  let savedEnv: Record<string, string | undefined>;
+  let dir: string;
+  const ENV = ["GMC_CONFIG_DIR", "GMC_PROFILE", "GMC_ACCOUNT_ID"] as const;
+
+  // A processed product as `products.list` returns it; `toProductInput` strips it
+  // to the writable shape a pulled file holds.
+  const product = (offerId: string, title: string) => ({
+    name: `accounts/123/products/online~en~US~${offerId}`,
+    offerId,
+    channel: "ONLINE",
+    contentLanguage: "en",
+    feedLabel: "US",
+    attributes: { title },
+  });
+  // The pulled-file equivalent of the product above (key fields + attributes).
+  const file = (offerId: string, title: string) => ({
+    offerId,
+    contentLanguage: "en",
+    feedLabel: "US",
+    channel: "ONLINE",
+    attributes: { title },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.exitCode = 0;
+    savedEnv = {};
+    for (const key of ENV) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    process.env["GMC_CONFIG_DIR"] = join(tmpdir(), "gmc-feeds-test-no-config");
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    dir = mkdtempSync(join(tmpdir(), "gmc-diff-"));
+    writes = [];
+    errs = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+      writes.push(String(chunk));
+      return true;
+    });
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+      errs.push(String(chunk));
+      return true;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(dir, { recursive: true, force: true });
+    for (const key of ENV) {
+      const value = savedEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    process.exitCode = 0;
+  });
+
+  it("categorizes added / updated / unchanged / orphaned against the catalog", async () => {
+    listProducts.mockResolvedValue([product("SKU1", "A"), product("SKU2", "B"), product("SKU4", "D")]);
+    writeFileSync(join(dir, "unchanged.json"), JSON.stringify(file("SKU1", "A"))); // matches SKU1
+    writeFileSync(join(dir, "updated.json"), JSON.stringify(file("SKU2", "B-EDIT"))); // differs from SKU2
+    writeFileSync(join(dir, "added.json"), JSON.stringify(file("SKU3", "C"))); // not in catalog
+    // SKU4 has no local file → orphaned.
+
+    await run(["feeds", "diff", "--dir", dir, "--json"]);
+
+    const out = JSON.parse(writes.join("")) as {
+      added: string[];
+      updated: string[];
+      unchanged: number;
+      orphaned: string[];
+    };
+    expect(out.added).toEqual(["ONLINE~en~US~SKU3"]);
+    expect(out.updated).toEqual(["ONLINE~en~US~SKU2"]);
+    expect(out.unchanged).toBe(1);
+    expect(out.orphaned).toEqual(["ONLINE~en~US~SKU4"]);
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("scopes the comparison to a data source when --data-source is given", async () => {
+    listProducts.mockResolvedValue([
+      { ...product("SKU1", "A"), dataSource: "accounts/123/dataSources/100" },
+      { ...product("SKU2", "B"), dataSource: "accounts/123/dataSources/200" },
+    ]);
+    writeFileSync(join(dir, "in-source.json"), JSON.stringify(file("SKU1", "A"))); // matches, source 100
+    writeFileSync(join(dir, "other-source.json"), JSON.stringify(file("SKU2", "B"))); // lives in 200
+
+    await run(["feeds", "diff", "--dir", dir, "--data-source", "100", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as {
+      added: string[];
+      unchanged: number;
+      orphaned: string[];
+      dataSource: string;
+    };
+    // SKU2 belongs to source 200, so against source 100 it reads as "added", not matched.
+    expect(out.added).toEqual(["ONLINE~en~US~SKU2"]);
+    expect(out.unchanged).toBe(1);
+    expect(out.orphaned).toEqual([]);
+    expect(out.dataSource).toBe("100");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("reports no changes when the directory matches the catalog (key order ignored)", async () => {
+    listProducts.mockResolvedValue([product("SKU1", "A"), product("SKU2", "B")]);
+    // Same content, deliberately different key order — stable compare treats as equal.
+    writeFileSync(
+      join(dir, "a.json"),
+      JSON.stringify({ attributes: { title: "A" }, channel: "ONLINE", feedLabel: "US", contentLanguage: "en", offerId: "SKU1" }),
+    );
+    writeFileSync(join(dir, "b.json"), JSON.stringify(file("SKU2", "B")));
+
+    await run(["feeds", "diff", "--dir", dir, "--json"]);
+
+    const out = JSON.parse(writes.join("")) as {
+      added: string[];
+      updated: string[];
+      unchanged: number;
+      orphaned: string[];
+    };
+    expect(out.added).toEqual([]);
+    expect(out.updated).toEqual([]);
+    expect(out.unchanged).toBe(2);
+    expect(out.orphaned).toEqual([]);
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("exits 2 when the directory cannot be read", async () => {
+    await run(["feeds", "diff", "--dir", join(dir, "does-not-exist")]);
+
+    expect(listProducts).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("Could not read feed directory");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("skips an invalid file (exit 1) but still diffs the rest", async () => {
+    listProducts.mockResolvedValue([]); // empty catalog → valid files are all "added"
+    writeFileSync(join(dir, "good.json"), JSON.stringify(file("SKU1", "A")));
+    writeFileSync(join(dir, "bad.json"), "{ not valid json");
+
+    await run(["feeds", "diff", "--dir", dir, "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { added: string[]; failed?: number };
+    expect(out.added).toEqual(["ONLINE~en~US~SKU1"]);
+    expect(out.failed).toBe(1);
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("exits 5 when the Merchant API rejects the listing", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(file("SKU1", "A")));
+    listProducts.mockRejectedValue(new MerchantApiError("Forbidden (403).", 403, "DENIED", false));
+
+    await run(["feeds", "diff", "--dir", dir, "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { ok: boolean };
+    expect(out.ok).toBe(false);
+    expect(process.exitCode).toBe(5);
+  });
+});
