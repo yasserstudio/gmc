@@ -42,7 +42,7 @@ export interface Finding extends RuleViolation {
   offerId: string | null;
 }
 
-/** Read-only context passed to every rule (locale-aware checks land in v0.9.4). */
+/** Read-only context passed to every rule (locale-aware checks land in a later phase). */
 export interface RuleContext {
   /** Target country (ISO-3166 alpha-2), from config — for locale-aware rules. */
   targetCountry?: string;

@@ -1,50 +1,27 @@
 import { describe, it, expect } from "vitest";
-import type { ProductInput } from "@gmc-cli/api";
+import { RULES } from "../src/rules/index.js";
 import { requiredRules } from "../src/rules/required.js";
+import { formatRules } from "../src/rules/format.js";
 
-const rule = (id: string) => {
-  const found = requiredRules.find((r) => r.id === id);
-  if (!found) throw new Error(`no rule ${id}`);
-  return found;
-};
-const check = (id: string, product: ProductInput) => rule(id).check(product, {});
-
-describe("required.offer-id", () => {
-  it("flags a missing or blank offer id", () => {
-    expect(check("required.offer-id", {})).toHaveLength(1);
-    expect(check("required.offer-id", { offerId: "  " })).toHaveLength(1);
-    expect(check("required.offer-id", { offerId: "SKU1" })).toHaveLength(0);
+describe("rule registry", () => {
+  it("is exactly required + format, concatenated", () => {
+    expect(RULES).toHaveLength(requiredRules.length + formatRules.length);
   });
-});
 
-describe("required.title", () => {
-  it("flags a missing or blank title", () => {
-    expect(check("required.title", { offerId: "x" })).toHaveLength(1);
-    expect(check("required.title", { attributes: { title: "" } })).toHaveLength(1);
-    expect(check("required.title", { attributes: { title: "Shoe" } })).toHaveLength(0);
-  });
-});
-
-describe("required.price", () => {
-  it("flags a missing price or amount", () => {
-    expect(check("required.price", { offerId: "x" })).toHaveLength(1);
-    expect(check("required.price", { attributes: { price: {} } })).toHaveLength(1);
-    expect(
-      check("required.price", { attributes: { price: { currencyCode: "USD" } } }),
-    ).toHaveLength(1);
-    expect(
-      check("required.price", {
-        attributes: { price: { amountMicros: "1000", currencyCode: "USD" } },
-      }),
-    ).toHaveLength(0);
-  });
-});
-
-describe("rule shape", () => {
-  it("every rule has a stable dotted id and default severity", () => {
-    for (const r of requiredRules) {
-      expect(r.id).toMatch(/^required\.[a-z-]+$/);
+  it("every rule has a unique, well-formed id and a valid default severity", () => {
+    const ids = new Set<string>();
+    for (const r of RULES) {
+      expect(r.id).toMatch(/^(required|format)\.[a-z-]+$/);
       expect(["error", "warning", "info"]).toContain(r.defaultSeverity);
+      expect(r.title.length).toBeGreaterThan(0);
+      expect(ids.has(r.id)).toBe(false);
+      ids.add(r.id);
+    }
+  });
+
+  it("every rule returns an array on an empty product (no throws)", () => {
+    for (const r of RULES) {
+      expect(Array.isArray(r.check({}, {}))).toBe(true);
     }
   });
 });

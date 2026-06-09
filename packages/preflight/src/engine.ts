@@ -3,6 +3,7 @@
 // files or `--remote` pull) and renders the report; this just runs the rules.
 
 import type { ProductInput } from "@gmc-cli/api";
+import { productKey } from "@gmc-cli/api";
 import type {
   Finding,
   FindingCounts,
@@ -20,16 +21,6 @@ import { RULES } from "./rules/index.js";
  * core); CI branches on it to fail a build on a real violation.
  */
 export const PREFLIGHT_EXIT_CODE = 6;
-
-/**
- * Composite product identity — the same `{channel}~{contentLanguage}~{feedLabel}~{offerId}`
- * key Merchant Center (and `gmc feeds`) use. Missing parts collapse to empty segments.
- */
-export function productKey(input: ProductInput): string {
-  return [input.channel, input.contentLanguage, input.feedLabel, input.offerId]
-    .map((part) => part ?? "")
-    .join("~");
-}
 
 /** Resolve a rule's effective level: an explicit override, else its default. */
 function settingFor(rule: Rule, config: PreflightConfig): Severity | "off" {
