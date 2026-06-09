@@ -1,5 +1,11 @@
 # @gmc-cli/cli
 
+## 0.9.1
+
+### Patch Changes
+
+- fdb7f7e: feat(cli): `gmc feeds push` — apply a directory of pulled product files to a target data source (`--data-source <id>`). Malformed local files are skipped and tallied (exit 1); an API rejection aborts the run (exit 5, idempotent re-run is safe).
+
 ## 0.9.0
 
 ### Minor Changes
