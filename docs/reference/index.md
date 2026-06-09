@@ -14,7 +14,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc accounts`](/reference/accounts) | Inspect accounts (`list` / `get` / `info`) |
 | [`gmc products`](/reference/products) | Manage products (`list` / `get` / `insert` / `delete`) |
 | [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`) |
-| [`gmc feeds`](/reference/feeds) | Feeds as code (`pull`; `push` / `diff` coming) |
+| [`gmc feeds`](/reference/feeds) | Feeds as code (`pull` / `push`; `diff` coming) |
 
 ## Global options
 

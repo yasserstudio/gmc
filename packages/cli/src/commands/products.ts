@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { emitJson, reportError, UsageError } from "@gmc-cli/core";
+import { emitJson, reportError } from "@gmc-cli/core";
 import {
   ProductsService,
   productSegment,
@@ -8,17 +8,7 @@ import {
   type Price,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, readJsonObject, line, parsePageSize } from "./_shared.js";
-
-function requireDataSource(dataSource?: string): string {
-  if (!dataSource) {
-    throw new UsageError(
-      "--data-source is required to insert or delete a product.",
-      "Pass --data-source <id> (a primary API data source) — create one with `gmc datasources create`.",
-    );
-  }
-  return dataSource;
-}
+import { clientFor, resolveAccount, readJsonObject, line, parsePageSize, requireDataSource } from "./_shared.js";
 
 function offerIdOf(product: Product): string {
   return product.offerId ?? productSegment(product.name);
@@ -120,7 +110,7 @@ export function registerProductsCommands(program: Command): void {
       try {
         const ctx = contextFrom(program);
         const account = resolveAccount(undefined, ctx);
-        const dataSource = requireDataSource(opts.dataSource);
+        const dataSource = requireDataSource(opts.dataSource, "insert or delete a product");
         const input = (await readJsonObject(opts.file, "product input")) as ProductInput;
         const service = new ProductsService(await clientFor(ctx, account));
         const result = await service.insertProductInput(input, dataSource);
@@ -145,7 +135,7 @@ export function registerProductsCommands(program: Command): void {
       try {
         const ctx = contextFrom(program);
         const account = resolveAccount(undefined, ctx);
-        const dataSource = requireDataSource(opts.dataSource);
+        const dataSource = requireDataSource(opts.dataSource, "insert or delete a product");
         const service = new ProductsService(await clientFor(ctx, account));
         await service.deleteProductInput(productId, dataSource);
         // Echo the canonical product segment, not the raw argument form.

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { mkdtempSync, rmSync, readdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const listProducts = vi.fn();
+const insertProductInput = vi.fn();
 
 vi.mock("@gmc-cli/auth", () => ({
   resolveAuth: vi.fn(async () => ({
@@ -22,6 +23,7 @@ vi.mock("@gmc-cli/api", async (importActual) => {
     },
     ProductsService: class {
       listProducts = listProducts;
+      insertProductInput = insertProductInput;
     },
   };
 });
@@ -170,6 +172,136 @@ describe("gmc feeds pull", () => {
 
     const out = JSON.parse(writes.join("")) as { ok: boolean };
     expect(out.ok).toBe(false);
+    expect(process.exitCode).toBe(5);
+  });
+});
+
+describe("gmc feeds push", () => {
+  let writes: string[];
+  let errs: string[];
+  let savedEnv: Record<string, string | undefined>;
+  let dir: string;
+  const ENV = ["GMC_CONFIG_DIR", "GMC_PROFILE", "GMC_ACCOUNT_ID"] as const;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    insertProductInput.mockResolvedValue({});
+    process.exitCode = 0;
+    savedEnv = {};
+    for (const key of ENV) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    process.env["GMC_CONFIG_DIR"] = join(tmpdir(), "gmc-feeds-test-no-config");
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    dir = mkdtempSync(join(tmpdir(), "gmc-push-"));
+    writes = [];
+    errs = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+      writes.push(String(chunk));
+      return true;
+    });
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+      errs.push(String(chunk));
+      return true;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(dir, { recursive: true, force: true });
+    for (const key of ENV) {
+      const value = savedEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    process.exitCode = 0;
+  });
+
+  it("inserts one product input per JSON file, under the given data source", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify({ offerId: "SKU1", attributes: { title: "A" } }));
+    writeFileSync(join(dir, "b.json"), JSON.stringify({ offerId: "SKU2", attributes: { title: "B" } }));
+
+    await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { pushed: number; dataSource: string; failed?: number };
+    expect(out.pushed).toBe(2);
+    expect(out.dataSource).toBe("55");
+    expect("failed" in out).toBe(false);
+    expect(insertProductInput).toHaveBeenCalledTimes(2);
+    expect(insertProductInput).toHaveBeenCalledWith({ offerId: "SKU1", attributes: { title: "A" } }, "55");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("only reads .json files (ignores other files)", async () => {
+    writeFileSync(join(dir, "keep.json"), JSON.stringify({ offerId: "SKU1" }));
+    writeFileSync(join(dir, "README.txt"), "not a product");
+    writeFileSync(join(dir, ".DS_Store"), "junk");
+
+    await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { pushed: number };
+    expect(out.pushed).toBe(1);
+    expect(insertProductInput).toHaveBeenCalledTimes(1);
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("requires --data-source (exit 2)", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify({ offerId: "SKU1" }));
+
+    await run(["feeds", "push", "--dir", dir]);
+
+    expect(insertProductInput).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("--data-source is required");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("exits 2 when the directory cannot be read", async () => {
+    await run(["feeds", "push", "--dir", join(dir, "does-not-exist"), "--data-source", "55"]);
+
+    expect(insertProductInput).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("Could not read feed directory");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("skips a malformed file, pushes the rest, and exits 1", async () => {
+    writeFileSync(join(dir, "good.json"), JSON.stringify({ offerId: "SKU1" }));
+    writeFileSync(join(dir, "bad.json"), "{ not valid json");
+    writeFileSync(join(dir, "array.json"), JSON.stringify([1, 2, 3]));
+
+    await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as {
+      pushed: number;
+      failed?: number;
+      failures?: { file: string }[];
+    };
+    expect(out.pushed).toBe(1);
+    expect(out.failed).toBe(2);
+    expect((out.failures ?? []).map((f) => f.file).sort()).toEqual(["array.json", "bad.json"]);
+    expect(insertProductInput).toHaveBeenCalledTimes(1);
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("pushes nothing from an empty directory (exit 0)", async () => {
+    await run(["feeds", "push", "--dir", dir, "--data-source", "55"]);
+
+    expect(insertProductInput).not.toHaveBeenCalled();
+    expect(writes.join("")).toContain("Pushed 0 product(s)");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("aborts after the first failed insert (exit 5), not pushing the rest", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify({ offerId: "SKU1" }));
+    writeFileSync(join(dir, "b.json"), JSON.stringify({ offerId: "SKU2" }));
+    insertProductInput.mockRejectedValue(new MerchantApiError("Forbidden (403).", 403, "DENIED", false));
+
+    await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { ok: boolean };
+    expect(out.ok).toBe(false);
+    // The run aborts on the first rejection rather than attempting every file.
+    expect(insertProductInput).toHaveBeenCalledTimes(1);
     expect(process.exitCode).toBe(5);
   });
 });

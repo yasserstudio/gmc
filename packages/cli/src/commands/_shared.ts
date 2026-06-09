@@ -23,6 +23,21 @@ export function parsePageSize(raw: string | undefined): number | undefined {
 }
 
 /**
+ * Require a `--data-source` for product write operations (insert / delete / feeds
+ * push), or throw a UsageError. `action` names the operation in the message.
+ * Accepts a bare id or a full resource name.
+ */
+export function requireDataSource(dataSource: string | undefined, action = "write products"): string {
+  if (!dataSource) {
+    throw new UsageError(
+      `--data-source is required to ${action}.`,
+      "Pass --data-source <id> (a primary API data source) — create one with `gmc datasources create`.",
+    );
+  }
+  return dataSource;
+}
+
+/**
  * Resolve the target account from a positional arg or the context, validating it.
  * `positional` is undefined for commands that take the account only from
  * --account / GMC_ACCOUNT_ID / profile (e.g. products); accounts get/info also
