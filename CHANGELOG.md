@@ -7,6 +7,23 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.5 — policy / disapproval-trigger checks
+
+Phase 4, part 3 — **Phase 4 complete**. `gmc preflight` now predicts editorial
+*disapprovals*, not just schema errors, so it catches a real rejection offline before upload.
+
+- **policy** — a new `policy.*` rule family of heuristics: `promotional-title` (an
+  **error** — promotional text like "free shipping" / "20% off" / "best price" in the
+  title), plus warnings for `title-caps` (SHOUTING, Unicode-aware), `title-symbols`
+  (emoji / repeated punctuation / decorative glyphs), `phone-in-title` (formatted phone
+  numbers), and `link-https` (an `http` landing page).
+- **tunable** — heuristics are conservative and fully overridable in `.gmcpreflightrc`;
+  warnings don't gate a run unless you pass `--strict`.
+- **no engine change** — the rules slot into the same registry; the CLI, `--json`, and
+  config are rule-agnostic.
+
+_`@gmc-cli/cli` → 0.9.5, `@gmc-cli/preflight` → 0.1.2 (patch); other packages unchanged._
+
 ## v0.9.4 — preflight rule library
 
 Phase 4, part 2 — the offline scanner grows from 3 seed rules to 18.
