@@ -136,12 +136,18 @@ async function readProductFile(path: string): Promise<ProductInput> {
   return parsed as ProductInput;
 }
 
+/** How many feed files to read at once — big feeds are I/O-bound, not CPU-bound. */
+const READ_CONCURRENCY = 16;
+
 /**
  * Read every `*.json` file in `dir` (name order) and parse each as a ProductInput.
  * Shared by `feeds push` / `feeds diff` / `preflight`: a malformed / non-object file
  * is recorded as a failure rather than thrown, so one bad file doesn't sink the whole
  * directory. An unreadable directory IS fatal (UsageError) — there's nothing to
  * operate on.
+ *
+ * Files are read with bounded concurrency, but results are reassembled in name order
+ * so the output is deterministic regardless of which read finishes first.
  */
 export async function loadProductFiles(dir: string): Promise<LoadedFeed> {
   let entries: string[];
@@ -154,14 +160,31 @@ export async function loadProductFiles(dir: string): Promise<LoadedFeed> {
     );
   }
   const names = entries.filter((f) => f.endsWith(".json")).sort();
+
+  type Slot = { file: string; input: ProductInput } | FileLoadFailure;
+  const results = new Array<Slot>(names.length);
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < names.length) {
+      const i = next++;
+      const file = names[i];
+      if (file === undefined) continue; // unreachable (i < length); satisfies the index check
+      try {
+        results[i] = { file, input: await readProductFile(join(dir, file)) };
+      } catch (err) {
+        results[i] = { file, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(READ_CONCURRENCY, names.length) }, () => worker()),
+  );
+
   const files: LoadedFeed["files"] = [];
   const failures: FileLoadFailure[] = [];
-  for (const file of names) {
-    try {
-      files.push({ file, input: await readProductFile(join(dir, file)) });
-    } catch (err) {
-      failures.push({ file, error: err instanceof Error ? err.message : String(err) });
-    }
+  for (const slot of results) {
+    if ("input" in slot) files.push(slot);
+    else failures.push(slot);
   }
   return { files, failures };
 }

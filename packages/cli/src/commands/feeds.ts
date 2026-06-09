@@ -6,10 +6,10 @@ import {
   ProductsService,
   productSegment,
   toProductInput,
+  productKey,
   type Product,
   type ProductInput,
 } from "@gmc-cli/api";
-import { productKey } from "@gmc-cli/preflight";
 import { contextFrom, wantsJson } from "../context.js";
 import {
   clientFor,

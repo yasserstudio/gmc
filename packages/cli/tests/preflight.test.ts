@@ -32,19 +32,39 @@ function run(args: string[]): Promise<unknown> {
   return createProgram().parseAsync(["node", "gmc", ...args]);
 }
 
+// A fully-compliant product: zero findings (no errors, no warnings) across the rule set.
 const GOOD = JSON.stringify({
   offerId: "SKU1",
   channel: "ONLINE",
   contentLanguage: "en",
   feedLabel: "US",
-  attributes: { title: "Trail Runner", price: { amountMicros: "49990000", currencyCode: "USD" } },
+  attributes: {
+    title: "Trail Runner",
+    description: "A lightweight trail running shoe.",
+    link: "https://example.com/trail-runner",
+    imageLink: "https://example.com/trail-runner.jpg",
+    availability: "in_stock",
+    condition: "new",
+    brand: "Acme",
+    price: { amountMicros: "49990000", currencyCode: "USD" },
+  },
 });
+// Identical to GOOD but missing only the title — isolates required.title for the
+// rule + config tests (so turning required.title off leaves a clean product).
 const MISSING_TITLE = JSON.stringify({
   offerId: "SKU2",
   channel: "ONLINE",
   contentLanguage: "en",
   feedLabel: "US",
-  attributes: { price: { amountMicros: "1000", currencyCode: "USD" } },
+  attributes: {
+    description: "A lightweight trail running shoe.",
+    link: "https://example.com/trail-runner",
+    imageLink: "https://example.com/trail-runner.jpg",
+    availability: "in_stock",
+    condition: "new",
+    brand: "Acme",
+    price: { amountMicros: "1000", currencyCode: "USD" },
+  },
 });
 
 describe("gmc preflight", () => {
