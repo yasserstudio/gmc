@@ -24,16 +24,33 @@ Products are read as push-ready [ProductInput](/reference/products#gmc-products-
 
 ## What it checks
 
-Each rule has a stable dotted id and a default severity. v0.9.3 ships the engine with a seed set; the full library lands across Phase 4.
+Each rule has a stable dotted id and a default severity. Rules come in families: **`required.*`** (a missing attribute the Merchant API rejects) and **`format.*`** (an attribute that's present but malformed). A `format.*` rule fires only when its attribute is present — an absent value is the matching `required.*` rule's finding, so a missing title is reported once, not twice.
 
 | Rule | Default | Catches |
 |------|---------|---------|
 | `required.offer-id` | error | Missing offer id (the unique product identifier) |
 | `required.title` | error | Missing or blank `title` |
+| `required.description` | error | Missing or blank `description` |
+| `required.link` | error | Missing landing-page `link` |
+| `required.image-link` | error | Missing `image_link` |
+| `required.availability` | error | Missing `availability` |
 | `required.price` | error | Missing `price` / missing amount |
+| `required.condition` | warning | Missing `condition` (recommended; required for used/refurbished) |
+| `required.identifier-exists` | warning | None of `gtin` / `mpn` / `brand` present |
+| `format.link-url` | error | `link` is not a valid http(s) URL |
+| `format.image-link-url` | error | `image_link` is not a valid http(s) URL |
+| `format.price-amount` | error | `amountMicros` is not a non-negative integer count of micros |
+| `format.price-currency` | error | A priced product's `currencyCode` is missing or not a 3-letter code |
+| `format.availability-enum` | error | `availability` not in `in_stock` / `out_of_stock` / `preorder` / `backorder` |
+| `format.condition-enum` | error | `condition` not in `new` / `refurbished` / `used` |
+| `format.gtin-checksum` | warning | `gtin` is the wrong length or fails its check digit |
+| `format.title-length` | warning | `title` exceeds 150 characters |
+| `format.description-length` | warning | `description` exceeds 5000 characters |
+
+Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc). `warning` findings don't fail the run unless you pass `--strict`.
 
 ::: tip Coming next
-v0.9.4 adds the full required-attribute + format library (link/image URLs, price & currency, enums, GTIN checksums, length limits, identifier-exists); v0.9.5 adds policy / disapproval-trigger heuristics.
+v0.9.5 adds policy / disapproval-trigger heuristics (Phase 4 exit).
 :::
 
 ## Findings
