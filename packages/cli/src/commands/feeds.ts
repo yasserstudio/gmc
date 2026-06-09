@@ -36,7 +36,105 @@ async function readProductFile(path: string): Promise<ProductInput> {
   return parsed as ProductInput;
 }
 
-/** Register the `gmc feeds` command group (pull / push; diff arrives in v0.9.2). */
+interface FileLoadFailure {
+  file: string;
+  error: string;
+}
+
+interface LoadedFeed {
+  files: { file: string; input: ProductInput }[];
+  failures: FileLoadFailure[];
+}
+
+/**
+ * Read every `*.json` file in `dir` (name order) and parse each as a ProductInput.
+ * Shared by `push` and `diff`: a malformed / non-object file is recorded as a
+ * failure rather than thrown, so one bad file doesn't sink the whole directory.
+ * An unreadable directory IS fatal (UsageError) — there's nothing to operate on.
+ */
+async function loadProductFiles(dir: string): Promise<LoadedFeed> {
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    throw new UsageError(
+      `Could not read feed directory "${dir}".`,
+      "Run `gmc feeds pull` first, or pass --dir <path> to an existing directory.",
+    );
+  }
+  const names = entries.filter((f) => f.endsWith(".json")).sort();
+  const files: LoadedFeed["files"] = [];
+  const failures: FileLoadFailure[] = [];
+  for (const file of names) {
+    try {
+      files.push({ file, input: await readProductFile(join(dir, file)) });
+    } catch (err) {
+      failures.push({ file, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return { files, failures };
+}
+
+/** Normalize a data source id or full resource name to its bare id, for matching. */
+function dataSourceId(dataSource: string): string {
+  return dataSource.replace(/^.*dataSources\//, "");
+}
+
+/**
+ * The composite product identity (`{channel}~{contentLanguage}~{feedLabel}~{offerId}`)
+ * — the same key Merchant Center uses, so a pulled file and its processed product
+ * match regardless of filename. Missing parts collapse to empty segments.
+ */
+function productKey(input: ProductInput): string {
+  return [input.channel, input.contentLanguage, input.feedLabel, input.offerId]
+    .map((part) => part ?? "")
+    .join("~");
+}
+
+/**
+ * Order-independent serialization (object keys sorted recursively) for deep
+ * equality. Both sides are always JSON-sourced — a parsed file vs a Product mapped
+ * through `toProductInput` — so leaves are only string/number/boolean/null and the
+ * `?? "null"` guards an unreachable `undefined`. Array order IS significant and is
+ * preserved (e.g. `customAttributes`).
+ */
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  const obj = value as Record<string, unknown>;
+  return `{${Object.keys(obj)
+    .sort()
+    .map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`)
+    .join(",")}}`;
+}
+
+/** Human-readable `feeds diff` output: the +/~/- change list, summary, and any skips. */
+function renderDiffHuman(
+  dir: string,
+  result: { added: string[]; updated: string[]; unchanged: number; orphaned: string[] },
+  failures: FileLoadFailure[],
+): void {
+  const { added, updated, unchanged, orphaned } = result;
+  if (added.length + updated.length + orphaned.length === 0) {
+    process.stdout.write(`No changes — ${dir} matches the catalog (${unchanged} unchanged).\n`);
+  } else {
+    process.stdout.write(`${dir} vs catalog:\n`);
+    for (const id of added) process.stdout.write(`  + ${id}\n`);
+    for (const id of updated) process.stdout.write(`  ~ ${id}\n`);
+    for (const id of orphaned) process.stdout.write(`  - ${id}  (only in catalog)\n`);
+    process.stdout.write(
+      `${added.length} to add, ${updated.length} to update, ${unchanged} unchanged` +
+        (orphaned.length ? `, ${orphaned.length} only in catalog (push won't remove)` : "") +
+        ".\n",
+    );
+  }
+  if (failures.length) {
+    process.stdout.write(`Skipped ${failures.length} invalid file(s):\n`);
+    for (const f of failures) process.stdout.write(`  - ${f.file}: ${f.error}\n`);
+  }
+}
+
+/** Register the `gmc feeds` command group (pull / push / diff). */
 export function registerFeedsCommands(program: Command): void {
   const feeds = program
     .command("feeds")
@@ -105,34 +203,17 @@ export function registerFeedsCommands(program: Command): void {
         const dataSource = requireDataSource(opts.dataSource, "push a feed");
         const { dir } = opts;
 
-        let entries: string[];
-        try {
-          entries = await readdir(dir);
-        } catch {
-          throw new UsageError(
-            `Could not read feed directory "${dir}".`,
-            "Run `gmc feeds pull` first, or pass --dir <path> to an existing directory.",
-          );
-        }
-        const files = entries.filter((f) => f.endsWith(".json")).sort();
+        // Parse the whole directory up front; invalid files become `failures`.
+        const { files, failures } = await loadProductFiles(dir);
 
         const service = new ProductsService(await clientFor(ctx, account));
         let pushed = 0;
-        const failures: { file: string; error: string }[] = [];
         let apiError: unknown;
-        for (const file of files) {
-          // A malformed / non-object file is recorded and skipped so the rest of
-          // the directory still applies. An API rejection is a different class of
-          // problem — auth, a bad data source, an invalid product — and almost
-          // always recurs for every file, so it aborts the run (inserts are
-          // idempotent, so re-running after a fix is safe).
-          let input: ProductInput;
-          try {
-            input = await readProductFile(join(dir, file));
-          } catch (err) {
-            failures.push({ file, error: err instanceof Error ? err.message : String(err) });
-            continue;
-          }
+        for (const { input } of files) {
+          // An API rejection is a different class of problem from a bad file —
+          // auth, a bad data source, an invalid product — and almost always recurs
+          // for every file, so it aborts the run (inserts are idempotent, so
+          // re-running after a fix is safe).
           try {
             await service.insertProductInput(input, dataSource);
             pushed += 1;
@@ -165,6 +246,75 @@ export function registerFeedsCommands(program: Command): void {
         if (failures.length) process.exitCode = ExitCode.Error;
       } catch (err) {
         reportError(err, { json }, "gmc feeds push");
+      }
+    });
+
+  feeds
+    .command("diff")
+    .description("Show what `push` would change vs the current catalog")
+    .option("--dir <path>", "Input directory", DEFAULT_DIR)
+    .option("--data-source <id>", "Only compare against products from this data source")
+    .option("--page-size <n>", "Max products per API page")
+    .action(async (opts: { dir: string; dataSource?: string; pageSize?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(undefined, ctx);
+        const pageSize = parsePageSize(opts.pageSize);
+        const { dir } = opts;
+        // `push` targets one data source; scope the comparison to it when given so
+        // diff is an exact preview of `push --data-source <id>`. Without it, diff
+        // compares against the whole catalog (all data sources) — a product living
+        // under a different source then reads as `added` (push would create it
+        // under the target), not as a match.
+        const sourceFilter = opts.dataSource ? dataSourceId(opts.dataSource) : undefined;
+
+        const { files, failures } = await loadProductFiles(dir);
+        const local = new Map<string, ProductInput>();
+        for (const { input } of files) local.set(productKey(input), input);
+
+        const service = new ProductsService(await clientFor(ctx, account));
+        const remoteProducts = await service.listProducts(pageSize ? { pageSize } : {});
+        const remote = new Map<string, ProductInput>();
+        for (const product of remoteProducts) {
+          if (sourceFilter && dataSourceId(product.dataSource ?? "") !== sourceFilter) continue;
+          const remoteInput = toProductInput(product);
+          remote.set(productKey(remoteInput), remoteInput);
+        }
+
+        // `push` only inserts/replaces, so catalog-only products ("orphaned") are
+        // reported but never removed.
+        const added: string[] = [];
+        const updated: string[] = [];
+        let unchanged = 0;
+        for (const [id, localInput] of local) {
+          const current = remote.get(id);
+          if (!current) added.push(id);
+          else if (stableStringify(localInput) !== stableStringify(current)) updated.push(id);
+          else unchanged += 1;
+        }
+        const orphaned = [...remote.keys()].filter((id) => !local.has(id));
+        added.sort();
+        updated.sort();
+        orphaned.sort();
+
+        if (ctx.json) {
+          emitJson({
+            added,
+            updated,
+            unchanged,
+            orphaned,
+            dir,
+            ...(sourceFilter ? { dataSource: sourceFilter } : {}),
+            ...(failures.length ? { failed: failures.length, failures } : {}),
+          });
+        } else {
+          renderDiffHuman(dir, { added, updated, unchanged, orphaned }, failures);
+        }
+        // Differences are informational (exit 0); only invalid local files fail the run.
+        if (failures.length) process.exitCode = ExitCode.Error;
+      } catch (err) {
+        reportError(err, { json }, "gmc feeds diff");
       }
     });
 }

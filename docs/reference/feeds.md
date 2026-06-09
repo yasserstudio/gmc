@@ -1,6 +1,6 @@
 # gmc feeds
 
-**Feeds as code** — sync your catalog to version-controllable local files. `pull` exports the account's products to a directory and `push` applies a directory back to a data source; `diff` arrives in v0.9.2. Operates on the account resolved from `--account` / `GMC_ACCOUNT_ID` / your profile.
+**Feeds as code** — sync your catalog to version-controllable local files. `pull` exports the account's products to a directory, `push` applies a directory back to a data source, and `diff` previews what `push` would change. Operates on the account resolved from `--account` / `GMC_ACCOUNT_ID` / your profile.
 
 ## `gmc feeds pull`
 
@@ -59,10 +59,34 @@ gmc feeds push --data-source 1234567 --json # { "pushed": N, "dataSource": "1234
 
 Files are applied in name order. A **malformed or non-object `.json` file** is skipped and recorded (the rest of the directory still applies); with `--json` the output gains `failed` and `failures` entries, and the run exits `1`. Non-`.json` files are ignored. Inserts are **idempotent**, so an interrupted push can be safely re-run.
 
+## `gmc feeds diff`
+
+Preview what `push` would change — compares the local directory against the **live catalog** and classifies each product. Read-only; touches nothing.
+
+```sh
+gmc feeds diff                  # compare ./feeds with the catalog
+gmc feeds diff --dir catalog
+gmc feeds diff --json           # { "added": [...], "updated": [...], "unchanged": N, "orphaned": [...] }
+```
+
+| Option | Description |
+|--------|-------------|
+| `--dir <path>` | Input directory (default `feeds`) |
+| `--page-size <n>` | Max products per API page |
+
+Each product is matched by its composite id (`{channel}~{contentLanguage}~{feedLabel}~{offerId}`), independent of filename, and bucketed:
+
+- `+` **added** — in the directory, not yet in the catalog (`push` would create it)
+- `~` **updated** — present in both, but the content differs (`push` would replace it)
+- **unchanged** — identical (counted, not listed)
+- `-` **orphaned** — in the catalog, not in the directory. Reported for awareness; **`push` never removes products**, so these are unaffected.
+
+Differences are informational — the command exits `0` even when there are changes. (An invalid local file still exits `1`, as with `push`.)
+
 ## Exit codes
 
-`1` partial (some local files invalid) · `2` usage (no account, no `--data-source`, unreadable directory) · `3` auth · `4` config · `5` Merchant API (a rejected insert aborts the run).
+`1` partial (some local files invalid) · `2` usage (no account, no `--data-source`, unreadable directory) · `3` auth · `4` config · `5` Merchant API.
 
 ::: tip Coming next
-`gmc feeds diff` (v0.9.2) shows what would change before pushing.
+Phase 4 — `gmc preflight`: an offline feed-compliance scanner that catches disapprovals before you upload.
 :::
