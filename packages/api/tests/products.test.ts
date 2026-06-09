@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { MerchantClient } from "../src/client.js";
-import { ProductsService, productSegment, toProductInput } from "../src/products.js";
+import { ProductsService, productSegment, toProductInput, productKey } from "../src/products.js";
 import type { Clock } from "../src/rate-limiter.js";
 
 const auth = {
@@ -147,5 +147,18 @@ describe("toProductInput", () => {
 
   it("omits absent fields", () => {
     expect(toProductInput({ name: "accounts/123/products/x", offerId: "SKU2" })).toEqual({ offerId: "SKU2" });
+  });
+});
+
+describe("productKey", () => {
+  it("joins the four identity segments with ~", () => {
+    expect(
+      productKey({ channel: "ONLINE", contentLanguage: "en", feedLabel: "US", offerId: "sku" }),
+    ).toBe("ONLINE~en~US~sku");
+  });
+
+  it("collapses missing parts to empty segments", () => {
+    expect(productKey({ offerId: "sku" })).toBe("~~~sku");
+    expect(productKey({})).toBe("~~~");
   });
 });
