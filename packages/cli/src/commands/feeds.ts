@@ -1,7 +1,7 @@
 import type { Command } from "commander";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { emitJson, reportError, UsageError, ExitCode } from "@gmc-cli/core";
+import { emitJson, reportError, ExitCode } from "@gmc-cli/core";
 import {
   ProductsService,
   productSegment,
@@ -9,8 +9,16 @@ import {
   type Product,
   type ProductInput,
 } from "@gmc-cli/api";
+import { productKey } from "@gmc-cli/preflight";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, parsePageSize, requireDataSource } from "./_shared.js";
+import {
+  clientFor,
+  resolveAccount,
+  parsePageSize,
+  requireDataSource,
+  loadProductFiles,
+  type FileLoadFailure,
+} from "./_shared.js";
 
 const DEFAULT_DIR = "feeds";
 
@@ -27,68 +35,9 @@ function fileNameFor(product: Product): string | null {
   return `${segment.replace(/[/\\:]/g, "_")}.json`;
 }
 
-/** Read and parse one product file as a push-ready ProductInput, or throw. */
-async function readProductFile(path: string): Promise<ProductInput> {
-  const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error("not a JSON object");
-  }
-  return parsed as ProductInput;
-}
-
-interface FileLoadFailure {
-  file: string;
-  error: string;
-}
-
-interface LoadedFeed {
-  files: { file: string; input: ProductInput }[];
-  failures: FileLoadFailure[];
-}
-
-/**
- * Read every `*.json` file in `dir` (name order) and parse each as a ProductInput.
- * Shared by `push` and `diff`: a malformed / non-object file is recorded as a
- * failure rather than thrown, so one bad file doesn't sink the whole directory.
- * An unreadable directory IS fatal (UsageError) — there's nothing to operate on.
- */
-async function loadProductFiles(dir: string): Promise<LoadedFeed> {
-  let entries: string[];
-  try {
-    entries = await readdir(dir);
-  } catch {
-    throw new UsageError(
-      `Could not read feed directory "${dir}".`,
-      "Run `gmc feeds pull` first, or pass --dir <path> to an existing directory.",
-    );
-  }
-  const names = entries.filter((f) => f.endsWith(".json")).sort();
-  const files: LoadedFeed["files"] = [];
-  const failures: FileLoadFailure[] = [];
-  for (const file of names) {
-    try {
-      files.push({ file, input: await readProductFile(join(dir, file)) });
-    } catch (err) {
-      failures.push({ file, error: err instanceof Error ? err.message : String(err) });
-    }
-  }
-  return { files, failures };
-}
-
 /** Normalize a data source id or full resource name to its bare id, for matching. */
 function dataSourceId(dataSource: string): string {
   return dataSource.replace(/^.*dataSources\//, "");
-}
-
-/**
- * The composite product identity (`{channel}~{contentLanguage}~{feedLabel}~{offerId}`)
- * — the same key Merchant Center uses, so a pulled file and its processed product
- * match regardless of filename. Missing parts collapse to empty segments.
- */
-function productKey(input: ProductInput): string {
-  return [input.channel, input.contentLanguage, input.feedLabel, input.offerId]
-    .map((part) => part ?? "")
-    .join("~");
 }
 
 /**
@@ -169,7 +118,10 @@ export function registerFeedsCommands(program: Command): void {
           }
           seen.add(name);
           try {
-            await writeFile(join(dir, name), `${JSON.stringify(toProductInput(product), null, 2)}\n`);
+            await writeFile(
+              join(dir, name),
+              `${JSON.stringify(toProductInput(product), null, 2)}\n`,
+            );
             pulled += 1;
           } catch {
             // e.g. an id with a NUL byte that the filesystem rejects.
@@ -181,7 +133,10 @@ export function registerFeedsCommands(program: Command): void {
           emitJson({ pulled, dir, ...(skipped ? { skipped } : {}) });
         } else {
           process.stdout.write(`Pulled ${pulled} product(s) to ${dir}.\n`);
-          if (skipped) process.stdout.write(`Skipped ${skipped} product(s) (no id, conflict, or write error).\n`);
+          if (skipped)
+            process.stdout.write(
+              `Skipped ${skipped} product(s) (no id, conflict, or write error).\n`,
+            );
         }
       } catch (err) {
         reportError(err, { json }, "gmc feeds pull");
@@ -233,14 +188,21 @@ export function registerFeedsCommands(program: Command): void {
         }
 
         if (ctx.json) {
-          emitJson({ pushed, dataSource, dir, ...(failures.length ? { failed: failures.length, failures } : {}) });
+          emitJson({
+            pushed,
+            dataSource,
+            dir,
+            ...(failures.length ? { failed: failures.length, failures } : {}),
+          });
         } else {
           process.stdout.write(`Pushed ${pushed} product(s) to data source ${dataSource}.\n`);
           if (failures.length) {
             process.stdout.write(`Skipped ${failures.length} invalid file(s):\n`);
             for (const f of failures) process.stdout.write(`  - ${f.file}: ${f.error}\n`);
           }
-          process.stdout.write("Processing is async; products may take a few minutes to appear in `products list`.\n");
+          process.stdout.write(
+            "Processing is async; products may take a few minutes to appear in `products list`.\n",
+          );
         }
         // Partial failure (only local file errors reach here) → non-zero so CI can gate.
         if (failures.length) process.exitCode = ExitCode.Error;
