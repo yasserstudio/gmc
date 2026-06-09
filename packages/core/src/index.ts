@@ -32,6 +32,8 @@ export const ExitCode = {
   Config: 4,
   /** Merchant API failure (see @gmc-cli/api MerchantApiError). */
   Api: 5,
+  /** Preflight found gating violations (see @gmc-cli/preflight). */
+  Preflight: 6,
 } as const;
 
 export type ExitCodeValue = (typeof ExitCode)[keyof typeof ExitCode];

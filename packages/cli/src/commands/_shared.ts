@@ -2,9 +2,10 @@
 // datasources, ...): resolving the target account, building a client from the
 // invocation context, and reading JSON input from a file or stdin.
 
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { createMerchantClient, UsageError, type CommandContext } from "@gmc-cli/core";
-import type { MerchantClient } from "@gmc-cli/api";
+import type { MerchantClient, ProductInput } from "@gmc-cli/api";
 import { getConfigDir } from "@gmc-cli/config";
 
 /** Write a padded `label  value` line to stdout — shared detail-view renderer. */
@@ -112,4 +113,55 @@ export async function readJsonObject(
     throw new UsageError(`The ${label} must be a JSON object.`, "Provide a single JSON object.");
   }
   return parsed as Record<string, unknown>;
+}
+
+/** A feed file that couldn't be read or parsed as a product input. */
+export interface FileLoadFailure {
+  file: string;
+  error: string;
+}
+
+/** The result of reading a directory of product files: the good ones and the bad. */
+export interface LoadedFeed {
+  files: { file: string; input: ProductInput }[];
+  failures: FileLoadFailure[];
+}
+
+/** Read and parse one product file as a push-ready ProductInput, or throw. */
+async function readProductFile(path: string): Promise<ProductInput> {
+  const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error("not a JSON object");
+  }
+  return parsed as ProductInput;
+}
+
+/**
+ * Read every `*.json` file in `dir` (name order) and parse each as a ProductInput.
+ * Shared by `feeds push` / `feeds diff` / `preflight`: a malformed / non-object file
+ * is recorded as a failure rather than thrown, so one bad file doesn't sink the whole
+ * directory. An unreadable directory IS fatal (UsageError) — there's nothing to
+ * operate on.
+ */
+export async function loadProductFiles(dir: string): Promise<LoadedFeed> {
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    throw new UsageError(
+      `Could not read feed directory "${dir}".`,
+      "Run `gmc feeds pull` first, or pass --dir <path> to an existing directory.",
+    );
+  }
+  const names = entries.filter((f) => f.endsWith(".json")).sort();
+  const files: LoadedFeed["files"] = [];
+  const failures: FileLoadFailure[] = [];
+  for (const file of names) {
+    try {
+      files.push({ file, input: await readProductFile(join(dir, file)) });
+    } catch (err) {
+      failures.push({ file, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return { files, failures };
 }

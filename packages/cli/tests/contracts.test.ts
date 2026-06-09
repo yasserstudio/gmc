@@ -3,6 +3,7 @@ import { ExitCode } from "@gmc-cli/core";
 import { ConfigError, DEFAULT_PROFILE as CONFIG_DEFAULT_PROFILE } from "@gmc-cli/config";
 import { AuthError, DEFAULT_PROFILE as AUTH_DEFAULT_PROFILE } from "@gmc-cli/auth";
 import { MerchantApiError } from "@gmc-cli/api";
+import { PREFLIGHT_EXIT_CODE, PreflightConfigError } from "@gmc-cli/preflight";
 
 // Cross-package invariants. Each error hardcodes its exit code (it cannot import
 // core's ExitCode without a dependency cycle), and the two DEFAULT_PROFILE
@@ -18,6 +19,14 @@ describe("cross-package contracts", () => {
 
   it("MerchantApiError.exitCode matches ExitCode.Api", () => {
     expect(new MerchantApiError("x", 500, "CODE", true).exitCode).toBe(ExitCode.Api);
+  });
+
+  it("PREFLIGHT_EXIT_CODE matches ExitCode.Preflight", () => {
+    expect(PREFLIGHT_EXIT_CODE).toBe(ExitCode.Preflight);
+  });
+
+  it("PreflightConfigError.exitCode matches ExitCode.Config", () => {
+    expect(new PreflightConfigError("x", "CODE").exitCode).toBe(ExitCode.Config);
   });
 
   it("auth and config agree on the default profile name", () => {
