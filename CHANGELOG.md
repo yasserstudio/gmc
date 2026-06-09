@@ -7,6 +7,21 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.2 — feeds diff
+
+Feeds as code, part 3 — **Phase 3 complete**. The full round-trip is now `pull` → edit → `diff` → `push`.
+
+- **feeds** — `gmc feeds diff` previews what `push` would change vs the live
+  catalog: `+` added, `~` updated, unchanged (counted), `-` orphaned (catalog-only,
+  which push never removes). Products are matched by composite id, independent of
+  filename. `--data-source <id>` scopes the comparison to one source for an exact
+  push preview; otherwise it compares against the whole catalog.
+- **read-only** — differences exit `0`; an invalid local file exits `1` (as `push`).
+- **internal** — the shared directory-load loop is factored out of `push` into
+  `loadProductFiles`.
+
+_`@gmc-cli/cli` → 0.9.2 (patch); supporting packages unchanged._
+
 ## v0.9.1 — feeds push
 
 Feeds as code, part 2 — the round-trip closes. First release under the patch-per-deliverable scheme: we hold `0.9.x` until everything is stable, then `1.0.0` at launch.
