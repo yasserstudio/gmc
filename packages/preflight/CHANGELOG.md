@@ -1,8 +1,8 @@
-# @gmc-cli/core
+# @gmc-cli/preflight
 
-## 0.7.3
+## 0.1.0
 
-### Patch Changes
+### Minor Changes
 
 - b187945: feat(preflight): offline feed-compliance engine + `gmc preflight` (v0.9.3)
 
@@ -24,17 +24,3 @@
   (`required.offer-id`, `required.title`, `required.price`). The full required /
   format rule library lands in v0.9.4 and policy / disapproval-trigger checks in
   v0.9.5.
-
-## 0.7.2
-
-### Patch Changes
-
-- Updated dependencies [bb24c04]
-  - @gmc-cli/api@0.9.0
-
-## 0.7.1
-
-### Patch Changes
-
-- Updated dependencies [82afb6c]
-  - @gmc-cli/api@0.8.0
