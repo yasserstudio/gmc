@@ -7,6 +7,9 @@ export const SPEC = "https://support.google.com/merchants/answer/7052112";
 /** Unique product identifiers (gtin / mpn / brand / GTIN) documentation. */
 export const IDENTIFIER_DOC = "https://support.google.com/merchants/answer/6324461";
 
+/** Title & description editorial guidelines (no promotional text, gimmicky caps/symbols). */
+export const EDITORIAL_DOC = "https://support.google.com/merchants/answer/6324415";
+
 /**
  * Trim a possibly-non-string value; empty/whitespace counts as absent. Accepts
  * `unknown` because product JSON is third-party and may carry a non-string where the

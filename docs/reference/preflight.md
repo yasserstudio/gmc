@@ -46,11 +46,16 @@ Each rule has a stable dotted id and a default severity. Rules come in families:
 | `format.gtin-checksum` | warning | `gtin` is the wrong length or fails its check digit |
 | `format.title-length` | warning | `title` exceeds 150 characters |
 | `format.description-length` | warning | `description` exceeds 5000 characters |
+| `policy.promotional-title` | error | Promotional text in `title` (e.g. "free shipping", "20% off", "best price") |
+| `policy.title-caps` | warning | `title` is excessively capitalized (SHOUTING) |
+| `policy.title-symbols` | warning | Gimmicky symbols or emoji in `title` |
+| `policy.phone-in-title` | warning | A phone number in `title` |
+| `policy.link-https` | warning | Landing-page `link` uses `http`, not `https` |
 
-Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc). `warning` findings don't fail the run unless you pass `--strict`.
+The `policy.*` family predicts editorial **disapproval** triggers — these are heuristic, so all default to `warning` except `policy.promotional-title` (a well-known hard disapproval, an `error`). Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc); `warning` findings don't fail the run unless you pass `--strict`.
 
 ::: tip Coming next
-v0.9.5 adds policy / disapproval-trigger heuristics (Phase 4 exit).
+Phase 5 (v0.9.6+) adds `gmc migrate` — Content API → Merchant API feed migration.
 :::
 
 ## Findings
