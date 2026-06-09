@@ -7,6 +7,42 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.4 — preflight rule library
+
+Phase 4, part 2 — the offline scanner grows from 3 seed rules to 18.
+
+- **required** — `description`, `link`, `image_link`, `availability` join the seed
+  `offer-id`/`title`/`price` as gating errors. `condition` and `identifier-exists`
+  (none of `gtin`/`mpn`/`brand`) are warnings — recommended, not always rejected.
+- **format** — present-but-malformed checks: `link`/`image_link` URLs, `price` amount
+  and currency, `availability`/`condition` enums (errors); GTIN check-digit and
+  title/description length limits (warnings). A `format.*` rule fires only when its
+  attribute is present, so a missing value is reported once by its `required.*` rule.
+- **robustness** — attribute values are read defensively (a non-string from a
+  hand-edited feed is coerced, not thrown on) and echoed safely (control characters
+  stripped, length capped).
+- **internal** — `productKey` moves to `@gmc-cli/api` next to `ProductInput`;
+  `loadProductFiles` reads the feed directory with bounded concurrency, preserving order.
+
+_`@gmc-cli/cli` → 0.9.4, `@gmc-cli/api` → 0.9.1, `@gmc-cli/preflight` → 0.1.1 (all patch)._
+
+## v0.9.3 — preflight engine
+
+Phase 4, part 1 — a new offline compliance scanner.
+
+- **preflight** — `gmc preflight` scans product files for Merchant Center compliance
+  issues with no API call and no auth. `--dir` scans a directory of `feeds pull` files,
+  `--file` one file, `--remote` the live catalog.
+- **config** — `.gmcpreflightrc` (discovered by walking up, or via `--config`) sets
+  per-rule severities, an `ignore` list, `targetCountry`, and `strict`; `--strict`
+  treats warnings as failures.
+- **findings** — each carries a severity, the offending attribute, a fix suggestion,
+  and a docs link; grouped by product in human output, or a full report under `--json`.
+- **exit code** — new `6` (`ExitCode.Preflight`) when gating findings exist, so CI
+  fails before a bad feed uploads.
+
+_`@gmc-cli/cli` → 0.9.3, new `@gmc-cli/preflight` → 0.1.0 (patch)._
+
 ## v0.9.2 — feeds diff
 
 Feeds as code, part 3 — **Phase 3 complete**. The full round-trip is now `pull` → edit → `diff` → `push`.
