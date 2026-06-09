@@ -6,6 +6,7 @@
 
 import type { Rule } from "../types.js";
 import { requiredRules } from "./required.js";
+import { formatRules } from "./format.js";
 
 /** All rules, concatenated family by family. */
-export const RULES: readonly Rule[] = [...requiredRules];
+export const RULES: readonly Rule[] = [...requiredRules, ...formatRules];

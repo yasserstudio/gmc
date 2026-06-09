@@ -26,6 +26,7 @@ export interface ProductAttributes {
   link?: string;
   imageLink?: string;
   availability?: string;
+  condition?: string;
   price?: Price;
   brand?: string;
   gtin?: string;
@@ -97,6 +98,18 @@ interface ProductsListPage {
  */
 export function productSegment(idOrName: string): string {
   return idOrName.replace(/^.*\/(?:products|productInputs)\//, "");
+}
+
+/**
+ * Composite product identity — the `{channel}~{contentLanguage}~{feedLabel}~{offerId}`
+ * key Merchant Center, `gmc feeds`, and preflight all key products by. Missing parts
+ * collapse to empty segments. Lives here, next to the {@link ProductInput} it derives
+ * from, so every consumer shares one definition.
+ */
+export function productKey(input: ProductInput): string {
+  return [input.channel, input.contentLanguage, input.feedLabel, input.offerId]
+    .map((part) => part ?? "")
+    .join("~");
 }
 
 /**
