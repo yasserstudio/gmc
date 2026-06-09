@@ -7,6 +7,19 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.1 — feeds push
+
+Feeds as code, part 2 — the round-trip closes. First release under the patch-per-deliverable scheme: we hold `0.9.x` until everything is stable, then `1.0.0` at launch.
+
+- **feeds** — `gmc feeds push --dir <path> --data-source <id>` applies a directory
+  of pulled product files back to a target data source (the inverse of `pull`).
+  The target is always explicit — pulled files don't record their origin source.
+- **error semantics** — an invalid local file is skipped and tallied (exit `1`, the
+  rest of the directory still applies); an API rejection aborts the run (exit `5`,
+  and inserts are idempotent, so re-running after a fix is safe).
+
+_`@gmc-cli/cli` → 0.9.1 (patch); supporting packages unchanged._
+
 ## v0.9.0 — Phase 3: feeds pull
 
 Feeds as code, part 1.
