@@ -15,6 +15,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc products`](/reference/products) | Manage products (`list` / `get` / `insert` / `delete`) |
 | [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`) |
 | [`gmc feeds`](/reference/feeds) | Feeds as code (`pull` / `push` / `diff`) |
+| [`gmc preflight`](/reference/preflight) | Offline feed-compliance scanner — catch disapprovals before upload |
 
 ## Global options
 
@@ -31,4 +32,4 @@ See [Configuration & profiles](/guide/configuration) for how `--profile` / `--ac
 
 ## JSON & exit codes
 
-With `--json`, success prints the result payload bare; failures print `{ "ok": false, "error": { "code", "message", "suggestion" } }`. Exit codes are classed: `0` success, `2` usage, `3` auth, `4` config, `5` Merchant API.
+With `--json`, success prints the result payload bare; failures print `{ "ok": false, "error": { "code", "message", "suggestion" } }`. Exit codes are classed: `0` success, `2` usage, `3` auth, `4` config, `5` Merchant API, `6` preflight (gating compliance findings).

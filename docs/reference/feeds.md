@@ -91,6 +91,6 @@ Differences are informational — the command exits `0` even when there are chan
 
 `1` partial (some local files invalid) · `2` usage (no account; `push` without `--data-source`; unreadable directory) · `3` auth · `4` config · `5` Merchant API.
 
-::: tip Coming next
-Phase 4 — `gmc preflight`: an offline feed-compliance scanner that catches disapprovals before you upload.
+::: tip Next step
+Run [`gmc preflight`](/reference/preflight) on the pulled directory to catch Merchant Center disapprovals offline, before you `push`.
 :::

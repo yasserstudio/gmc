@@ -44,6 +44,7 @@ gmc doctor                           # 2. diagnose auth, GCP registration, and M
 gmc accounts list                    # 3. see the accounts your credential can reach
 gmc --account 123456789 products list   # 4. read the catalog
 gmc --account 123456789 feeds pull      # 5. export it to version-controllable files
+gmc preflight --dir feeds               # 6. catch disapprovals offline, before you push
 ```
 
 Set an account once in a [profile](https://yasserstudio.github.io/gmc/guide/configuration) and drop the `--account` flag.
@@ -60,10 +61,10 @@ Most Merchant Center work is still done by hand in the web UI, and the Content A
 | `--json` + classed exit codes | ✅ | — | DIY |
 | Diagnoses the silent GCP-registration trap | ✅ `doctor` | — | — |
 | Catalog as version-controllable files | ✅ | — | DIY |
-| Offline feed-compliance preflight | 🚧 _roadmap_ | — | — |
+| Offline feed-compliance preflight | ✅ `preflight` | — | — |
 | Content API → Merchant API migrate | 🚧 _roadmap_ | — | — |
 
-The differentiators — `doctor` (shipped), `preflight`, and `migrate` — are front-loaded over breadth. See the [roadmap](#roadmap).
+The differentiators — `doctor` and `preflight` (shipped), and `migrate` — are front-loaded over breadth. See the [roadmap](#roadmap).
 
 ---
 
@@ -121,11 +122,26 @@ gmc datasources delete <id>
 
 ## Feeds as code
 
-Pull your catalog to version-controllable files — one push-ready product per file — to commit, diff, review, and (soon) push back.
+Pull your catalog to version-controllable files — one push-ready product per file — then commit, diff, review, and push back.
 
 ```bash
-gmc feeds pull --dir feeds      # one JSON file per product
+gmc feeds pull --dir feeds                  # one JSON file per product
+gmc feeds diff --data-source 123            # preview what push would change
+gmc feeds push --dir feeds --data-source 123
 ```
+
+---
+
+## Preflight
+
+Catch Merchant Center disapprovals **offline**, before you upload — no API call, no auth. Run it on a pulled directory, a single file, or (with `--remote`) the live catalog. It exits non-zero on gating findings, so it drops straight into CI.
+
+```bash
+gmc preflight --dir feeds        # scan the pulled catalog
+gmc preflight --json             # full machine-readable report
+```
+
+Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The required-attribute / format library (v0.9.4) and policy / disapproval-trigger checks (v0.9.5) build on this engine.
 
 ---
 
@@ -152,6 +168,7 @@ Every command supports `--json` and uses classed exit codes, so pipelines can br
 | `3` | Authentication error |
 | `4` | Configuration error |
 | `5` | Merchant API error |
+| `6` | Preflight found gating compliance issues |
 
 A dedicated GitHub Action and a preflight CI gate arrive in [Phase 8](#roadmap).
 
@@ -168,6 +185,7 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 | [`@gmc-cli/api`](packages/api) | Typed Merchant API client (rate limiter, retry, pagination) |
 | [`@gmc-cli/auth`](packages/auth) | Authentication — service account, OAuth, ADC |
 | [`@gmc-cli/config`](packages/config) | Configuration loading and profiles |
+| [`@gmc-cli/preflight`](packages/preflight) | Offline feed-compliance rule engine + `.gmcpreflightrc` |
 
 ---
 
@@ -180,10 +198,10 @@ gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0`
 | 0 | v0.0 | Scaffold — monorepo, `gmc` shell, docs site | ✅ |
 | 1 | v0.1–v0.4 | Spike pt 1 — auth, CLI shell, `doctor` | ✅ |
 | 2 | v0.5–v0.7 | Spike pt 2 — typed client, accounts, products | ✅ |
-| 3 | v0.8–v0.11 | Feeds as code — data sources ✓, feeds pull ✓, push / diff next | 🚧 |
-| 4 | v0.12–v0.14 | **Preflight** — offline feed-compliance scanner | |
-| 5 | v0.15–v0.17 | **Migrate** — Content API → Merchant API assistant | |
-| 6–9 | v0.18–v0.28 | Inventories, promotions, reports, CI/CD, launch → **v1.0.0** | |
+| 3 | v0.8–v0.9.2 | Feeds as code — data sources, pull, push, diff | ✅ |
+| 4 | v0.9.3–v0.9.5 | **Preflight** — offline feed-compliance scanner (engine ✓, rules next) | 🚧 |
+| 5 | v0.9.6–v0.9.8 | **Migrate** — Content API → Merchant API assistant | |
+| 6–9 | v0.9.9–v0.9.x | Inventories, promotions, reports, CI/CD, launch → **v1.0.0** | |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 
