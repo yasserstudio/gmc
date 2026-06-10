@@ -40,6 +40,11 @@ export type {
   FetchSettings,
 } from "./datasources.js";
 
+export { InventoriesService } from "./inventories.js";
+export type { LocalInventory, RegionalInventory, TimePeriod } from "./inventories.js";
+
+export { toMicros } from "./money.js";
+
 export { MerchantApiError } from "./errors.js";
 
 export {

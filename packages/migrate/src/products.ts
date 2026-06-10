@@ -11,7 +11,7 @@
 // identity / `id` / `targetCountry` fields. The one real rename is
 // `targetCountry` → `feedLabel`.
 
-import type { CustomAttribute, Price, ProductInput } from "@gmc-cli/api";
+import { toMicros, type CustomAttribute, type Price, type ProductInput } from "@gmc-cli/api";
 
 // Identity / structural fields handled explicitly — never hoisted into attributes.
 const IDENTITY_FIELDS = new Set([
@@ -55,28 +55,6 @@ export function isTransformError(r: ProductTransformResult): r is ProductTransfo
 /** A non-empty string, else undefined. */
 function strOr(v: unknown): string | undefined {
   return typeof v === "string" && v !== "" ? v : undefined;
-}
-
-/**
- * Convert a Content API decimal price string to integer micros (value × 1,000,000),
- * or null if the value isn't a non-negative decimal. BigInt-based so large catalogs
- * and long fractions never hit floating-point error; rounds half-up at the 6th
- * fractional digit (micros precision).
- */
-export function toMicros(value: string | number): string | null {
-  const m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(String(value).trim());
-  if (!m) return null;
-  if (m[1] === "-") return null; // prices are non-negative
-  const intPart = m[2] ?? "0"; // group 2 (\d+) always matches when m is non-null
-  let frac = m[3] ?? "";
-  let carry = 0n;
-  if (frac.length > 6) {
-    if (frac.charCodeAt(6) - 48 >= 5) carry = 1n; // round half-up on the 7th digit
-    frac = frac.slice(0, 6);
-  } else {
-    frac = frac.padEnd(6, "0");
-  }
-  return (BigInt(intPart) * 1_000_000n + BigInt(frac) + carry).toString();
 }
 
 /** True when an object is a Content API money value (`{value, currency}`). */

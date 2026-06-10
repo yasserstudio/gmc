@@ -5,12 +5,19 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createMerchantClient, UsageError, type CommandContext } from "@gmc-cli/core";
-import { productSegment, type MerchantClient, type ProductInput } from "@gmc-cli/api";
+import { productSegment, type MerchantClient, type Price, type ProductInput } from "@gmc-cli/api";
 import { getConfigDir } from "@gmc-cli/config";
 
 /** Write a padded `label  value` line to stdout — shared detail-view renderer. */
 export function line(label: string, value: string): void {
   process.stdout.write(`${label.padEnd(14)}${value}\n`);
+}
+
+/** Render a Merchant API Price (`amountMicros` / `currencyCode`) as `12.34 USD`. */
+export function formatPrice(price: Price): string {
+  const micros = Number(price.amountMicros);
+  const amount = Number.isFinite(micros) ? (micros / 1_000_000).toFixed(2) : "—";
+  return `${amount} ${price.currencyCode ?? ""}`.trim();
 }
 
 /**

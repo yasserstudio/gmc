@@ -5,19 +5,20 @@ import {
   productSegment,
   type Product,
   type ProductInput,
-  type Price,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, readJsonObject, line, parsePageSize, requireDataSource } from "./_shared.js";
+import {
+  clientFor,
+  resolveAccount,
+  readJsonObject,
+  line,
+  formatPrice,
+  parsePageSize,
+  requireDataSource,
+} from "./_shared.js";
 
 function offerIdOf(product: Product): string {
   return product.offerId ?? productSegment(product.name);
-}
-
-function formatPrice(price: Price): string {
-  const micros = Number(price.amountMicros);
-  const amount = Number.isFinite(micros) ? (micros / 1_000_000).toFixed(2) : "—";
-  return `${amount} ${price.currencyCode ?? ""}`.trim();
 }
 
 function issueSummary(product: Product): string {

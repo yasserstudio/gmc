@@ -19,7 +19,10 @@ export type {
   ProfilePlan,
   ProfileAction,
 } from "./profile-plan.js";
-export { transformProduct, toMicros, parseContentApiId, isTransformError } from "./products.js";
+export { transformProduct, parseContentApiId, isTransformError } from "./products.js";
+// toMicros now lives with the Price type in @gmc-cli/api; re-exported so existing
+// `@gmc-cli/migrate` consumers keep importing it from one place.
+export { toMicros } from "@gmc-cli/api";
 export type {
   ProductTransform,
   ProductTransformError,
