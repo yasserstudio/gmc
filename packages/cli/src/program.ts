@@ -10,6 +10,7 @@ import { registerPreflightCommand } from "./commands/preflight.js";
 import { registerMigrateCommands } from "./commands/migrate.js";
 import { registerInventoryCommands } from "./commands/inventory.js";
 import { registerPromotionsCommands } from "./commands/promotions.js";
+import { registerReportsCommands } from "./commands/reports.js";
 
 /**
  * Build the root `gmc` command tree.
@@ -19,6 +20,7 @@ import { registerPromotionsCommands } from "./commands/promotions.js";
  * Phase 4: `preflight` (v0.9.3) — offline feed-compliance scanner.
  * Phase 5: `migrate` (v0.9.6) — Content API → Merchant API assistant.
  * Phase 6: `inventory` (v0.9.9) + `promotions` (v0.9.10).
+ * Phase 7: `reports` (v0.9.11) — MCQL queries + performance.
  */
 export function createProgram(): Command {
   // `__GMC_VERSION` is injected at build time by tsup's `define` (see tsup.config.ts).
@@ -45,6 +47,7 @@ export function createProgram(): Command {
   registerMigrateCommands(program);
   registerInventoryCommands(program);
   registerPromotionsCommands(program);
+  registerReportsCommands(program);
 
   return program;
 }
