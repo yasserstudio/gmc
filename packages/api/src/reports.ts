@@ -32,13 +32,41 @@ export interface ProductPerformanceView {
   [key: string]: unknown;
 }
 
+/** A row of `competitive_visibility_competitor_view`. Subset. */
+export interface CompetitiveVisibilityCompetitorView {
+  reportCountryCode?: string;
+  reportCategoryId?: string;
+  trafficSource?: string;
+  domain?: string;
+  isYourDomain?: boolean;
+  rank?: string;
+  adsOrganicRatio?: number;
+  pageOverlapRate?: number;
+  higherPositionRate?: number;
+  relativeVisibility?: number;
+  [key: string]: unknown;
+}
+
+/** A row of `price_competitiveness_product_view`. `price`/`benchmarkPrice` are Prices. Subset. */
+export interface PriceCompetitivenessProductView {
+  id?: string;
+  title?: string;
+  brand?: string;
+  price?: Price;
+  benchmarkPrice?: Price;
+  reportCountryCode?: string;
+  [key: string]: unknown;
+}
+
 /**
  * One result row. The populated field depends on which view the query targets;
- * `product_performance_view` is typed, others (added with later report presets)
- * arrive under their own key via the index signature.
+ * the typed views below cover the `gmc reports` presets, and any other view
+ * arrives under its own key via the index signature (so `--json` is never lossy).
  */
 export interface ReportRow {
   productPerformanceView?: ProductPerformanceView;
+  competitiveVisibilityCompetitorView?: CompetitiveVisibilityCompetitorView;
+  priceCompetitivenessProductView?: PriceCompetitivenessProductView;
   [view: string]: unknown;
 }
 
