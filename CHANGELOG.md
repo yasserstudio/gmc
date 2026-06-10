@@ -7,6 +7,18 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.16 — GitLab CI recipe
+
+Phase 8, part 3 — **Phase 8 complete**.
+
+- **GitLab CI guide** — an offline `preflight` gate job (no credentials) and an authenticated job that
+  uses `GMC_SERVICE_ACCOUNT` for env-var auth, via a GitLab **File-type CI/CD variable** holding the
+  service-account key (read by path, so the key stays off the command line and out of logs).
+- No code change — `GMC_SERVICE_ACCOUNT` (a key **file path** *or* **raw JSON**) already ships; this
+  documents the CI recipe for it.
+
+_`@gmc-cli/cli` → 0.9.16 (patch); other packages unchanged._
+
 ## v0.9.15 — gmc-action (GitHub Action)
 
 Phase 8, part 2 — CI gating.
