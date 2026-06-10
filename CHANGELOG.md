@@ -7,6 +7,37 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.19 — pre-v1 audit hardening
+
+Phase 9, part 3 — the full pre-launch audit (5 parallel agents: quality · Google-API
+alignment · docs coverage · security · packaging) + an offline smoke test, with the
+findings actioned.
+
+- **API alignment — `channel` removed (Merchant API v1).** v1 dropped the `channel` field
+  from products, product inputs, and data sources, replacing it with a boolean
+  `legacyLocal`. Product identity is now the 3-segment `{contentLanguage}~{feedLabel}~{offerId}`
+  (a `local~` prefix marks legacy-local products). `productKey` / `productFileName` and the
+  `migrate feed-labels` grouping drop the old channel segment — so `feeds diff` no longer
+  mis-pairs products and `datasources create` no longer sends a removed field. **Flag change:**
+  `gmc datasources create --channel <online|local>` → `--legacy-local` (boolean). `migrate
+  products` maps a Content API `channel: "local"` to `legacyLocal: true`, flags unknown channels
+  as dropped, and drops `online` (the v1 default).
+- **Packaging — self-contained npm package.** The `@gmc-cli/cli` build now bundles the
+  `@gmc-cli/*` workspace packages (a global / `npx` install resolves no internal packages at
+  runtime) and ships no source maps; only `commander` and `google-auth-library` remain runtime
+  dependencies. The `release` script builds before publishing.
+- **Robustness.** `--days` and `--page-size` reject non-plain-integer / out-of-range values;
+  `gmc config path` emits the `{ ok: false, error }` envelope on failure; `feeds push` reports
+  its partial `pushed` count in the JSON failure envelope.
+- **Security.** The release-binaries workflow passes the release tag via an environment
+  variable instead of interpolating it into the shell.
+- **Docs.** Removed the pre-release / run-from-source notices and "coming in Phase 4/5" hedges;
+  refreshed the roadmap and README to reality; documented exit code `6`, `reports --page-size`,
+  and the legacy-local model.
+
+_`@gmc-cli/cli` → 0.9.19 (patch); `@gmc-cli/api` → 0.9.7, `@gmc-cli/core` → 0.7.10,
+`@gmc-cli/preflight` → 0.1.8, `@gmc-cli/migrate` → 0.1.8 (all patch)._
+
 ## v0.9.18 — install paths: Homebrew tap + standalone binaries
 
 Phase 9, part 2 — distribution.
