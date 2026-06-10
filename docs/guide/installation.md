@@ -18,7 +18,7 @@ npx @gmc-cli/cli doctor
 ## Homebrew
 
 ```sh
-brew install yasserstudio/gmc/gmc
+brew install yasserstudio/tap/gmc
 ```
 
 (The formula installs the published npm package and links the `gmc` binary; Homebrew pulls in Node.)

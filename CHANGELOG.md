@@ -7,6 +7,29 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v1.0.0 — first stable release 🎉
+
+**`gmc` is stable and published to npm** — `npm install -g @gmc-cli/cli`.
+
+All nine build phases are complete and the tool has been through a full pre-launch audit
+(quality · Google Merchant API `v1` alignment · docs coverage · security · packaging) and an
+end-to-end smoke test against the published package.
+
+- **Command surface** — `doctor`, `auth`, `config`, `accounts`, `products`, `datasources`,
+  `feeds` (feeds-as-code: pull / push / diff), `preflight` (offline feed-compliance scanner),
+  `migrate` (Content API → Merchant API), `inventory`, `promotions`, and `reports`, all on
+  Merchant API `v1`.
+- **Distribution** — self-contained `@gmc-cli/cli` (the workspace packages are bundled in;
+  only `commander` and `google-auth-library` are runtime deps), plus a Homebrew tap
+  (`brew install yasserstudio/tap/gmc`) and standalone macOS/Linux binaries attached to the
+  GitHub release.
+- **Contract** — uniform `--json` (bare payload on success, `{ ok: false, error }` on failure)
+  and classed exit codes (`0`/`1`/`2`/`3`/`4`/`5`/`6`) across every command.
+
+The `0.x` series (v0.0 → v0.9.19) is the public build log below.
+
+_`@gmc-cli/cli` → 1.0.0._
+
 ## v0.9.19 — pre-v1 audit hardening
 
 Phase 9, part 3 — the full pre-launch audit (5 parallel agents: quality · Google-API

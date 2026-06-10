@@ -18,6 +18,6 @@ Most Merchant Center work is still done by hand in the web UI. A CLI makes it:
 
 ## Status
 
-gmc is in the **`0.x` pre-release series**, shipping in small patches toward `1.0`. The current release is **v0.9.18**; Phases 0–8 are complete and Phase 9 (polish → launch) is underway. The full command surface — `accounts`, `products`, `datasources`, `feeds`, `preflight`, `migrate`, `inventory`, `promotions`, and `reports` — has shipped. See the [roadmap](/guide/roadmap) for the phase breakdown and the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for what shipped in each release.
+gmc is **stable at `v1.0.0`**. All nine build phases are complete: the full command surface — `accounts`, `products`, `datasources`, `feeds`, `preflight`, `migrate`, `inventory`, `promotions`, and `reports` — has shipped, and the API layer tracks Merchant API `v1`. See the [roadmap](/guide/roadmap) for the phase breakdown and the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for what shipped in each release.
 
 Ready to try it? Head to [Getting started](/guide/getting-started).
