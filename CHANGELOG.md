@@ -7,6 +7,22 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.10 — Merchant API v1 + promotions
+
+Phase 6, part 2 — closes Phase 6. Two alignment-critical changes.
+
+- **Target Merchant API v1.** The Merchant API `v1beta` was **shut down on 2026-02-28**; every
+  sub-API now targets the stable **v1** endpoint (`products/v1`, `accounts/v1`, `datasources/v1`,
+  `inventories/v1`, `promotions/v1`) and `gmc doctor`'s probe hits `accounts/v1`. Paths are otherwise
+  unchanged — just the version segment, so live calls reach a supported endpoint.
+- **`gmc promotions`** — manage Merchant Center promotions (discounts/offers). `gmc promotions
+  list|get|insert`; `insert` reads the `Promotion` JSON from `--file`/stdin and requires
+  `--data-source`. The promotions API takes `{ promotion, dataSource }` as the request body (verified
+  against the v1 reference). No delete — promotions expire.
+
+_`@gmc-cli/cli` → 0.9.10, `@gmc-cli/api` → 0.9.4 (patch); `@gmc-cli/core`/`migrate`/`preflight` take the
+internal-dependency patch cascade; other packages unchanged._
+
 ## v0.9.9 — inventory: local + regional
 
 Phase 6, part 1 — the breadth build-out begins with the **inventories sub-API**: per-store
