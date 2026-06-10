@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeFileSync, rmSync } from "node:fs";
+import { writeFileSync, rmSync, mkdtempSync } from "node:fs";
 import { Readable } from "node:stream";
 
 const getDataSource = vi.fn();
@@ -250,7 +250,8 @@ describe("gmc datasources", () => {
   });
 
   it("create with both flags and --file exits 2", async () => {
-    const file = join(tmpdir(), "gmc-ds-conflict.json");
+    const tmp = mkdtempSync(join(tmpdir(), "gmc-ds-"));
+    const file = join(tmp, "conflict.json");
     writeFileSync(file, JSON.stringify({ displayName: "x", supplementalProductDataSource: {} }));
     try {
       await run([
@@ -266,7 +267,7 @@ describe("gmc datasources", () => {
         file,
       ]);
     } finally {
-      rmSync(file, { force: true });
+      rmSync(tmp, { recursive: true, force: true });
     }
     expect(createDataSource).not.toHaveBeenCalled();
     expect(errs.join("")).toContain("either create flags or --file");
@@ -294,7 +295,8 @@ describe("gmc datasources", () => {
 
   it("create from --file posts the parsed DataSource", async () => {
     createDataSource.mockResolvedValue({ dataSourceId: "55" });
-    const file = join(tmpdir(), "gmc-ds-create.json");
+    const tmp = mkdtempSync(join(tmpdir(), "gmc-ds-"));
+    const file = join(tmp, "create.json");
     writeFileSync(
       file,
       JSON.stringify({ displayName: "From file", supplementalProductDataSource: {} }),
@@ -303,7 +305,7 @@ describe("gmc datasources", () => {
     try {
       await run(["datasources", "create", "--file", file]);
     } finally {
-      rmSync(file, { force: true });
+      rmSync(tmp, { recursive: true, force: true });
     }
 
     expect(createDataSource).toHaveBeenCalledWith({
