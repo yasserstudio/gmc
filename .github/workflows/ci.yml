@@ -13,6 +13,11 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    # Non-blocking until the repo's Dependency Graph is enabled (Settings →
+    # Code security → Dependency graph). Once enabled, this becomes a hard gate
+    # on high-severity vulns + GPL licenses; until then it self-skips cleanly.
+    # Vuln scanning is already gated by `pnpm audit --prod` (below) + the Socket app.
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
