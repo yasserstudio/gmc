@@ -7,6 +7,23 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.9 — inventory: local + regional
+
+Phase 6, part 1 — the breadth build-out begins with the **inventories sub-API**: per-store
+(**local**) and per-region (**regional**) overrides of a product's price/availability.
+
+- **`gmc inventory local|regional list|insert|delete <product>`** — set a product's stock/price
+  for a specific store (`storeCode`) or region. `insert` takes convenience flags
+  (`--store-code`/`--region`, `--availability`, `--quantity`, `--price` + `--currency`) layered over
+  an optional `--file` JSON base, so "mark store S1 out of stock" is one line. It's an upsert that
+  **replaces** the whole entry (unsent fields are cleared) — the output says so.
+- **`@gmc-cli/api`** gains `InventoriesService` (mirrors `ProductsService`); `toMicros` (decimal →
+  micros) moves here next to the `Price` type it produces, re-exported from `@gmc-cli/migrate` for
+  compatibility. The shared `formatPrice` render helper moves to `_shared.ts`.
+
+_`@gmc-cli/cli` → 0.9.9, `@gmc-cli/api` → 0.9.3 (patch); `@gmc-cli/core`/`migrate`/`preflight` take the
+internal-dependency patch cascade; other packages unchanged._
+
 ## v0.9.8 — migrate: feed-labels
 
 Phase 5, part 3 — **Phase 5 complete**. The feed-label transfer check: the silent
