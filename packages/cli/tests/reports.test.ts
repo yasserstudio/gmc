@@ -127,4 +127,62 @@ describe("gmc reports", () => {
     expect(search).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
   });
+
+  it("builds a competitive_visibility query with required filters", async () => {
+    search.mockResolvedValue([]);
+    await run([
+      "reports", "competitive-visibility",
+      "--country", "us", "--category", "536", "--since", "2026-05-01", "--until", "2026-05-31",
+    ]);
+    const q = search.mock.calls[0][0] as string;
+    expect(q).toContain("FROM competitive_visibility_competitor_view");
+    expect(q).toContain("WHERE date BETWEEN '2026-05-01' AND '2026-05-31'");
+    expect(q).toContain("report_country_code = 'US'"); // upper-cased
+    expect(q).toContain("report_category_id = 536"); // unquoted number
+    expect(q).toContain("traffic_source = 'ADS'"); // default
+  });
+
+  it("renders competitor rows and marks your domain", async () => {
+    search.mockResolvedValue([
+      { competitiveVisibilityCompetitorView: { domain: "you.example", isYourDomain: true, rank: "1", relativeVisibility: 0.42 } },
+      { competitiveVisibilityCompetitorView: { domain: "rival.example", rank: "2", relativeVisibility: 0.31 } },
+    ]);
+    await run(["reports", "competitive-visibility", "--country", "US", "--category", "536"]);
+    expect(out()).toContain("you.example (you)");
+    expect(out()).toContain("42.0%");
+  });
+
+  it("requires --country and --category for competitive-visibility", async () => {
+    await run(["reports", "competitive-visibility", "--category", "536"]);
+    expect(search).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+    process.exitCode = 0;
+    await run(["reports", "competitive-visibility", "--country", "US"]);
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("rejects an invalid --traffic-source", async () => {
+    await run(["reports", "competitive-visibility", "--country", "US", "--category", "536", "--traffic-source", "SEO"]);
+    expect(search).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("builds a price_competitiveness query, optionally filtered by country", async () => {
+    search.mockResolvedValue([]);
+    await run(["reports", "price-competitiveness"]);
+    expect(search.mock.calls[0][0]).toContain("FROM price_competitiveness_product_view");
+    expect(search.mock.calls[0][0]).not.toContain("WHERE");
+    search.mockClear();
+    await run(["reports", "price-competitiveness", "--country", "US"]);
+    expect(search.mock.calls[0][0]).toContain("WHERE report_country_code = 'US'");
+  });
+
+  it("renders price vs benchmark", async () => {
+    search.mockResolvedValue([
+      { priceCompetitivenessProductView: { title: "Shoe", price: { amountMicros: "49990000", currencyCode: "USD" }, benchmarkPrice: { amountMicros: "59990000", currencyCode: "USD" } } },
+    ]);
+    await run(["reports", "price-competitiveness"]);
+    expect(out()).toContain("Shoe");
+    expect(out()).toContain("your 49.99 USD vs benchmark 59.99 USD");
+  });
 });

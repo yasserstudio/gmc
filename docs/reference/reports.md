@@ -27,6 +27,42 @@ Product performance (clicks, impressions, CTR, conversions) over a date window, 
 Human output is a date-sorted table; `--json` emits `{ "results": [...], "since", "until" }` with the
 raw `ReportRow`s.
 
+## `gmc reports competitive-visibility`
+
+How your domain's visibility compares to competitors in a category, from
+`competitive_visibility_competitor_view`. Country and category are **required** (the view mandates
+them); the window defaults to the last 30 days.
+
+```sh
+gmc reports competitive-visibility --country US --category 536
+gmc reports competitive-visibility --country US --category 536 --traffic-source ORGANIC --since 2026-05-01 --until 2026-05-31
+```
+
+| Option | Description |
+|--------|-------------|
+| `--country <code>` | 2-letter report country code, e.g. `US` (required) |
+| `--category <id>` | Numeric Google product category id, e.g. `536` (required) |
+| `--traffic-source <src>` | `ADS`, `ORGANIC`, or `ALL` (default `ADS`) |
+| `--days` / `--since` / `--until` | Date window (default last 30 days) |
+
+Output is a table of competitor domains with rank, relative visibility, page overlap, and
+higher-position rate (your own domain is marked); `--json` for the raw rows.
+
+## `gmc reports price-competitiveness`
+
+Your prices vs the category benchmark per product, from `price_competitiveness_product_view`
+(`price` and `benchmark_price` are amounts).
+
+```sh
+gmc reports price-competitiveness
+gmc reports price-competitiveness --country US
+```
+
+| Option | Description |
+|--------|-------------|
+| `--country <code>` | Filter to a 2-letter report country code |
+| `--page-size <n>` | Max rows per API page |
+
 ## `gmc reports query <mcql>`
 
 Run any MCQL query and print the result rows (one JSON object per line, then a count) — or `--json`

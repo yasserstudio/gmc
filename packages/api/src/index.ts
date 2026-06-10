@@ -47,7 +47,13 @@ export { PromotionsService, promotionSegment } from "./promotions.js";
 export type { Promotion, PromotionAttributes } from "./promotions.js";
 
 export { ReportsService } from "./reports.js";
-export type { ReportRow, ProductPerformanceView, ReportDate } from "./reports.js";
+export type {
+  ReportRow,
+  ProductPerformanceView,
+  CompetitiveVisibilityCompetitorView,
+  PriceCompetitivenessProductView,
+  ReportDate,
+} from "./reports.js";
 
 export { toMicros } from "./money.js";
 
