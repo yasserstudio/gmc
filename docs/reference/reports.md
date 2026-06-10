@@ -63,6 +63,28 @@ gmc reports price-competitiveness --country US
 | `--country <code>` | Filter to a 2-letter report country code |
 | `--page-size <n>` | Max rows per API page |
 
+## `gmc reports check`
+
+A **CI gate** on a performance metric: it aggregates `product_performance_view` over the window and
+**exits non-zero** if the metric breaches a threshold — so a Shopping performance regression fails
+your build.
+
+```sh
+gmc reports check --metric clicks --min 1000          # fail if < 1000 clicks in the last 30 days
+gmc reports check --metric ctr --min 0.02             # fail if CTR < 2%
+gmc reports check --metric conversions --min 50 --since 2026-05-01 --until 2026-05-31
+```
+
+| Option | Description |
+|--------|-------------|
+| `--metric <name>` | `clicks`, `impressions`, `conversions`, or `ctr` (a fraction, e.g. `0.02` = 2%) |
+| `--min <n>` | Fail if the metric is below this |
+| `--max <n>` | Fail if the metric is above this |
+| `--days` / `--since` / `--until` | Date window (default last 30 days) |
+
+At least one of `--min`/`--max` is required. Exit `0` within bounds, **`1` on breach** (CI gate),
+`2` usage. `--json` emits `{ metric, value, min, max, ok, since, until }`.
+
 ## `gmc reports query <mcql>`
 
 Run any MCQL query and print the result rows (one JSON object per line, then a count) — or `--json`
