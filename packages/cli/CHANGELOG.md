@@ -1,5 +1,16 @@
 # @gmc-cli/cli
 
+## 1.0.0
+
+### Major Changes
+
+- **v1.0.0 — first stable release.** All nine build phases are complete and the tool has
+  been through a full pre-launch audit (quality · Google Merchant API v1 alignment · docs ·
+  security · packaging) and an end-to-end smoke test. `gmc` is published to npm as the
+  self-contained `@gmc-cli/cli` (install `npm i -g @gmc-cli/cli`); the command surface spans
+  `doctor`, `auth`, `config`, `accounts`, `products`, `datasources`, `feeds`, `preflight`,
+  `migrate`, `inventory`, `promotions`, and `reports`, all on Merchant API `v1`.
+
 ## 0.9.19
 
 ### Patch Changes
