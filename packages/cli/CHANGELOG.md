@@ -1,5 +1,23 @@
 # @gmc-cli/cli
 
+## 0.9.12
+
+### Patch Changes
+
+- ba9415f: feat(reports): competitive visibility + price competitiveness (Phase 7, v0.9.12)
+
+  Two more `gmc reports` presets on the reports sub-API:
+  - **`gmc reports competitive-visibility --country <c> --category <id>`** — how your domain's visibility compares to competitors (`competitive_visibility_competitor_view`): rank, relative visibility, page-overlap and higher-position rates. Country + category are required (the view mandates them); `--traffic-source` (ADS/ORGANIC/ALL, default ADS) and a date window (`--days`/`--since`/`--until`).
+  - **`gmc reports price-competitiveness [--country <c>]`** — your prices vs the category benchmark per product (`price_competitiveness_product_view`; `price`/`benchmark_price` are amounts).
+
+  `@gmc-cli/api`'s `ReportRow` gains typed `competitiveVisibilityCompetitorView` and `priceCompetitivenessProductView` views. All column names and required filters verified against the Merchant API reports guides. Next: v0.9.13 — CI threshold alerting.
+
+- Updated dependencies [ba9415f]
+  - @gmc-cli/api@0.9.6
+  - @gmc-cli/core@0.7.9
+  - @gmc-cli/migrate@0.1.7
+  - @gmc-cli/preflight@0.1.7
+
 ## 0.9.11
 
 ### Patch Changes

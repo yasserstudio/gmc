@@ -7,6 +7,19 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.12 — reports: competitive visibility + price competitiveness
+
+Phase 7, part 2 — two more report presets.
+
+- **`gmc reports competitive-visibility --country <c> --category <id>`** — your domain's visibility
+  vs competitors (rank, relative visibility, page overlap, higher-position rate) from
+  `competitive_visibility_competitor_view`. Country + category are required; `--traffic-source`
+  (`ADS`/`ORGANIC`/`ALL`, default `ADS`) and a date window (`--days`/`--since`/`--until`).
+- **`gmc reports price-competitiveness [--country]`** — your prices vs the category benchmark per
+  product, from `price_competitiveness_product_view`.
+
+_`@gmc-cli/cli` → 0.9.12, `@gmc-cli/api` → 0.9.6 (patch); `@gmc-cli/core`/`migrate`/`preflight` cascade._
+
 ## v0.9.11 — reports: query + performance
 
 Phase 7, part 1 — the reports sub-API (`reports/v1`, Merchant Center Query Language).
