@@ -7,6 +7,7 @@ import { registerProductsCommands } from "./commands/products.js";
 import { registerDataSourcesCommands } from "./commands/datasources.js";
 import { registerFeedsCommands } from "./commands/feeds.js";
 import { registerPreflightCommand } from "./commands/preflight.js";
+import { registerMigrateCommands } from "./commands/migrate.js";
 
 /**
  * Build the root `gmc` command tree.
@@ -14,6 +15,7 @@ import { registerPreflightCommand } from "./commands/preflight.js";
  * Phase 2: `accounts` (v0.6) and `products` (v0.7) — the spike's MVP surface.
  * Phase 3: `datasources` (v0.8) and `feeds` (v0.9) — feeds as code.
  * Phase 4: `preflight` (v0.9.3) — offline feed-compliance scanner.
+ * Phase 5: `migrate` (v0.9.6) — Content API → Merchant API assistant.
  */
 export function createProgram(): Command {
   // `__GMC_VERSION` is injected at build time by tsup's `define` (see tsup.config.ts).
@@ -37,6 +39,7 @@ export function createProgram(): Command {
   registerDataSourcesCommands(program);
   registerFeedsCommands(program);
   registerPreflightCommand(program);
+  registerMigrateCommands(program);
 
   return program;
 }

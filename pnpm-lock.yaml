@@ -78,6 +78,9 @@ importers:
       '@gmc-cli/core':
         specifier: workspace:*
         version: link:../core
+      '@gmc-cli/migrate':
+        specifier: workspace:*
+        version: link:../migrate
       '@gmc-cli/preflight':
         specifier: workspace:*
         version: link:../preflight
@@ -106,6 +109,16 @@ importers:
       '@gmc-cli/config':
         specifier: workspace:*
         version: link:../config
+    devDependencies:
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.9.1
+
+  packages/migrate:
+    dependencies:
+      '@gmc-cli/auth':
+        specifier: workspace:*
+        version: link:../auth
     devDependencies:
       '@types/node':
         specifier: ^25.6.0

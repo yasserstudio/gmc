@@ -1,11 +1,8 @@
 {
-  "name": "@gmc-cli/cli",
-  "version": "0.9.5",
-  "description": "Google Merchant Center CLI — a typed, CI-friendly command-line interface for the Google Merchant API, with an offline feed-compliance preflight. Provides the gmc command.",
+  "name": "@gmc-cli/migrate",
+  "version": "0.1.0",
+  "description": "Content API for Shopping → Merchant API migration engine for the Google Merchant Center CLI — scope mapping, legacy-config import, and product remapping.",
   "type": "module",
-  "bin": {
-    "gmc": "./dist/bin.js"
-  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -26,30 +23,14 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@gmc-cli/api": "workspace:*",
-    "@gmc-cli/auth": "workspace:*",
-    "@gmc-cli/config": "workspace:*",
-    "@gmc-cli/core": "workspace:*",
-    "@gmc-cli/migrate": "workspace:*",
-    "@gmc-cli/preflight": "workspace:*",
-    "commander": "^14.0.3"
-  },
   "homepage": "https://yasserstudio.github.io/gmc/",
   "keywords": [
     "google-merchant-center",
     "merchant-api",
-    "google-shopping",
-    "product-feed",
-    "cli",
-    "ecommerce",
-    "feed",
-    "preflight",
     "content-api-migration",
-    "merchant-center-next",
-    "devops",
-    "ci-cd",
-    "typescript"
+    "content-api-for-shopping",
+    "product-feed",
+    "migration"
   ],
   "engines": {
     "node": ">=20"
@@ -57,6 +38,9 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@gmc-cli/auth": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.6.0"

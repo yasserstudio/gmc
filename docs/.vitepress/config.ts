@@ -48,6 +48,7 @@ export default defineConfig({
             { text: "gmc datasources", link: "/reference/datasources" },
             { text: "gmc feeds", link: "/reference/feeds" },
             { text: "gmc preflight", link: "/reference/preflight" },
+            { text: "gmc migrate", link: "/reference/migrate" },
           ],
         },
       ],
