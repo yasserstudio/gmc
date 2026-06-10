@@ -8,7 +8,7 @@ export { resolveAuth } from "./resolve.js";
 export { loadServiceAccountKey, createServiceAccountAuth } from "./service-account.js";
 export type { ServiceAccountAuthOptions } from "./service-account.js";
 export { acquireToken, clearTokenCache } from "./token-cache.js";
-export { MERCHANT_API_SCOPE, DEFAULT_SCOPES, scopesFor } from "./scopes.js";
+export { MERCHANT_API_SCOPE, DEFAULT_SCOPES, SUB_APIS, scopesFor } from "./scopes.js";
 export type { SubApi } from "./scopes.js";
 export {
   loginWithOAuth,

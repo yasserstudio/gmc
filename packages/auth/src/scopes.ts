@@ -18,8 +18,20 @@ export type SubApi =
   | "inventories"
   | "reports"
   | "accounts"
+  | "datasources"
   | "promotions"
   | "quota";
+
+/** All sub-API keys, in a stable order. Mirrors `@gmc-cli/api` SUB_APIS. */
+export const SUB_APIS: readonly SubApi[] = [
+  "products",
+  "inventories",
+  "reports",
+  "accounts",
+  "datasources",
+  "promotions",
+  "quota",
+];
 
 // Per-sub-API scope map. Every entry currently resolves to the content scope;
 // when Google ships granular scopes, only this table changes.
@@ -28,6 +40,7 @@ const SUB_API_SCOPES: Readonly<Record<SubApi, readonly string[]>> = {
   inventories: [MERCHANT_API_SCOPE],
   reports: [MERCHANT_API_SCOPE],
   accounts: [MERCHANT_API_SCOPE],
+  datasources: [MERCHANT_API_SCOPE],
   promotions: [MERCHANT_API_SCOPE],
   quota: [MERCHANT_API_SCOPE],
 };
