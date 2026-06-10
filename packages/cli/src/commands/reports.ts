@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { emitJson, reportError, UsageError } from "@gmc-cli/core";
+import { emitJson, reportError, ExitCode, UsageError } from "@gmc-cli/core";
 import { ReportsService, type ReportDate, type ReportRow } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
 import { clientFor, resolveAccount, parsePageSize, formatPrice } from "./_shared.js";
@@ -203,7 +203,51 @@ function renderPriceCompetitiveness(rows: ReportRow[]): void {
   }
 }
 
-/** Register the `gmc reports` command group (query / performance / competitive-visibility / price-competitiveness). */
+// Metrics `gmc reports check` can gate on, aggregated client-side from product_performance_view.
+const CHECK_METRICS = new Set(["clicks", "impressions", "conversions", "ctr"]);
+
+interface PerformanceTotals {
+  clicks: number;
+  impressions: number;
+  conversions: number;
+  ctr: number;
+}
+
+// A non-negative, finite count from an int64-as-string / number / missing value.
+function toCount(v: unknown): number {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function aggregatePerformance(rows: ReportRow[]): PerformanceTotals {
+  let clicks = 0;
+  let impressions = 0;
+  let conversions = 0;
+  for (const r of rows) {
+    const v = r.productPerformanceView;
+    if (!v) continue;
+    clicks += toCount(v.clicks);
+    impressions += toCount(v.impressions);
+    conversions += toCount(v.conversions);
+  }
+  return { clicks, impressions, conversions, ctr: impressions ? clicks / impressions : 0 };
+}
+
+/** Parse a `--min`/`--max` threshold as a non-negative finite number, or throw. */
+function parseThreshold(flag: string, raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    throw new UsageError(`Invalid ${flag} "${raw}".`, "Use a non-negative number (a fraction like 0.02 for --metric ctr).");
+  }
+  return n;
+}
+
+function formatMetric(metric: string, value: number): string {
+  return metric === "ctr" ? `${(value * 100).toFixed(2)}%` : String(value);
+}
+
+/** Register the `gmc reports` command group (query / performance / competitive-visibility / price-competitiveness / check). */
 export function registerReportsCommands(program: Command): void {
   const reports = program
     .command("reports")
@@ -304,6 +348,70 @@ export function registerReportsCommands(program: Command): void {
         else renderPriceCompetitiveness(rows);
       } catch (err) {
         reportError(err, { json }, "gmc reports price-competitiveness");
+      }
+    });
+
+  reports
+    .command("check")
+    .description("Gate CI on a performance metric threshold (non-zero exit if breached)")
+    .option("--metric <name>", "clicks, impressions, conversions, or ctr (a 0–1 fraction)")
+    .option("--min <n>", "Fail if the metric is below this (ctr as a fraction, e.g. 0.02)")
+    .option("--max <n>", "Fail if the metric is above this")
+    .option("--days <n>", "Window size in days, ending today (default 30)")
+    .option("--since <date>", "Start date (ISO); overrides --days")
+    .option("--until <date>", "End date (ISO; default today)")
+    .option("--page-size <n>", "Max rows per API page")
+    .action(async (opts: PerfOpts & { metric?: string; min?: string; max?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(undefined, ctx);
+        const pageSize = parsePageSize(opts.pageSize);
+        const metric = opts.metric;
+        if (!metric || !CHECK_METRICS.has(metric)) {
+          throw new UsageError(
+            `Invalid or missing --metric "${metric ?? ""}".`,
+            "Use one of: clicks, impressions, conversions, ctr.",
+          );
+        }
+        const min = parseThreshold("--min", opts.min);
+        const max = parseThreshold("--max", opts.max);
+        if (min === undefined && max === undefined) {
+          throw new UsageError("Pass --min and/or --max.", "e.g. --metric clicks --min 100.");
+        }
+        const { since, until } = resolveWindow(opts);
+        const service = new ReportsService(await clientFor(ctx, account));
+        const totals = aggregatePerformance(
+          await service.search(performanceQuery(since, until), pageSize ? { pageSize } : {}),
+        );
+        const value = totals[metric as keyof PerformanceTotals];
+        const belowMin = min !== undefined && value < min;
+        const aboveMax = max !== undefined && value > max;
+        const ok = !belowMin && !aboveMax;
+
+        if (ctx.json) {
+          emitJson({
+            metric,
+            value,
+            ...(min !== undefined ? { min } : {}),
+            ...(max !== undefined ? { max } : {}),
+            ok,
+            since,
+            until,
+          });
+        } else {
+          process.stdout.write(`${metric} = ${formatMetric(metric, value)} (${since} → ${until})\n`);
+          if (ok) {
+            process.stdout.write("Passed.\n");
+          } else if (belowMin) {
+            process.stdout.write(`Failed — below --min ${formatMetric(metric, min as number)}.\n`);
+          } else {
+            process.stdout.write(`Failed — above --max ${formatMetric(metric, max as number)}.\n`);
+          }
+        }
+        if (!ok) process.exitCode = ExitCode.Error;
+      } catch (err) {
+        reportError(err, { json }, "gmc reports check");
       }
     });
 }

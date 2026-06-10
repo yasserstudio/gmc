@@ -185,4 +185,91 @@ describe("gmc reports", () => {
     expect(out()).toContain("Shoe");
     expect(out()).toContain("your 49.99 USD vs benchmark 59.99 USD");
   });
+
+  const PERF_ROWS = [
+    { productPerformanceView: { clicks: "60", impressions: "1000", conversions: "3" } },
+    { productPerformanceView: { clicks: "50", impressions: "1000", conversions: "2" } },
+  ]; // totals: clicks 110, impressions 2000, conversions 5, ctr 0.055
+
+  it("check passes when the metric is within bounds (exit 0)", async () => {
+    search.mockResolvedValue(PERF_ROWS);
+    await run(["reports", "check", "--metric", "clicks", "--min", "100"]);
+    expect(out()).toContain("clicks = 110");
+    expect(out()).toContain("Passed.");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("check fails below --min (exit 1)", async () => {
+    search.mockResolvedValue(PERF_ROWS);
+    await run(["reports", "check", "--metric", "clicks", "--min", "200"]);
+    expect(out()).toContain("below --min");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("check fails above --max, including computed ctr", async () => {
+    search.mockResolvedValue(PERF_ROWS);
+    await run(["reports", "check", "--metric", "ctr", "--max", "0.05"]);
+    expect(out()).toContain("ctr = 5.50%");
+    expect(out()).toContain("above --max");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("check requires a valid --metric", async () => {
+    await run(["reports", "check", "--metric", "revenue", "--min", "1"]);
+    expect(search).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("check requires at least one of --min/--max", async () => {
+    await run(["reports", "check", "--metric", "clicks"]);
+    expect(search).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("check fails on zero rows (metric below --min)", async () => {
+    search.mockResolvedValue([]);
+    await run(["reports", "check", "--metric", "clicks", "--min", "1"]);
+    expect(out()).toContain("clicks = 0");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("check handles ctr with zero impressions (0.00%, no NaN)", async () => {
+    search.mockResolvedValue([{ productPerformanceView: { clicks: "0", impressions: "0" } }]);
+    await run(["reports", "check", "--metric", "ctr", "--min", "0.01"]);
+    expect(out()).toContain("ctr = 0.00%");
+    expect(out()).not.toContain("NaN");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("check passes when the value is exactly at --min (strict bound)", async () => {
+    search.mockResolvedValue([{ productPerformanceView: { clicks: "100", impressions: "1000" } }]);
+    await run(["reports", "check", "--metric", "clicks", "--min", "100"]);
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("check rejects a negative --min", async () => {
+    await run(["reports", "check", "--metric", "clicks", "--min", "-5"]);
+    expect(search).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("check enforces both --min and --max together", async () => {
+    search.mockResolvedValue([{ productPerformanceView: { clicks: "5000", impressions: "1000" } }]);
+    await run(["reports", "check", "--metric", "clicks", "--min", "100", "--max", "1000"]);
+    expect(out()).toContain("above --max");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("check emits a JSON verdict", async () => {
+    search.mockResolvedValue(PERF_ROWS);
+    await run(["-j", "reports", "check", "--metric", "conversions", "--min", "5", "--since", "2026-05-01", "--until", "2026-05-31"]);
+    expect(JSON.parse(out())).toEqual({
+      metric: "conversions",
+      value: 5,
+      min: 5,
+      ok: true,
+      since: "2026-05-01",
+      until: "2026-05-31",
+    });
+  });
 });
