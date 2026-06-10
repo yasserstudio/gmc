@@ -8,26 +8,13 @@ on:
 
 permissions: {}
 
-jobs:
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    # Non-blocking until the repo's Dependency Graph is enabled (Settings →
-    # Code security → Dependency graph). Once enabled, this becomes a hard gate
-    # on high-severity vulns + GPL licenses; until then it self-skips cleanly.
-    # Vuln scanning is already gated by `pnpm audit --prod` (below) + the Socket app.
-    continue-on-error: true
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v4
-        with:
-          fail-on-severity: high
-          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0
+# NOTE: a `dependency-review` job (license-denial + PR dep-diff) is intentionally
+# omitted — it requires the repo's Dependency Graph to be enabled (Settings → Code
+# security → Dependency graph). Supply-chain/vuln scanning is already covered by the
+# `pnpm audit --prod` step below + the Socket app. To add it back, enable Dependency
+# Graph, then restore the actions/dependency-review-action job (see RELEASING.md).
 
+jobs:
   check:
     runs-on: ubuntu-latest
     strategy:
