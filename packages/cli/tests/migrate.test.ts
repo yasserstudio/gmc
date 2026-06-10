@@ -5,9 +5,11 @@ import { mkdtempSync, rmSync, writeFileSync, readFileSync, readdirSync, existsSy
 
 // vi.hoisted so these are initialized before the hoisted vi.mock factories run
 // (@gmc-cli/auth is imported very early via program.ts → auth.ts).
-const { resolveAuth, probeMerchantApi } = vi.hoisted(() => ({
+const { resolveAuth, probeMerchantApi, listProducts, listDataSources } = vi.hoisted(() => ({
   resolveAuth: vi.fn(),
   probeMerchantApi: vi.fn(),
+  listProducts: vi.fn(),
+  listDataSources: vi.fn(),
 }));
 
 vi.mock("@gmc-cli/auth", async (importActual) => {
@@ -17,7 +19,21 @@ vi.mock("@gmc-cli/auth", async (importActual) => {
 
 vi.mock("@gmc-cli/api", async (importActual) => {
   const actual = await importActual<typeof import("@gmc-cli/api")>();
-  return { ...actual, probeMerchantApi };
+  return {
+    ...actual,
+    probeMerchantApi,
+    // Stub the client + services used by `migrate feed-labels` (the cross-check);
+    // scopes/products tests don't touch these.
+    MerchantClient: class {
+      constructor(_options: unknown) {}
+    },
+    ProductsService: class {
+      listProducts = listProducts;
+    },
+    DataSourcesService: class {
+      listDataSources = listDataSources;
+    },
+  };
 });
 
 import { createProgram } from "../src/program.js";
@@ -315,5 +331,139 @@ describe("gmc migrate products", () => {
     await run(["preflight", "--dir", outDir]);
     expect(out()).toContain("No issues found");
     expect(process.exitCode).toBe(0);
+  });
+});
+
+const pi = (offerId: string, feedLabel?: string) => ({
+  offerId,
+  channel: "online",
+  contentLanguage: "en",
+  ...(feedLabel !== undefined ? { feedLabel } : {}),
+  attributes: { title: offerId },
+});
+const source = (feedLabel: string) => ({
+  primaryProductDataSource: { channel: "online", feedLabel, contentLanguage: "en" },
+});
+
+describe("gmc migrate feed-labels", () => {
+  let writes: string[];
+  let dir: string;
+  let configDir: string;
+  let savedEnv: Record<string, string | undefined>;
+  const ENV = ["GMC_CONFIG_DIR", "GMC_PROFILE", "GMC_ACCOUNT_ID"] as const;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.exitCode = 0;
+    savedEnv = {};
+    for (const key of ENV) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    configDir = mkdtempSync(join(tmpdir(), "gmc-fl-cfg-"));
+    process.env["GMC_CONFIG_DIR"] = configDir;
+    dir = mkdtempSync(join(tmpdir(), "gmc-fl-"));
+    writes = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+      writes.push(String(chunk));
+      return true;
+    });
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    resolveAuth.mockResolvedValue(PASS_CLIENT);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(configDir, { recursive: true, force: true });
+    for (const key of ENV) {
+      const value = savedEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  const out = (): string => writes.join("");
+
+  it("analyzes a local feed offline (no account) — flags missing + case-variant, exits non-zero", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    writeFileSync(join(dir, "b.json"), JSON.stringify(pi("B", "us")));
+    writeFileSync(join(dir, "c.json"), JSON.stringify(pi("C"))); // no feedLabel
+    await run(["migrate", "feed-labels", "--dir", dir]);
+    expect(out()).toContain("Cross-check skipped — no account configured");
+    expect(out()).toContain("have no feedLabel");
+    expect(out()).toContain("multiple cases");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("passes when every group matches a data source (cross-check)", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    listDataSources.mockResolvedValue([source("US")]);
+    await run(["migrate", "feed-labels", "--dir", dir]);
+    expect(out()).toContain("✓ matches a data source");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("fails when a group matches no data source (the campaign-killer)", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    writeFileSync(join(dir, "b.json"), JSON.stringify(pi("B", "CA")));
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    listDataSources.mockResolvedValue([source("US")]);
+    await run(["migrate", "feed-labels", "--dir", dir]);
+    expect(out()).toContain("no matching data source");
+    expect(out()).toContain('No primary data source has feedLabel "CA"');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("degrades to offline when the data-source fetch fails", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    listDataSources.mockRejectedValue(new Error("boom"));
+    await run(["migrate", "feed-labels", "--dir", dir]);
+    expect(out()).toContain("Cross-check skipped — couldn't reach");
+    // A fetch failure must not yield any matched/unmatched verdict (stays offline).
+    expect(out()).not.toContain("matching data source");
+    expect(process.exitCode).toBe(0); // labels themselves are fine
+  });
+
+  it("skips the cross-check with a clear note on a malformed account id", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    process.env["GMC_ACCOUNT_ID"] = "not-numeric";
+    await run(["migrate", "feed-labels", "--dir", dir]);
+    expect(out()).toContain('invalid account id "not-numeric"');
+    expect(listDataSources).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("checks the live catalog with --remote", async () => {
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    listProducts.mockResolvedValue([
+      { offerId: "A", channel: "online", contentLanguage: "en", feedLabel: "US" },
+    ]);
+    listDataSources.mockResolvedValue([source("US")]);
+    await run(["migrate", "feed-labels", "--remote"]);
+    expect(out()).toContain("scanned 1 product(s)");
+    expect(out()).toContain("✓ matches a data source");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("counts warnings as failures under --strict", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    writeFileSync(join(dir, "b.json"), JSON.stringify(pi("B", "us")));
+    await run(["migrate", "feed-labels", "--dir", dir, "--strict"]);
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("emits a JSON report", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify(pi("A", "US")));
+    process.env["GMC_ACCOUNT_ID"] = "123";
+    listDataSources.mockResolvedValue([source("US")]);
+    await run(["-j", "migrate", "feed-labels", "--dir", dir]);
+    const parsed = JSON.parse(out());
+    expect(parsed.crossChecked).toBe(true);
+    expect(parsed.scanned).toBe(1);
+    expect(parsed.groups[0]).toMatchObject({ feedLabel: "US", matched: true });
+    expect(parsed.ok).toBe(true);
   });
 });

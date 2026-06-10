@@ -2,7 +2,13 @@ import type { Command } from "commander";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { resolveAuth, AuthError } from "@gmc-cli/auth";
-import { probeMerchantApi, productKey } from "@gmc-cli/api";
+import {
+  probeMerchantApi,
+  productKey,
+  ProductsService,
+  DataSourcesService,
+  type DataSource,
+} from "@gmc-cli/api";
 import { emitJson, reportError, ExitCode, UsageError, type CommandContext } from "@gmc-cli/core";
 import { getConfigDir, getUserConfigPath, loadConfig, upsertProfile } from "@gmc-cli/config";
 import {
@@ -11,11 +17,22 @@ import {
   planProfileMigration,
   transformProduct,
   isTransformError,
+  checkFeedLabels,
   type ProfilePlan,
   type ScopeAuditReport,
+  type FeedLabelProduct,
+  type FeedLabelSource,
+  type FeedLabelReport,
 } from "@gmc-cli/migrate";
 import { contextFrom, wantsJson } from "../context.js";
-import { productFileName, readJsonObject } from "./_shared.js";
+import {
+  clientFor,
+  loadProductFiles,
+  parsePageSize,
+  productFileName,
+  readJsonObject,
+  resolveAccount,
+} from "./_shared.js";
 
 // Same status glyphs as `gmc doctor` (doctor.ts) — kept local because the status
 // type differs (CheckStatus there vs the migrate report's here).
@@ -279,7 +296,77 @@ function renderProductsReport(
   );
 }
 
-/** Register the `gmc migrate` command group. Phase 5: `scopes` (v0.9.6), `products` (v0.9.7). */
+interface FeedLabelsOpts {
+  dir: string;
+  remote?: boolean;
+  strict?: boolean;
+  pageSize?: string;
+}
+
+const FL_GLYPH: Record<FeedLabelReport["findings"][number]["severity"], string> = {
+  error: "✗",
+  warning: "⚠",
+  info: "ℹ",
+};
+
+/** The feed identity of a primary data source, or null for non-primary sources. */
+function primarySource(ds: DataSource): FeedLabelSource | null {
+  const p = ds.primaryProductDataSource;
+  if (!p) return null;
+  const s: FeedLabelSource = {};
+  if (p.channel !== undefined) s.channel = p.channel;
+  if (p.feedLabel !== undefined) s.feedLabel = p.feedLabel;
+  if (p.contentLanguage !== undefined) s.contentLanguage = p.contentLanguage;
+  return s;
+}
+
+function renderFeedLabels(report: FeedLabelReport, notes: string[]): void {
+  process.stdout.write(
+    `gmc migrate feed-labels — scanned ${report.scanned} product(s) across ${report.groups.length} feed-label group(s)\n`,
+  );
+  for (const note of notes) process.stdout.write(`${note}\n`);
+
+  if (report.groups.length) {
+    process.stdout.write("\nfeed labels:\n");
+    for (const g of report.groups) {
+      const label = g.feedLabel || "(none)";
+      const lang = g.contentLanguage || "—";
+      const mark =
+        report.crossChecked && g.feedLabel
+          ? g.matched
+            ? "  ✓ matches a data source"
+            : "  ✗ no matching data source"
+          : "";
+      process.stdout.write(`  ${label} / ${lang}  ${g.count} product(s)${mark}\n`);
+    }
+  }
+
+  if (report.findings.length) {
+    process.stdout.write("\n");
+    for (const f of report.findings) {
+      process.stdout.write(`${FL_GLYPH[f.severity]} ${f.message}\n`);
+      if (f.suggestion) process.stdout.write(`    → ${f.suggestion}\n`);
+    }
+  }
+
+  const { error, warning, info } = report.counts;
+  const parts: string[] = [];
+  if (error) parts.push(`${error} error${error === 1 ? "" : "s"}`);
+  if (warning) parts.push(`${warning} warning${warning === 1 ? "" : "s"}`);
+  if (info) parts.push(`${info} info`);
+  process.stdout.write(
+    `\n${parts.length ? parts.join(", ") : "No issues"} across ${report.groups.length} group(s).\n`,
+  );
+  if (report.ok) {
+    process.stdout.write("Passed.\n");
+  } else {
+    process.stdout.write(
+      report.strict ? "Failed — strict mode counts warnings as failures.\n" : "Failed.\n",
+    );
+  }
+}
+
+/** Register the `gmc migrate` command group. Phase 5: `scopes` (v0.9.6), `products` (v0.9.7), `feed-labels` (v0.9.8). */
 export function registerMigrateCommands(program: Command): void {
   const migrate = program
     .command("migrate")
@@ -416,6 +503,74 @@ export function registerMigrateCommands(program: Command): void {
         if (errors.length) process.exitCode = ExitCode.Error;
       } catch (err) {
         reportError(err, { json }, "gmc migrate products");
+      }
+    });
+
+  migrate
+    .command("feed-labels")
+    .description("Check migrated feed labels resolve to feeds your campaigns target")
+    .option("--dir <path>", "Directory of product files to check", "feeds")
+    .option("--remote", "Pull and check the live catalog instead (needs auth)")
+    .option("--strict", "Treat warnings as failures (non-zero exit)")
+    .option("--page-size <n>", "Max products per API page (with --remote)")
+    .action(async (opts: FeedLabelsOpts) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const pageSize = parsePageSize(opts.pageSize);
+        const notes: string[] = [];
+
+        // 1. Products: live catalog (--remote) or a local feed dir.
+        let products: FeedLabelProduct[];
+        // dataSources stays undefined for offline-only analysis (skips the cross-check rules).
+        let dataSources: FeedLabelSource[] | undefined;
+
+        if (opts.remote) {
+          const account = resolveAccount(undefined, ctx);
+          const client = await clientFor(ctx, account);
+          products = await new ProductsService(client).listProducts(pageSize ? { pageSize } : {});
+          dataSources = (await new DataSourcesService(client).listDataSources())
+            .map(primarySource)
+            .filter((s): s is FeedLabelSource => s !== null);
+        } else {
+          const loaded = await loadProductFiles(opts.dir);
+          products = loaded.files.map((f) => f.input);
+          if (loaded.failures.length) {
+            notes.push(`Skipped ${loaded.failures.length} unparseable file(s).`);
+          }
+          // Best-effort cross-check when an account is configured; offline otherwise.
+          if (ctx.accountId && !/^\d+$/.test(ctx.accountId)) {
+            // Distinguish a misconfigured id from an unreachable account so the
+            // note doesn't misdiagnose a setup error as a network problem.
+            notes.push(`Cross-check skipped — invalid account id "${ctx.accountId}".`);
+          } else if (ctx.accountId) {
+            try {
+              const client = await clientFor(ctx, ctx.accountId);
+              dataSources = (await new DataSourcesService(client).listDataSources())
+                .map(primarySource)
+                .filter((s): s is FeedLabelSource => s !== null);
+            } catch {
+              notes.push("Cross-check skipped — couldn't reach the account's data sources.");
+            }
+          } else {
+            notes.push("Cross-check skipped — no account configured (offline analysis only).");
+          }
+          if (loaded.failures.length) process.exitCode = ExitCode.Error;
+        }
+
+        const report = checkFeedLabels(products, {
+          ...(dataSources ? { dataSources } : {}),
+          strict: Boolean(opts.strict),
+        });
+
+        if (json) {
+          emitJson({ ...report, ...(notes.length ? { notes } : {}) });
+        } else {
+          renderFeedLabels(report, notes);
+        }
+        if (!report.ok) process.exitCode = ExitCode.Error;
+      } catch (err) {
+        reportError(err, { json }, "gmc migrate feed-labels");
       }
     });
 }
