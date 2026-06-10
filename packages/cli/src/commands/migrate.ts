@@ -1,17 +1,21 @@
 import type { Command } from "commander";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { resolveAuth, AuthError } from "@gmc-cli/auth";
-import { probeMerchantApi } from "@gmc-cli/api";
-import { emitJson, reportError, UsageError, type CommandContext } from "@gmc-cli/core";
+import { probeMerchantApi, productKey } from "@gmc-cli/api";
+import { emitJson, reportError, ExitCode, UsageError, type CommandContext } from "@gmc-cli/core";
 import { getConfigDir, getUserConfigPath, loadConfig, upsertProfile } from "@gmc-cli/config";
 import {
   auditScopes,
   parseMerchantInfo,
   planProfileMigration,
+  transformProduct,
+  isTransformError,
   type ProfilePlan,
   type ScopeAuditReport,
 } from "@gmc-cli/migrate";
 import { contextFrom, wantsJson } from "../context.js";
-import { readJsonObject } from "./_shared.js";
+import { productFileName, readJsonObject } from "./_shared.js";
 
 // Same status glyphs as `gmc doctor` (doctor.ts) — kept local because the status
 // type differs (CheckStatus there vs the migrate report's here).
@@ -151,7 +155,131 @@ function renderPlan(plan: ProfilePlan, written: boolean, configPath: string): vo
   );
 }
 
-/** Register the `gmc migrate` command group. Phase 5: `scopes` (v0.9.6). */
+interface ProductsOpts {
+  from: string;
+  file?: string;
+  out: string;
+  feedLabel?: string;
+}
+
+/** A loaded Content API source product, or a load error (e.g. unparseable file). */
+interface ContentSource {
+  label: string;
+  raw?: unknown;
+  error?: string;
+}
+
+/** Per-product transform notes for the report (only shown when non-empty). */
+interface ProductReportEntry {
+  key: string;
+  remapped: string[];
+  dropped: string[];
+  warnings: string[];
+}
+
+/** Pull the product list out of a single product, a bare array, or a list response. */
+function extractProducts(parsed: unknown): unknown[] {
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed !== null && typeof parsed === "object") {
+    const o = parsed as Record<string, unknown>;
+    if (Array.isArray(o["resources"])) return o["resources"]; // Content API list response
+    if (Array.isArray(o["products"])) return o["products"];
+    return [parsed]; // a single product object
+  }
+  return [parsed]; // non-object — transformProduct will report it
+}
+
+/** A human-friendly label for a source product (its offer/id, else a positional one). */
+function offerIdHint(raw: unknown): string | undefined {
+  if (raw !== null && typeof raw === "object") {
+    const o = raw as Record<string, unknown>;
+    if (typeof o["offerId"] === "string" && o["offerId"]) return o["offerId"];
+    if (typeof o["id"] === "string" && o["id"]) return o["id"];
+  }
+  return undefined;
+}
+
+/** Read `--file`: a single product, a JSON array, or a products.list response. */
+async function loadContentApiFile(file: string): Promise<ContentSource[]> {
+  let raw: string;
+  try {
+    raw = await readFile(file, "utf8");
+  } catch {
+    throw new UsageError(`Could not read "${file}".`, "Check the path is correct and readable.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new UsageError(
+      `"${file}" is not valid JSON.`,
+      "Provide a Content API product, a JSON array, or a products.list response.",
+    );
+  }
+  const base = basename(file);
+  return extractProducts(parsed).map((item, i) => ({
+    label: offerIdHint(item) ?? `${base}[${i}]`,
+    raw: item,
+  }));
+}
+
+/**
+ * Read `--from`: every `*.json` in a directory. Each file may itself be a single
+ * product, an array, or a `products.list` response — same shapes as `--file` —
+ * so they're fanned out via {@link extractProducts}. An unparseable file becomes
+ * a load error.
+ */
+async function loadContentApiDir(dir: string): Promise<ContentSource[]> {
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    throw new UsageError(
+      `Could not read directory "${dir}".`,
+      "Pass --from <dir> to a directory of Content API product files, or --file <path>.",
+    );
+  }
+  const sources: ContentSource[] = [];
+  for (const name of entries.filter((f) => f.endsWith(".json")).sort()) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await readFile(join(dir, name), "utf8"));
+    } catch {
+      sources.push({ label: name, error: "invalid JSON" });
+      continue;
+    }
+    const items = extractProducts(parsed);
+    items.forEach((raw, i) => {
+      sources.push({ label: items.length > 1 ? `${name}[${i}]` : name, raw });
+    });
+  }
+  return sources;
+}
+
+function renderProductsReport(
+  out: string,
+  written: string[],
+  report: ProductReportEntry[],
+  errors: { source: string; error: string }[],
+): void {
+  process.stdout.write(`gmc migrate products — converted ${written.length} product(s) to ${out}\n`);
+  for (const e of report) {
+    if (!e.remapped.length && !e.dropped.length && !e.warnings.length) continue;
+    process.stdout.write(`\n${e.key}\n`);
+    for (const r of e.remapped) process.stdout.write(`  ~ ${r}\n`);
+    if (e.dropped.length) process.stdout.write(`  - dropped: ${e.dropped.join(", ")}\n`);
+    for (const w of e.warnings) process.stdout.write(`  ⚠ ${w}\n`);
+  }
+  if (errors.length) {
+    process.stdout.write(`\nCould not convert ${errors.length} product(s):\n`);
+    for (const e of errors) process.stdout.write(`  ✗ ${e.source}: ${e.error}\n`);
+  }
+  process.stdout.write(
+    `\n${written.length} converted${errors.length ? `, ${errors.length} error(s)` : ""}.\n`,
+  );
+}
+
+/** Register the `gmc migrate` command group. Phase 5: `scopes` (v0.9.6), `products` (v0.9.7). */
 export function registerMigrateCommands(program: Command): void {
   const migrate = program
     .command("migrate")
@@ -207,6 +335,87 @@ export function registerMigrateCommands(program: Command): void {
         // Advisory by design — exit 0. Only usage/IO errors (thrown above) fail.
       } catch (err) {
         reportError(err, { json }, "gmc migrate scopes");
+      }
+    });
+
+  migrate
+    .command("products")
+    .description(
+      "Convert Content API v2.1 product JSON to push-ready Merchant API ProductInput files",
+    )
+    .option("--from <dir>", "Directory of Content API product JSON files", "content")
+    .option("--file <path>", "A single product, a JSON array, or a products.list response")
+    .option("--out <dir>", "Output directory for ProductInput files", "feeds")
+    .option("--feed-label <label>", "Override feedLabel for every product")
+    .action(async (opts: ProductsOpts) => {
+      const json = wantsJson(program);
+      try {
+        // --file takes precedence over --from.
+        const sources = opts.file
+          ? await loadContentApiFile(opts.file)
+          : await loadContentApiDir(opts.from);
+
+        const written: string[] = [];
+        const report: ProductReportEntry[] = [];
+        const errors: { source: string; error: string }[] = [];
+        const seen = new Set<string>();
+        // Create the output dir lazily, only once there's a product to write, so a
+        // run that converts nothing doesn't leave an empty directory behind.
+        let outReady = false;
+
+        for (const source of sources) {
+          if (source.error) {
+            errors.push({ source: source.label, error: source.error });
+            continue;
+          }
+          const result = transformProduct(source.raw);
+          if (isTransformError(result)) {
+            errors.push({ source: source.label, error: result.error });
+            continue;
+          }
+          const { input, remapped, dropped, warnings } = result;
+          if (opts.feedLabel) {
+            remapped.push(`feedLabel overridden → "${opts.feedLabel}" (--feed-label)`);
+            input.feedLabel = opts.feedLabel;
+          }
+          const name = productFileName(input);
+          if (!name) {
+            errors.push({ source: source.label, error: "no id to name the output file" });
+            continue;
+          }
+          // Don't silently overwrite a file already written this run (id collision).
+          if (seen.has(name)) {
+            errors.push({ source: source.label, error: `duplicate product id (${name})` });
+            continue;
+          }
+          seen.add(name);
+          if (!outReady) {
+            await mkdir(opts.out, { recursive: true });
+            outReady = true;
+          }
+          await writeFile(join(opts.out, name), `${JSON.stringify(input, null, 2)}\n`);
+          written.push(name);
+          report.push({ key: productKey(input), remapped, dropped, warnings });
+        }
+
+        if (json) {
+          emitJson({
+            converted: written.length,
+            out: opts.out,
+            written,
+            products: report.filter(
+              (e) => e.remapped.length || e.dropped.length || e.warnings.length,
+            ),
+            ...(errors.length ? { errors } : {}),
+          });
+        } else {
+          renderProductsReport(opts.out, written, report, errors);
+        }
+        // A product that couldn't be converted fails the run, so CI gates an
+        // incomplete migration (the good products are still written).
+        if (errors.length) process.exitCode = ExitCode.Error;
+      } catch (err) {
+        reportError(err, { json }, "gmc migrate products");
       }
     });
 }

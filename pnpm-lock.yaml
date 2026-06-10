@@ -116,6 +116,9 @@ importers:
 
   packages/migrate:
     dependencies:
+      '@gmc-cli/api':
+        specifier: workspace:*
+        version: link:../api
       '@gmc-cli/auth':
         specifier: workspace:*
         version: link:../auth

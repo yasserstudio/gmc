@@ -5,12 +5,35 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createMerchantClient, UsageError, type CommandContext } from "@gmc-cli/core";
-import type { MerchantClient, ProductInput } from "@gmc-cli/api";
+import { productSegment, type MerchantClient, type ProductInput } from "@gmc-cli/api";
 import { getConfigDir } from "@gmc-cli/config";
 
 /** Write a padded `label  value` line to stdout — shared detail-view renderer. */
 export function line(label: string, value: string): void {
   process.stdout.write(`${label.padEnd(14)}${value}\n`);
+}
+
+/**
+ * Filesystem-safe per-product filename from its composite id (`{channel}~
+ * {contentLanguage}~{feedLabel}~{offerId}`); null if no id can be derived. Prefers
+ * a processed product's `name` segment, else builds from the identity fields.
+ * Shared by `feeds pull` (from a Product) and `migrate products` (from a
+ * ProductInput) so both name files identically. Path separators / colon are
+ * replaced so the id stays one path segment.
+ */
+export function productFileName(p: {
+  name?: string;
+  channel?: string;
+  contentLanguage?: string;
+  feedLabel?: string;
+  offerId?: string;
+}): string | null {
+  let segment = p.name ? productSegment(p.name) : "";
+  if (!segment && p.offerId) {
+    segment = [p.channel, p.contentLanguage, p.feedLabel, p.offerId].filter(Boolean).join("~");
+  }
+  if (!segment) return null;
+  return `${segment.replace(/[/\\:]/g, "_")}.json`;
 }
 
 /** Parse a positive-integer `--page-size` flag, or throw a UsageError. */

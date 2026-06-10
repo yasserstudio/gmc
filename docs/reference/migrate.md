@@ -1,6 +1,6 @@
 # gmc migrate
 
-**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API. Phase 5 builds it in three steps — this page documents `migrate scopes` (v0.9.6); `migrate products` and `migrate feed-labels` follow.
+**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API. Phase 5 builds it in three steps: `migrate scopes` (v0.9.6) and `migrate products` (v0.9.7) below; `migrate feed-labels` follows.
 
 ```sh
 gmc migrate scopes                                   # audit auth readiness
@@ -73,11 +73,45 @@ Without `--write` it's a **dry-run** — it prints exactly what *would* change (
 }
 ```
 
+## `gmc migrate products`
+
+Converts **Content API v2.1 product JSON** into push-ready Merchant API [`ProductInput`](/reference/products) files — the same shape [`feeds pull`](/reference/feeds) emits — so the output drops straight into `gmc feeds push` and `gmc preflight`. This completes the **migrate → validate → upload** pipeline.
+
+```sh
+gmc migrate products --from content                 # a dir of Content API product files → ./feeds
+gmc migrate products --file products.json --out feeds   # a single product, array, or products.list dump
+gmc migrate products --from content --feed-label US-en  # override the feed label for every product
+gmc preflight --dir feeds                           # validate the converted catalog before push
+```
+
+| Option | Description |
+|--------|-------------|
+| `--from <dir>` | Directory of Content API product JSON files (default `content`) |
+| `--file <path>` | A single product, a JSON array, or a `products.list` response (`{resources:[…]}` / `{products:[…]}`); takes precedence over `--from` |
+| `--out <dir>` | Output directory for `ProductInput` files (default `feeds`) |
+| `--feed-label <label>` | Override the derived feed label for every product |
+
+### What it converts
+
+The Merchant API keeps only *identity* fields at the top level and nests everything descriptive under `attributes`, and both APIs share the product-spec attribute names — so the transform moves every field except the identity ones into `attributes`, converts prices to micros, and remaps the identity fields:
+
+| Content API v2.1 | Merchant API | |
+|---|---|---|
+| `price: {value:"49.99", currency:"USD"}` | `attributes.price: {amountMicros:"49990000", currencyCode:"USD"}` | value × 1,000,000 (BigInt, half-up at 6 dp); also `salePrice`, nested `shipping[].price`, … |
+| `availability: "in stock"` | `attributes.availability: "in_stock"` | enum spaces → underscores |
+| `targetCountry: "US"` | `feedLabel: "US"` | the key remap (an explicit `feedLabel` wins; `--feed-label` overrides) |
+| `id: "online:en:US:SKU1"` | `offerId`/`channel`/`contentLanguage`/`feedLabel` | parsed to backfill missing identity, then dropped |
+| `title`, `description`, `link`, `customLabel0`, `shipping`, … | `attributes.*` | moved as-is (names match) |
+| `customAttributes: [{name,value}]` | `customAttributes` | carried through |
+| `id` / `kind` / `source` / `selfLink` | — | output-only → dropped |
+
+Each run prints a **migration report** — products converted, identity remaps, dropped fields, and any warnings (e.g. a price whose value isn't a number, left for `preflight` to flag) — or the full report as `--json`.
+
 ## Exit codes
 
-`migrate scopes` is an **assistant, not a CI gate** — audit findings are advisory, so a reachability warning or a failing probe still exits `0`. Only real errors fail: `2` usage (a non-numeric `--account`, an unreadable `--from`, or a legacy file with no valid `merchantId`) · `4` config (writing an invalid profile).
+- **`migrate scopes`** is an *assistant, not a CI gate* — audit findings are advisory, so a reachability warning or a failing probe still exits `0`. Only real errors fail: `2` usage (a non-numeric `--account`, an unreadable `--from`, or a legacy file with no valid `merchantId`) · `4` config (writing an invalid profile).
+- **`migrate products`** writes every product it can convert, but exits `1` if **any** product couldn't be converted (not an object, no derivable `offerId`, unparseable file) — so CI gates an incomplete migration. Dropped-field and price warnings are informational (exit `0`). `2` usage for an unreadable `--from`/`--file`.
 
 ## Coming next
 
-- **`gmc migrate products`** (v0.9.7) — convert Content API v2.1 product JSON to Merchant API [ProductInput](/reference/products) files: price `{value,currency}` → `{amountMicros,currencyCode}`, attribute hoisting, and identifier/`targetCountry` → `feedLabel` remapping. Output drops straight into [`feeds push`](/reference/feeds) and [`preflight`](/reference/preflight).
-- **`gmc migrate feed-labels`** (v0.9.8) — verify feed labels transfer correctly, so Shopping campaigns keep serving.
+- **`gmc migrate feed-labels`** (v0.9.8) — verify the `targetCountry` → `feedLabel` remap matches what your Google Ads Shopping campaigns expect, so products keep serving (the silent campaign-killer).
