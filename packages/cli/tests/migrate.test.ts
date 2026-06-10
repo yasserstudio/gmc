@@ -236,7 +236,7 @@ describe("gmc migrate products", () => {
     expect(process.exitCode).toBe(0);
 
     const files = readdirSync(outDir);
-    expect(files).toEqual(["online~en~US~SKU1.json"]);
+    expect(files).toEqual(["en~US~SKU1.json"]);
     const written = JSON.parse(readFileSync(join(outDir, files[0]), "utf-8"));
     expect(written).toMatchObject({
       offerId: "SKU1",
@@ -281,8 +281,8 @@ describe("gmc migrate products", () => {
     );
     await run(["migrate", "products", "--from", inDir, "--out", outDir]);
     expect(readdirSync(outDir).sort()).toEqual([
-      "online~en~US~SKU1.json",
-      "online~en~US~SKU2.json",
+      "en~US~SKU1.json",
+      "en~US~SKU2.json",
     ]);
     expect(process.exitCode).toBe(0);
   });
@@ -293,7 +293,7 @@ describe("gmc migrate products", () => {
     await run(["migrate", "products", "--from", inDir, "--out", outDir]);
     expect(out()).toContain("Could not convert 1 product(s)");
     expect(out()).toContain("bad.json");
-    expect(readdirSync(outDir)).toEqual(["online~en~US~SKU1.json"]);
+    expect(readdirSync(outDir)).toEqual(["en~US~SKU1.json"]);
     expect(process.exitCode).toBe(1); // ExitCode.Error
   });
 
@@ -317,7 +317,7 @@ describe("gmc migrate products", () => {
     await run(["-j", "migrate", "products", "--from", inDir, "--out", outDir]);
     const parsed = JSON.parse(out());
     expect(parsed.converted).toBe(1);
-    expect(parsed.written).toEqual(["online~en~US~SKU1.json"]);
+    expect(parsed.written).toEqual(["en~US~SKU1.json"]);
     expect(parsed.products[0].remapped).toEqual(
       expect.arrayContaining(['targetCountry "US" → feedLabel']),
     );
@@ -336,13 +336,12 @@ describe("gmc migrate products", () => {
 
 const pi = (offerId: string, feedLabel?: string) => ({
   offerId,
-  channel: "online",
   contentLanguage: "en",
   ...(feedLabel !== undefined ? { feedLabel } : {}),
   attributes: { title: offerId },
 });
 const source = (feedLabel: string) => ({
-  primaryProductDataSource: { channel: "online", feedLabel, contentLanguage: "en" },
+  primaryProductDataSource: { feedLabel, contentLanguage: "en" },
 });
 
 describe("gmc migrate feed-labels", () => {
@@ -439,7 +438,7 @@ describe("gmc migrate feed-labels", () => {
   it("checks the live catalog with --remote", async () => {
     process.env["GMC_ACCOUNT_ID"] = "123";
     listProducts.mockResolvedValue([
-      { offerId: "A", channel: "online", contentLanguage: "en", feedLabel: "US" },
+      { offerId: "A", contentLanguage: "en", feedLabel: "US" },
     ]);
     listDataSources.mockResolvedValue([source("US")]);
     await run(["migrate", "feed-labels", "--remote"]);

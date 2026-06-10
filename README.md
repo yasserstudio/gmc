@@ -21,18 +21,11 @@ It is built for the **Content API → Merchant API migration** (the Content API 
 
 ## Install
 
-> [!NOTE]
-> **Pre-release.** The `@gmc-cli/*` packages aren't published to npm yet — that lands later in the `0.x` series. For now, run from source.
-
 ```bash
-# From source (today)
-git clone https://github.com/yasserstudio/gmc.git
-cd gmc && pnpm install && pnpm build
-node packages/cli/dist/bin.js --help
-
-# Once published (coming in the 0.x series)
 npm install -g @gmc-cli/cli
 ```
+
+See the [Installation guide](https://yasserstudio.github.io/gmc/guide/installation) for other methods.
 
 ---
 
@@ -62,7 +55,7 @@ Most Merchant Center work is still done by hand in the web UI, and the Content A
 | Diagnoses the silent GCP-registration trap | ✅ `doctor` | — | — |
 | Catalog as version-controllable files | ✅ | — | DIY |
 | Offline feed-compliance preflight | ✅ `preflight` | — | — |
-| Content API → Merchant API migrate | 🚧 _roadmap_ | — | — |
+| Content API → Merchant API migrate | ✅ `migrate` | — | — |
 
 The differentiators — `doctor` and `preflight` (shipped), and `migrate` — are front-loaded over breadth. See the [roadmap](#roadmap).
 
@@ -104,10 +97,10 @@ The Merchant API splits products into a read-only **processed** resource and a w
 
 ```bash
 gmc products list --page-size 50              # processed products (status + issues)
-gmc products get online~en~US~SKU1            # one product, with item-level issues
+gmc products get en~US~SKU1            # one product, with item-level issues
 gmc products insert --data-source 11223344 --file product.json   # create/replace
 cat product.json | gmc products insert --data-source 11223344    # …or from stdin
-gmc products delete online~en~US~SKU1 --data-source 11223344
+gmc products delete en~US~SKU1 --data-source 11223344
 ```
 
 ## Data sources
@@ -170,13 +163,13 @@ Every command supports `--json` and uses classed exit codes, so pipelines can br
 | `5` | Merchant API error |
 | `6` | Preflight found gating compliance issues |
 
-A dedicated GitHub Action and a preflight CI gate arrive in [Phase 8](#roadmap).
+A [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) and a [GitLab CI recipe](https://yasserstudio.github.io/gmc/guide/gitlab-ci) are available for drop-in pipeline integration.
 
 ---
 
 ## Packages
 
-A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the packages as a typed Merchant API SDK. _(Not yet on npm — links point to the source.)_
+A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the packages as a typed Merchant API SDK.
 
 | Package | Description |
 | --- | --- |
@@ -186,6 +179,7 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 | [`@gmc-cli/auth`](packages/auth) | Authentication — service account, OAuth, ADC |
 | [`@gmc-cli/config`](packages/config) | Configuration loading and profiles |
 | [`@gmc-cli/preflight`](packages/preflight) | Offline feed-compliance rule engine + `.gmcpreflightrc` |
+| [`@gmc-cli/migrate`](packages/migrate) | Content API → Merchant API transform + feed-label checker |
 
 ---
 
@@ -199,9 +193,12 @@ gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0`
 | 1 | v0.1–v0.4 | Spike pt 1 — auth, CLI shell, `doctor` | ✅ |
 | 2 | v0.5–v0.7 | Spike pt 2 — typed client, accounts, products | ✅ |
 | 3 | v0.8–v0.9.2 | Feeds as code — data sources, pull, push, diff | ✅ |
-| 4 | v0.9.3–v0.9.5 | **Preflight** — offline feed-compliance scanner (engine ✓, rules next) | 🚧 |
-| 5 | v0.9.6–v0.9.8 | **Migrate** — Content API → Merchant API assistant | |
-| 6–9 | v0.9.9–v0.9.x | Inventories, promotions, reports, CI/CD, launch → **v1.0.0** | |
+| 4 | v0.9.3–v0.9.5 | **Preflight** — offline feed-compliance scanner | ✅ |
+| 5 | v0.9.6–v0.9.8 | **Migrate** — Content API → Merchant API assistant | ✅ |
+| 6 | v0.9.9–v0.9.10 | Inventories + promotions | ✅ |
+| 7 | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights | ✅ |
+| 8 | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening | ✅ |
+| 9 | v0.9.17+ | Polish & launch → **v1.0.0** | 🚧 |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

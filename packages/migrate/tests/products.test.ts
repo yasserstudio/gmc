@@ -47,10 +47,10 @@ describe("transformProduct", () => {
     });
     expect(input).toMatchObject({
       offerId: "SKU1",
-      channel: "online",
       contentLanguage: "en",
       feedLabel: "US",
     });
+    expect(input.legacyLocal).toBeUndefined();
     expect(input.attributes).toMatchObject({
       title: "Shoe",
       price: { amountMicros: "49990000", currencyCode: "USD" },
@@ -110,7 +110,8 @@ describe("transformProduct", () => {
 
   it("derives identity from the Content API id when fields are absent, and drops id/kind", () => {
     const r = ok({ id: "online:en:US:SKU9", kind: "content#product", title: "T" });
-    expect(r.input).toMatchObject({ offerId: "SKU9", channel: "online", contentLanguage: "en", feedLabel: "US" });
+    expect(r.input).toMatchObject({ offerId: "SKU9", contentLanguage: "en", feedLabel: "US" });
+    expect(r.input.legacyLocal).toBeUndefined();
     expect(r.dropped).toEqual(expect.arrayContaining(["id", "kind"]));
   });
 
@@ -124,8 +125,31 @@ describe("transformProduct", () => {
     });
   });
 
-  it("defaults channel to online", () => {
-    expect(ok({ offerId: "X" }).input.channel).toBe("online");
+  it("drops an online channel (the v1 default — no legacyLocal field)", () => {
+    const r = ok({ offerId: "X", channel: "online" });
+    expect(r.input.legacyLocal).toBeUndefined();
+    expect("channel" in r.input).toBe(false);
+  });
+
+  it("maps a local channel to legacyLocal: true and reports the remap", () => {
+    const r = ok({ offerId: "X", channel: "local" });
+    expect(r.input.legacyLocal).toBe(true);
+    expect("channel" in r.input).toBe(false);
+    expect(r.remapped.some((m) => m.includes("legacyLocal"))).toBe(true);
+  });
+
+  it("maps an uppercase LOCAL channel (Content API enum casing) to legacyLocal", () => {
+    expect(ok({ offerId: "X", channel: "LOCAL" }).input.legacyLocal).toBe(true);
+  });
+
+  it("derives a local channel from the Content API id", () => {
+    expect(ok({ id: "local:en:US:SKU1" }).input.legacyLocal).toBe(true);
+  });
+
+  it("flags an unrecognized channel as dropped (no v1 equivalent)", () => {
+    const r = ok({ offerId: "X", channel: "weird" });
+    expect(r.input.legacyLocal).toBeUndefined();
+    expect(r.dropped.some((d) => d.includes("channel"))).toBe(true);
   });
 
   it.each([

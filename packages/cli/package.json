@@ -27,13 +27,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@gmc-cli/api": "workspace:*",
-    "@gmc-cli/auth": "workspace:*",
-    "@gmc-cli/config": "workspace:*",
-    "@gmc-cli/core": "workspace:*",
-    "@gmc-cli/migrate": "workspace:*",
-    "@gmc-cli/preflight": "workspace:*",
-    "commander": "^14.0.3"
+    "commander": "^14.0.3",
+    "google-auth-library": "^10.7.0"
   },
   "homepage": "https://yasserstudio.github.io/gmc/",
   "keywords": [
@@ -59,10 +54,17 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "@gmc-cli/api": "workspace:*",
+    "@gmc-cli/auth": "workspace:*",
+    "@gmc-cli/config": "workspace:*",
+    "@gmc-cli/core": "workspace:*",
+    "@gmc-cli/migrate": "workspace:*",
+    "@gmc-cli/preflight": "workspace:*"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yasserstudio/gmc"
+    "url": "git+https://github.com/yasserstudio/gmc.git",
+    "directory": "packages/cli"
   }
 }

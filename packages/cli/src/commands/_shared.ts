@@ -21,34 +21,40 @@ export function formatPrice(price: Price): string {
 }
 
 /**
- * Filesystem-safe per-product filename from its composite id (`{channel}~
- * {contentLanguage}~{feedLabel}~{offerId}`); null if no id can be derived. Prefers
- * a processed product's `name` segment, else builds from the identity fields.
- * Shared by `feeds pull` (from a Product) and `migrate products` (from a
- * ProductInput) so both name files identically. Path separators / colon are
+ * Filesystem-safe per-product filename from its composite id (`{contentLanguage}~
+ * {feedLabel}~{offerId}`, `local~`-prefixed for legacy-local products); null if no
+ * id can be derived. Prefers a processed product's `name` segment, else builds from
+ * the identity fields. Shared by `feeds pull` (from a Product) and `migrate products`
+ * (from a ProductInput) so both name files identically. Path separators / colon are
  * replaced so the id stays one path segment.
  */
 export function productFileName(p: {
   name?: string;
-  channel?: string;
+  legacyLocal?: boolean;
   contentLanguage?: string;
   feedLabel?: string;
   offerId?: string;
 }): string | null {
   let segment = p.name ? productSegment(p.name) : "";
   if (!segment && p.offerId) {
-    segment = [p.channel, p.contentLanguage, p.feedLabel, p.offerId].filter(Boolean).join("~");
+    const core = [p.contentLanguage, p.feedLabel, p.offerId].filter(Boolean).join("~");
+    segment = p.legacyLocal ? `local~${core}` : core;
   }
   if (!segment) return null;
   return `${segment.replace(/[/\\:]/g, "_")}.json`;
 }
 
+/** The Merchant API's largest documented page size — values above this are rejected. */
+const MAX_PAGE_SIZE = 1000;
+
 /** Parse a positive-integer `--page-size` flag, or throw a UsageError. */
 export function parsePageSize(raw: string | undefined): number | undefined {
   if (raw === undefined) return undefined;
+  // Require plain digits so "1e21" can't pass Number() and reach the query string
+  // as "1e+21" (which the API rejects with an opaque 400). Cap at the API maximum.
   const n = Number(raw);
-  if (!Number.isInteger(n) || n <= 0) {
-    throw new UsageError(`Invalid --page-size "${raw}".`, "Use a positive integer.");
+  if (!/^\d+$/.test(raw) || !Number.isInteger(n) || n <= 0 || n > MAX_PAGE_SIZE) {
+    throw new UsageError(`Invalid --page-size "${raw}".`, `Use a positive integer up to ${MAX_PAGE_SIZE}.`);
   }
   return n;
 }

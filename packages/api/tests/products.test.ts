@@ -120,11 +120,11 @@ describe("ProductsService", () => {
 describe("toProductInput", () => {
   it("keeps writable fields and strips output-only ones", () => {
     const input = toProductInput({
-      name: "accounts/123/products/online~en~US~SKU1",
+      name: "accounts/123/products/local~en~US~SKU1",
       offerId: "SKU1",
       contentLanguage: "en",
       feedLabel: "US",
-      channel: "ONLINE",
+      legacyLocal: true,
       dataSource: "accounts/123/dataSources/55",
       attributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
       customAttributes: [{ name: "x", value: "y" }],
@@ -135,7 +135,7 @@ describe("toProductInput", () => {
       offerId: "SKU1",
       contentLanguage: "en",
       feedLabel: "US",
-      channel: "ONLINE",
+      legacyLocal: true,
       attributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
       customAttributes: [{ name: "x", value: "y" }],
     });
@@ -151,14 +151,20 @@ describe("toProductInput", () => {
 });
 
 describe("productKey", () => {
-  it("joins the four identity segments with ~", () => {
+  it("joins the three identity segments with ~", () => {
     expect(
-      productKey({ channel: "ONLINE", contentLanguage: "en", feedLabel: "US", offerId: "sku" }),
-    ).toBe("ONLINE~en~US~sku");
+      productKey({ contentLanguage: "en", feedLabel: "US", offerId: "sku" }),
+    ).toBe("en~US~sku");
+  });
+
+  it("prefixes legacy-local products with local~", () => {
+    expect(
+      productKey({ legacyLocal: true, contentLanguage: "en", feedLabel: "US", offerId: "sku" }),
+    ).toBe("local~en~US~sku");
   });
 
   it("collapses missing parts to empty segments", () => {
-    expect(productKey({ offerId: "sku" })).toBe("~~~sku");
-    expect(productKey({})).toBe("~~~");
+    expect(productKey({ offerId: "sku" })).toBe("~~sku");
+    expect(productKey({})).toBe("~~");
   });
 });

@@ -143,8 +143,18 @@ export function transformProduct(raw: unknown): ProductTransformResult {
   }
 
   const input: ProductInput = { offerId };
+  // Merchant API v1 removed `channel`: "local" products become `legacyLocal: true`,
+  // "online" (the default) carries no field.
   const channel = strOr(src["channel"]) ?? fromId.channel ?? "online";
-  input.channel = channel;
+  const channelLc = channel.toLowerCase();
+  if (channelLc === "local") {
+    input.legacyLocal = true;
+    remapped.push(`channel "${channel}" → legacyLocal`);
+  } else if (channelLc !== "online") {
+    // Anything other than online/local has no Merchant API v1 equivalent — flag it
+    // rather than dropping it silently.
+    dropped.push(`channel "${channel}" (no Merchant API v1 equivalent)`);
+  }
   const contentLanguage = strOr(src["contentLanguage"]) ?? fromId.contentLanguage;
   if (contentLanguage) input.contentLanguage = contentLanguage;
   const feedLabel = explicitFeedLabel ?? targetCountry ?? fromId.feedLabel;

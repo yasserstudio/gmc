@@ -165,11 +165,12 @@ export function registerFeedsCommands(program: Command): void {
         }
 
         if (apiError) {
-          // Surface how far the (idempotent) batch got before reporting the abort.
+          // Surface how far the (idempotent) batch got before reporting the abort —
+          // in human output and, for CI consumers, in the JSON envelope.
           if (!ctx.json && pushed > 0) {
             process.stdout.write(`Pushed ${pushed} product(s) before the error.\n`);
           }
-          reportError(apiError, { json }, "gmc feeds push");
+          reportError(apiError, { json }, "gmc feeds push", { pushed });
           return;
         }
 

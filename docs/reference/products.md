@@ -20,11 +20,11 @@ gmc products list --json   # { "products": [ … ] }
 
 ## `gmc products get <productId>`
 
-Fetch one processed product, with its status and any item-level issues. The id is the composite `{channel}~{contentLanguage}~{feedLabel}~{offerId}` (as shown by `list`); the full resource name is also accepted.
+Fetch one processed product, with its status and any item-level issues. The id is the composite `{contentLanguage}~{feedLabel}~{offerId}` (as shown by `list`; legacy-local products use a `local~` prefix); the full resource name is also accepted.
 
 ```sh
-gmc products get online~en~US~SKU1
-gmc products get online~en~US~SKU1 --json
+gmc products get en~US~SKU1
+gmc products get en~US~SKU1 --json
 ```
 
 ## `gmc products insert`
@@ -46,7 +46,6 @@ cat product.json | gmc products insert --data-source 11223344
   "offerId": "SKU1",
   "contentLanguage": "en",
   "feedLabel": "US",
-  "channel": "ONLINE",
   "attributes": {
     "title": "Trail Runner",
     "link": "https://shop.com/p/run01",
@@ -65,7 +64,7 @@ Inserting succeeds immediately, but the **processed** product (`get` / `list`) i
 Delete a product input from a data source.
 
 ```sh
-gmc products delete online~en~US~SKU1 --data-source 11223344
+gmc products delete en~US~SKU1 --data-source 11223344
 ```
 
 | Option | Description |
@@ -77,5 +76,5 @@ gmc products delete online~en~US~SKU1 --data-source 11223344
 `2` if the account, `--data-source`, or JSON input is missing/invalid · `3` auth · `5` Merchant API.
 
 ::: info Data sources
-Creating and managing data sources arrives in **Phase 3 (v0.8)**. For now, pass an existing primary API data source via `--data-source`.
+Pass an existing primary API data source via `--data-source`. To create and manage data sources, see [`gmc datasources`](/reference/datasources).
 :::

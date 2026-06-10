@@ -27,6 +27,10 @@ function fmtReportDate(d?: ReportDate): string {
 }
 
 /** Resolve the performance window: explicit --since/--until, else the last --days (default 30). */
+// Cap on `--days` (~10 years) — generous for any report retention window, but
+// bounded so the start date can't underflow into a negative/invalid year.
+const MAX_DAYS = 3650;
+
 function resolveWindow(opts: PerfOpts): { since: string; until: string } {
   for (const [flag, val] of [
     ["--since", opts.since],
@@ -40,9 +44,11 @@ function resolveWindow(opts: PerfOpts): { since: string; until: string } {
   if (opts.since) return { since: opts.since, until };
   let days = 30;
   if (opts.days !== undefined) {
+    // Require plain digits (so "1e9" / "1.5" can't slip past Number()) and cap the
+    // span — an unbounded value underflows the start date to a negative year.
     const n = Number(opts.days);
-    if (!Number.isInteger(n) || n <= 0) {
-      throw new UsageError(`Invalid --days "${opts.days}".`, "Use a positive integer.");
+    if (!/^\d+$/.test(opts.days) || !Number.isInteger(n) || n <= 0 || n > MAX_DAYS) {
+      throw new UsageError(`Invalid --days "${opts.days}".`, `Use a positive integer up to ${MAX_DAYS}.`);
     }
     days = n;
   }

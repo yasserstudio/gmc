@@ -6,13 +6,13 @@ shows the right stock and price per location. Both are sub-resources of a produc
 **list / insert (upsert) / delete**.
 
 ```sh
-gmc inventory local list online~en~US~SKU1
-gmc inventory local insert online~en~US~SKU1 --store-code STORE1 --availability out_of_stock --quantity 0
-gmc inventory local delete online~en~US~SKU1 --store-code STORE1
+gmc inventory local list en~US~SKU1
+gmc inventory local insert en~US~SKU1 --store-code STORE1 --availability out_of_stock --quantity 0
+gmc inventory local delete en~US~SKU1 --store-code STORE1
 
-gmc inventory regional list online~en~US~SKU1
-gmc inventory regional insert online~en~US~SKU1 --region US-CA --price 18.99 --currency USD
-gmc inventory regional delete online~en~US~SKU1 --region US-CA
+gmc inventory regional list en~US~SKU1
+gmc inventory regional insert en~US~SKU1 --region US-CA --price 18.99 --currency USD
+gmc inventory regional delete en~US~SKU1 --region US-CA
 ```
 
 `<product>` is a product id or full resource name (from [`gmc products list`](/reference/products)).
@@ -33,7 +33,7 @@ for full control:
 
 ```sh
 # full control via JSON, with a flag override
-gmc inventory local insert online~en~US~SKU1 --file store1.json --availability out_of_stock
+gmc inventory local insert en~US~SKU1 --file store1.json --availability out_of_stock
 ```
 
 Insert is an **upsert** keyed by `storeCode` / `region` — re-inserting replaces. There's no `get` or

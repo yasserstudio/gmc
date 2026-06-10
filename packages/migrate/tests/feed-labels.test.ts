@@ -2,14 +2,12 @@ import { describe, it, expect } from "vitest";
 import { checkFeedLabels, type FeedLabelProduct, type FeedLabelSource } from "../src/index.js";
 
 const p = (feedLabel?: string, extra: Partial<FeedLabelProduct> = {}): FeedLabelProduct => ({
-  channel: "online",
   contentLanguage: "en",
   ...(feedLabel !== undefined ? { feedLabel } : {}),
   ...extra,
 });
 
 const src = (feedLabel: string, extra: Partial<FeedLabelSource> = {}): FeedLabelSource => ({
-  channel: "online",
   contentLanguage: "en",
   feedLabel,
   ...extra,
@@ -20,7 +18,7 @@ function findingIds(r: ReturnType<typeof checkFeedLabels>): string[] {
 }
 
 describe("checkFeedLabels", () => {
-  it("groups products by (channel, feedLabel, contentLanguage)", () => {
+  it("groups products by (feedLabel, contentLanguage)", () => {
     const r = checkFeedLabels([p("US"), p("US"), p("CA")]);
     expect(r.scanned).toBe(3);
     expect(r.groups).toHaveLength(2);
@@ -69,7 +67,7 @@ describe("checkFeedLabels", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("requires channel + contentLanguage to match too", () => {
+  it("requires contentLanguage to match too", () => {
     const r = checkFeedLabels([p("US")], { dataSources: [src("US", { contentLanguage: "fr" })] });
     expect(findingIds(r)).toContain("feed-label.unmatched");
   });
@@ -107,9 +105,9 @@ describe("checkFeedLabels", () => {
   });
 
   it("does not collide identities that would merge under a naive space-join", () => {
-    // ("x y","z") vs ("x","y z") both become "online x y z" if joined by spaces.
-    const a: FeedLabelProduct = { channel: "online", feedLabel: "x y", contentLanguage: "z" };
-    const b: FeedLabelProduct = { channel: "online", feedLabel: "x", contentLanguage: "y z" };
+    // ("x y","z") vs ("x","y z") both become "x y z" if joined by spaces.
+    const a: FeedLabelProduct = { feedLabel: "x y", contentLanguage: "z" };
+    const b: FeedLabelProduct = { feedLabel: "x", contentLanguage: "y z" };
     const r = checkFeedLabels([a, b]);
     expect(r.groups).toHaveLength(2);
   });

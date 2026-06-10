@@ -105,16 +105,22 @@ export function emitJson(data: unknown): void {
 /**
  * Report an error consistently and set `process.exitCode`. In JSON mode a
  * `{ ok: false, error }` envelope goes to stdout (single parseable stream); in
- * human mode the message — and any suggestion — go to stderr.
+ * human mode the message — and any suggestion — go to stderr. `extra` fields are
+ * merged into the JSON envelope alongside `ok`/`error` (e.g. partial progress a CI
+ * consumer needs) — they can't override `ok`/`error`, don't affect human output, and
+ * must never carry secrets.
  */
 export function reportError(
   err: unknown,
   ctx: { json: boolean },
   humanPrefix = "gmc",
+  extra?: Record<string, unknown>,
 ): void {
   if (isStructuredError(err)) {
     if (ctx.json) {
+      // `extra` is spread first so it can never clobber the `ok`/`error` envelope keys.
       emitJson({
+        ...extra,
         ok: false,
         error: { code: err.code, message: err.message, suggestion: err.suggestion },
       });
@@ -128,7 +134,7 @@ export function reportError(
 
   const message = err instanceof Error ? err.message : String(err);
   if (ctx.json) {
-    emitJson({ ok: false, error: { message } });
+    emitJson({ ...extra, ok: false, error: { message } });
   } else {
     process.stderr.write(`${humanPrefix}: ${message}\n`);
   }

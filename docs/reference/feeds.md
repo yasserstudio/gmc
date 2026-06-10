@@ -21,17 +21,16 @@ Each file is named by the product's composite id and contains a push-ready input
 
 ```
 feeds/
-  online~en~US~SKU1.json
-  online~en~US~SKU2.json
+  en~US~SKU1.json
+  en~US~SKU2.json
 ```
 
 ```json
-// online~en~US~SKU1.json
+// en~US~SKU1.json
 {
   "offerId": "SKU1",
   "contentLanguage": "en",
   "feedLabel": "US",
-  "channel": "ONLINE",
   "attributes": { "title": "Trail Runner", "price": { "amountMicros": "49990000", "currencyCode": "USD" } }
 }
 ```
@@ -76,7 +75,7 @@ gmc feeds diff --json                   # { "added": [...], "updated": [...], "u
 | `--data-source <id>` | Only compare against products from this data source |
 | `--page-size <n>` | Max products per API page |
 
-Each product is matched by its composite id (`{channel}~{contentLanguage}~{feedLabel}~{offerId}`), independent of filename, and bucketed:
+Each product is matched by its composite id (`{contentLanguage}~{feedLabel}~{offerId}`, or `local~{contentLanguage}~{feedLabel}~{offerId}` for legacy-local products), independent of filename, and bucketed:
 
 - `+` **added** — in the directory, not yet in the catalog (`push` would create it)
 - `~` **updated** — present in both, but the content differs (`push` would replace it)

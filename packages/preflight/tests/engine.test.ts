@@ -17,7 +17,6 @@ const warnRule: Rule = {
 
 const product = (offerId: string): ProductInput => ({
   offerId,
-  channel: "ONLINE",
   contentLanguage: "en",
   feedLabel: "US",
 });
@@ -41,7 +40,7 @@ describe("runPreflight", () => {
       ruleId: "test.err",
       severity: "error",
       offerId: "bad",
-      productKey: "ONLINE~en~US~bad",
+      productKey: "en~US~bad",
       attribute: "offerId",
     });
   });
@@ -83,9 +82,9 @@ describe("runPreflight", () => {
     // produce findings — verifies cross-product order AND intra-product (err < warn).
     const report = runPreflight([product("bad"), product("aaa")], {}, [warnRule, errRule]);
     expect(report.findings.map((f) => `${f.productKey}/${f.ruleId}`)).toEqual([
-      "ONLINE~en~US~aaa/test.warn",
-      "ONLINE~en~US~bad/test.err",
-      "ONLINE~en~US~bad/test.warn",
+      "en~US~aaa/test.warn",
+      "en~US~bad/test.err",
+      "en~US~bad/test.warn",
     ]);
   });
 
@@ -118,8 +117,8 @@ describe("runPreflight", () => {
 
 describe("productKey", () => {
   it("joins the composite identity with empty segments for missing parts", () => {
-    expect(productKey(product("sku"))).toBe("ONLINE~en~US~sku");
-    expect(productKey({ offerId: "sku" })).toBe("~~~sku");
-    expect(productKey({})).toBe("~~~");
+    expect(productKey(product("sku"))).toBe("en~US~sku");
+    expect(productKey({ offerId: "sku" })).toBe("~~sku");
+    expect(productKey({})).toBe("~~");
   });
 });

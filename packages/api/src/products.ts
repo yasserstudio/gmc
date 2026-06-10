@@ -47,7 +47,8 @@ export interface ProductInput {
   offerId?: string;
   contentLanguage?: string;
   feedLabel?: string;
-  channel?: string;
+  /** True for products sold exclusively in physical stores (Merchant API v1 replaced `channel` with this). */
+  legacyLocal?: boolean;
   attributes?: ProductAttributes;
   customAttributes?: CustomAttribute[];
 }
@@ -75,10 +76,10 @@ export interface ProductStatus {
 /** A processed, read-only product (`accounts/{account}/products/{product}`). */
 export interface Product {
   name: string;
-  channel?: string;
   offerId?: string;
   contentLanguage?: string;
   feedLabel?: string;
+  legacyLocal?: boolean;
   dataSource?: string;
   attributes?: ProductAttributes;
   customAttributes?: CustomAttribute[];
@@ -93,23 +94,27 @@ interface ProductsListPage {
 
 /**
  * Reduce a product id or full resource name to the composite product segment
- * (`{channel}~{contentLanguage}~{feedLabel}~{offerId}`), so `get`/`delete` accept
- * either a bare id or the `name` returned by `list`.
+ * (`{contentLanguage}~{feedLabel}~{offerId}`, with a `local~` prefix for
+ * legacy-local products), so `get`/`delete` accept either a bare id or the `name`
+ * returned by `list`.
  */
 export function productSegment(idOrName: string): string {
   return idOrName.replace(/^.*\/(?:products|productInputs)\//, "");
 }
 
 /**
- * Composite product identity — the `{channel}~{contentLanguage}~{feedLabel}~{offerId}`
- * key Merchant Center, `gmc feeds`, and preflight all key products by. Missing parts
- * collapse to empty segments. Lives here, next to the {@link ProductInput} it derives
- * from, so every consumer shares one definition.
+ * Composite product identity — the `{contentLanguage}~{feedLabel}~{offerId}` key
+ * Merchant Center, `gmc feeds`, and preflight all key products by, with a `local~`
+ * prefix when the product is legacy-local (Merchant API v1 dropped the `channel`
+ * segment for this scheme). Missing parts collapse to empty segments. Lives here,
+ * next to the {@link ProductInput} it derives from, so every consumer shares one
+ * definition.
  */
 export function productKey(input: ProductInput): string {
-  return [input.channel, input.contentLanguage, input.feedLabel, input.offerId]
+  const core = [input.contentLanguage, input.feedLabel, input.offerId]
     .map((part) => part ?? "")
     .join("~");
+  return input.legacyLocal ? `local~${core}` : core;
 }
 
 /**
@@ -124,7 +129,7 @@ export function toProductInput(product: Product): ProductInput {
   if (product.offerId !== undefined) input.offerId = product.offerId;
   if (product.contentLanguage !== undefined) input.contentLanguage = product.contentLanguage;
   if (product.feedLabel !== undefined) input.feedLabel = product.feedLabel;
-  if (product.channel !== undefined) input.channel = product.channel;
+  if (product.legacyLocal !== undefined) input.legacyLocal = product.legacyLocal;
   if (product.attributes !== undefined) input.attributes = product.attributes;
   if (product.customAttributes !== undefined) input.customAttributes = product.customAttributes;
   return input;
