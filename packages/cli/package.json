@@ -1,6 +1,6 @@
 {
   "name": "@gmc-cli/cli",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "Google Merchant Center CLI — a typed, CI-friendly command-line interface for the Google Merchant API, with an offline feed-compliance preflight. Provides the gmc command.",
   "type": "module",
   "bin": {
