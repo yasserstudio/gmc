@@ -7,6 +7,20 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.14 — uniform `--json` contract
+
+Phase 8, part 1 — JSON/exit-code hardening across all commands.
+
+- **Uniform `--json`** — `gmc auth` (`whoami`/`login`/`test`/`logout`) and `gmc config`
+  (`path`/`list`/`current`) used to wrap success in `{ "ok": true, … }`; every other command prints
+  the payload bare. They now print bare too, so the contract is uniform across all 13 command groups:
+  **bare payload on success, `{ "ok": false, "error": {…} }` on failure.** (Domain `ok` fields on
+  `doctor`/`preflight`/`migrate scopes`/`reports check` are verdicts, not the envelope — unchanged.)
+- **exit codes** — the reference now documents `1` (a gating check failed) alongside `2` usage / `3`
+  auth / `4` config / `5` Merchant API / `6` preflight.
+
+_`@gmc-cli/cli` → 0.9.14 (patch); other packages unchanged._
+
 ## v0.9.13 — reports: CI threshold gate
 
 Phase 7, part 3 — **Phase 7 complete**.
