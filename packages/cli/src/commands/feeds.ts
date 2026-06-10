@@ -4,10 +4,8 @@ import { join } from "node:path";
 import { emitJson, reportError, ExitCode } from "@gmc-cli/core";
 import {
   ProductsService,
-  productSegment,
   toProductInput,
   productKey,
-  type Product,
   type ProductInput,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
@@ -17,23 +15,11 @@ import {
   parsePageSize,
   requireDataSource,
   loadProductFiles,
+  productFileName,
   type FileLoadFailure,
 } from "./_shared.js";
 
 const DEFAULT_DIR = "feeds";
-
-/** Safe per-product filename from its composite id; null if no id can be derived. */
-function fileNameFor(product: Product): string | null {
-  let segment = product.name ? productSegment(product.name) : "";
-  if (!segment && product.offerId) {
-    segment = [product.channel, product.contentLanguage, product.feedLabel, product.offerId]
-      .filter(Boolean)
-      .join("~");
-  }
-  if (!segment) return null;
-  // Replace path separators and colon (Windows) so the id stays one path segment.
-  return `${segment.replace(/[/\\:]/g, "_")}.json`;
-}
 
 /** Normalize a data source id or full resource name to its bare id, for matching. */
 function dataSourceId(dataSource: string): string {
@@ -109,7 +95,7 @@ export function registerFeedsCommands(program: Command): void {
         let pulled = 0;
         let skipped = 0;
         for (const product of products) {
-          const name = fileNameFor(product);
+          const name = productFileName(product);
           // Skip a product with no derivable id, or whose filename already exists
           // this run (collision — don't silently overwrite).
           if (!name || seen.has(name)) {
