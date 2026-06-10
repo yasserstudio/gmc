@@ -16,11 +16,15 @@ hero:
       link: https://github.com/yasserstudio/gmc
 features:
   - title: Typed Merchant API
-    details: A typed client for Accounts, Products, and more — per-sub-API rate limiting, retry/backoff, and pagination built in.
+    details: A typed client for accounts, products, data sources, inventory, promotions, and reports — per-sub-API rate limiting, retry/backoff, and pagination built in.
   - title: gmc doctor
     details: Diagnoses the silent GCP-registration / API-not-enabled trap that quietly breaks Merchant API access.
+  - title: Offline preflight
+    details: gmc preflight scans your feed for required-attribute, format, and disapproval-trigger issues locally — no API call — so you catch a rejection before upload.
+  - title: Content API → Merchant API
+    details: gmc migrate moves you off the retired Content API — scope/auth audit, product transform (price→micros, field remap), and a feed-label safety check.
+  - title: Feeds as code
+    details: Pull your catalog to version-controllable JSON, diff what would change, and push it back. Inventory and promotions too.
   - title: Built for CI
-    details: "--json everywhere and classed exit codes (usage, auth, config, api) so pipelines can branch on the failure."
-  - title: For the Content API cutover
-    details: Built for the Content API → Merchant API migration. Round-trip your catalog as version-controllable JSON.
+    details: "--json everywhere and classed exit codes, plus a GitHub Action and GitLab recipe — gate a merge on preflight or a performance threshold."
 ---

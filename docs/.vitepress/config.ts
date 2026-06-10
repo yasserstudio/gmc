@@ -8,7 +8,30 @@ export default defineConfig({
   base: "/gmc/",
   cleanUrls: true,
   lastUpdated: true,
-  head: [["meta", { name: "theme-color", content: "#1a73e8" }]],
+  sitemap: { hostname: "https://yasserstudio.github.io/gmc/" },
+  head: [
+    ["meta", { name: "theme-color", content: "#1a73e8" }],
+    ["meta", { name: "og:type", content: "website" }],
+    ["meta", { name: "og:title", content: "gmc — Google Merchant Center CLI" }],
+    [
+      "meta",
+      {
+        name: "og:description",
+        content:
+          "Typed, CI-friendly CLI for the Google Merchant API — with an offline feed-compliance preflight and a Content API → Merchant API migrator.",
+      },
+    ],
+    ["meta", { name: "og:url", content: "https://yasserstudio.github.io/gmc/" }],
+    ["meta", { name: "twitter:card", content: "summary" }],
+    ["meta", { name: "twitter:title", content: "gmc — Google Merchant Center CLI" }],
+    [
+      "meta",
+      {
+        name: "twitter:description",
+        content: "Typed, CI-friendly CLI for the Google Merchant API, with an offline preflight.",
+      },
+    ],
+  ],
   themeConfig: {
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
