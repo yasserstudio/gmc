@@ -7,8 +7,10 @@
 // resolves similarly with GMC_ACCOUNT_ID and the profile's file entry.
 
 import { readFileSync } from "node:fs";
+import { chmod, mkdir, rename, unlink, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { ConfigError } from "./errors.js";
 
 export { ConfigError } from "./errors.js";
@@ -182,4 +184,73 @@ export function resolveProfile(
   const resolved: ResolvedProfile = { name };
   if (accountId !== undefined) resolved.accountId = accountId;
   return resolved;
+}
+
+/** Options for {@link upsertProfile}. */
+export interface UpsertProfileOptions {
+  /** Also set this profile as the `defaultProfile`. */
+  setDefault?: boolean;
+  /** Config file path (defaults to the user config path). */
+  configPath?: string;
+}
+
+/**
+ * Atomically persist the configuration. The shape is re-validated first (so a bad
+ * in-memory config never lands on disk), then written via a randomized temp file
+ * + `rename` so readers never observe a partial file. Mirrors `writeJsonFileSecure`
+ * in @gmc-cli/auth: config.json isn't secret, but 0600/0700 keeps it consistent
+ * with the credential store living in the same directory.
+ */
+export async function saveConfig(
+  config: GmcConfig,
+  configPath: string = getUserConfigPath(),
+): Promise<void> {
+  const validated = validateConfig(config, configPath);
+  const parent = dirname(configPath);
+  // mkdir returns the first directory created, or undefined if it already existed —
+  // only tighten permissions on a directory we just created.
+  const created = await mkdir(parent, { recursive: true });
+  if (created) await chmod(parent, 0o700).catch(() => {});
+
+  const tmpPath = `${configPath}.${randomBytes(6).toString("hex")}.tmp`;
+  try {
+    await writeFile(tmpPath, `${JSON.stringify(validated, null, 2)}\n`, {
+      encoding: "utf-8",
+      mode: 0o600,
+    });
+    await chmod(tmpPath, 0o600).catch(() => {});
+    await rename(tmpPath, configPath);
+  } catch (err) {
+    await unlink(tmpPath).catch(() => {});
+    throw err;
+  }
+}
+
+/**
+ * Create or update a single profile and persist the config, preserving every
+ * other profile and the existing `defaultProfile` (unless `setDefault` is given).
+ * Returns the saved config. Throws {@link ConfigError} for a reserved profile name
+ * or an invalid value (e.g. a non-numeric account id), via {@link saveConfig}'s
+ * validation.
+ */
+export async function upsertProfile(
+  name: string,
+  profile: ProfileConfig,
+  opts: UpsertProfileOptions = {},
+): Promise<GmcConfig> {
+  if (RESERVED_PROFILE_KEYS.has(name)) {
+    throw new ConfigError(
+      `Profile name "${name}" is reserved.`,
+      "CONFIG_INVALID",
+      "Choose a name other than __proto__, constructor, or prototype.",
+    );
+  }
+  const configPath = opts.configPath ?? getUserConfigPath();
+  const config = loadConfig(configPath);
+  const profiles: Record<string, ProfileConfig> = { ...(config.profiles ?? {}) };
+  profiles[name] = { ...profile };
+  const next: GmcConfig = { ...config, profiles };
+  if (opts.setDefault) next.defaultProfile = name;
+  await saveConfig(next, configPath);
+  return next;
 }
