@@ -7,6 +7,18 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.17 — docs polish (SEO + 1.0 reference)
+
+Phase 9, part 1 — launch prep.
+
+- **SEO** — Open Graph / Twitter-card meta and a generated `sitemap.xml` for the docs site.
+- **Landing** — feature cards refreshed to the full surface (offline preflight, Content API → Merchant
+  API migrate, feeds-as-code, inventory/promotions/reports, and the CI Action + GitLab recipe).
+- **Reference** — the `reports` row now lists all subcommands. The CLI reference covers all 12 command
+  groups.
+
+_`@gmc-cli/cli` → 0.9.17 (patch); other packages unchanged._
+
 ## v0.9.16 — GitLab CI recipe
 
 Phase 8, part 3 — **Phase 8 complete**.
