@@ -1,6 +1,6 @@
 {
   "name": "@gmc-cli/core",
-  "version": "0.7.9",
+  "version": "0.7.10",
   "description": "Core business logic for the Google Merchant Center CLI — command orchestration, doctor checks, offline preflight scanner, and feed diffing for the Google Merchant API.",
   "type": "module",
   "main": "./dist/index.js",
