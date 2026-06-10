@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, readdirSync, existsSync } from "node:fs";
 
 // vi.hoisted so these are initialized before the hoisted vi.mock factories run
 // (@gmc-cli/auth is imported very early via program.ts → auth.ts).
@@ -166,5 +166,154 @@ describe("gmc migrate scopes", () => {
     expect(parsed.audit.scopeUnchanged).toBe(true);
     expect(parsed.plan).toMatchObject({ profileName: "store", accountId: "123456789", action: "create" });
     expect(parsed.written).toBe(false);
+  });
+});
+
+const FULL_PRODUCT = {
+  id: "online:en:US:SKU1",
+  kind: "content#product",
+  offerId: "SKU1",
+  title: "Running Shoe",
+  description: "A lightweight running shoe.",
+  link: "https://example.com/sku1",
+  imageLink: "https://example.com/sku1.jpg",
+  contentLanguage: "en",
+  targetCountry: "US",
+  channel: "online",
+  availability: "in stock",
+  condition: "new",
+  price: { value: "49.99", currency: "USD" },
+  brand: "Acme",
+};
+
+describe("gmc migrate products", () => {
+  let writes: string[];
+  let inDir: string;
+  let outDir: string;
+
+  beforeEach(() => {
+    process.exitCode = 0;
+    inDir = mkdtempSync(join(tmpdir(), "gmc-mp-in-"));
+    outDir = join(mkdtempSync(join(tmpdir(), "gmc-mp-out-")), "feeds");
+    writes = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+      writes.push(String(chunk));
+      return true;
+    });
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(inDir, { recursive: true, force: true });
+    rmSync(outDir, { recursive: true, force: true });
+  });
+
+  const out = (): string => writes.join("");
+
+  it("converts a directory of Content API products to push-ready files", async () => {
+    writeFileSync(join(inDir, "p1.json"), JSON.stringify(FULL_PRODUCT));
+    await run(["migrate", "products", "--from", inDir, "--out", outDir]);
+
+    expect(out()).toContain("converted 1 product(s)");
+    expect(out()).toContain('targetCountry "US" → feedLabel');
+    expect(process.exitCode).toBe(0);
+
+    const files = readdirSync(outDir);
+    expect(files).toEqual(["online~en~US~SKU1.json"]);
+    const written = JSON.parse(readFileSync(join(outDir, files[0]), "utf-8"));
+    expect(written).toMatchObject({
+      offerId: "SKU1",
+      feedLabel: "US",
+      attributes: {
+        price: { amountMicros: "49990000", currencyCode: "USD" },
+        availability: "in_stock",
+      },
+    });
+    expect(written.id).toBeUndefined(); // output-only field dropped
+  });
+
+  it("accepts a single product via --file", async () => {
+    const file = join(inDir, "one.json");
+    writeFileSync(file, JSON.stringify(FULL_PRODUCT));
+    await run(["migrate", "products", "--file", file, "--out", outDir]);
+    expect(readdirSync(outDir)).toHaveLength(1);
+  });
+
+  it("accepts a JSON array and a products.list response via --file", async () => {
+    const arr = join(inDir, "arr.json");
+    writeFileSync(
+      arr,
+      JSON.stringify([FULL_PRODUCT, { ...FULL_PRODUCT, offerId: "SKU2", id: "online:en:US:SKU2" }]),
+    );
+    await run(["migrate", "products", "--file", arr, "--out", outDir]);
+    expect(readdirSync(outDir)).toHaveLength(2);
+
+    rmSync(outDir, { recursive: true, force: true });
+    const list = join(inDir, "list.json");
+    writeFileSync(list, JSON.stringify({ resources: [FULL_PRODUCT] }));
+    await run(["migrate", "products", "--file", list, "--out", outDir]);
+    expect(readdirSync(outDir)).toHaveLength(1);
+  });
+
+  it("fans out a list-response / array file inside --from", async () => {
+    writeFileSync(
+      join(inDir, "list.json"),
+      JSON.stringify({
+        resources: [FULL_PRODUCT, { ...FULL_PRODUCT, offerId: "SKU2", id: "online:en:US:SKU2" }],
+      }),
+    );
+    await run(["migrate", "products", "--from", inDir, "--out", outDir]);
+    expect(readdirSync(outDir).sort()).toEqual([
+      "online~en~US~SKU1.json",
+      "online~en~US~SKU2.json",
+    ]);
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("reports an unconvertable product and exits non-zero, still writing the good ones", async () => {
+    writeFileSync(join(inDir, "good.json"), JSON.stringify(FULL_PRODUCT));
+    writeFileSync(join(inDir, "bad.json"), JSON.stringify({ title: "no offer id" }));
+    await run(["migrate", "products", "--from", inDir, "--out", outDir]);
+    expect(out()).toContain("Could not convert 1 product(s)");
+    expect(out()).toContain("bad.json");
+    expect(readdirSync(outDir)).toEqual(["online~en~US~SKU1.json"]);
+    expect(process.exitCode).toBe(1); // ExitCode.Error
+  });
+
+  it("reports an unparseable file as an error", async () => {
+    writeFileSync(join(inDir, "broken.json"), "{ not json");
+    await run(["migrate", "products", "--from", inDir, "--out", outDir]);
+    expect(out()).toContain("invalid JSON");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("overrides feedLabel with --feed-label", async () => {
+    writeFileSync(join(inDir, "p.json"), JSON.stringify(FULL_PRODUCT));
+    await run(["migrate", "products", "--from", inDir, "--out", outDir, "--feed-label", "US-en"]);
+    const files = readdirSync(outDir);
+    const written = JSON.parse(readFileSync(join(outDir, files[0]), "utf-8"));
+    expect(written.feedLabel).toBe("US-en");
+  });
+
+  it("emits a JSON report", async () => {
+    writeFileSync(join(inDir, "p.json"), JSON.stringify(FULL_PRODUCT));
+    await run(["-j", "migrate", "products", "--from", inDir, "--out", outDir]);
+    const parsed = JSON.parse(out());
+    expect(parsed.converted).toBe(1);
+    expect(parsed.written).toEqual(["online~en~US~SKU1.json"]);
+    expect(parsed.products[0].remapped).toEqual(
+      expect.arrayContaining(['targetCountry "US" → feedLabel']),
+    );
+  });
+
+  it("produces output that passes preflight (round-trip)", async () => {
+    writeFileSync(join(inDir, "p.json"), JSON.stringify(FULL_PRODUCT));
+    await run(["migrate", "products", "--from", inDir, "--out", outDir]);
+    expect(process.exitCode).toBe(0);
+    writes = [];
+    await run(["preflight", "--dir", outDir]);
+    expect(out()).toContain("No issues found");
+    expect(process.exitCode).toBe(0);
   });
 });
