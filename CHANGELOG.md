@@ -7,6 +7,19 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.15 — gmc-action (GitHub Action)
+
+Phase 8, part 2 — CI gating.
+
+- **`gmc-action`** — a composite GitHub Action (`action.yml`). `uses: yasserstudio/gmc@v1` runs any
+  gmc command (default `preflight`) and propagates its exit code, so a feed-compliance gate fails the
+  build before a bad feed ships. `preflight` runs offline; authenticated commands take a
+  service-account key via the `credentials` secret (written to a `0600` temp file, wired to ADC).
+- Inputs flow through environment variables (not `${{ }}` interpolation), so a crafted `args` can't
+  inject shell. Documented with a sample workflow in the guide. Goes live with the npm publish at v1.0.
+
+_`@gmc-cli/cli` → 0.9.15 (patch); other packages unchanged._
+
 ## v0.9.14 — uniform `--json` contract
 
 Phase 8, part 1 — JSON/exit-code hardening across all commands.
