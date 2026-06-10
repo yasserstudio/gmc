@@ -13,7 +13,7 @@ export function registerConfigCommands(program: Command): void {
     .action(() => {
       const paths = { configDir: getConfigDir(), configFile: getUserConfigPath() };
       if (wantsJson(program)) {
-        emitJson({ ok: true, ...paths });
+        emitJson(paths);
       } else {
         process.stdout.write(`config dir:  ${paths.configDir}\nconfig file: ${paths.configFile}\n`);
       }
@@ -32,7 +32,6 @@ export function registerConfigCommands(program: Command): void {
 
         if (json) {
           emitJson({
-            ok: true,
             defaultProfile,
             profiles: names.map((name) => ({
               name,
@@ -66,7 +65,7 @@ export function registerConfigCommands(program: Command): void {
       try {
         const ctx = contextFrom(program);
         if (json) {
-          emitJson({ ok: true, profile: ctx.profile, accountId: ctx.accountId ?? null });
+          emitJson({ profile: ctx.profile, accountId: ctx.accountId ?? null });
         } else {
           const account = ctx.accountId ? `\naccount: ${ctx.accountId}` : "";
           process.stdout.write(`profile: ${ctx.profile}${account}\n`);

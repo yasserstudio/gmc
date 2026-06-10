@@ -82,7 +82,7 @@ describe("gmc auth (JSON output)", () => {
     process.exitCode = 0;
   });
 
-  it("whoami emits { ok: true, email, projectId } and exit 0 on success", async () => {
+  it("whoami emits a bare { email, projectId } payload and exit 0 on success", async () => {
     mockResolveAuth.mockResolvedValue({
       getAccessToken: async () => "token",
       getClientEmail: () => "sa@demo.iam.gserviceaccount.com",
@@ -90,7 +90,6 @@ describe("gmc auth (JSON output)", () => {
     });
     await run(["auth", "whoami", "--json"]);
     expect(JSON.parse(writes.join(""))).toEqual({
-      ok: true,
       email: "sa@demo.iam.gserviceaccount.com",
       projectId: "demo",
     });
@@ -123,7 +122,7 @@ describe("gmc auth (JSON output)", () => {
     expect(process.exitCode).toBe(3);
   });
 
-  it("login emits { ok: true, email } and exit 0 on success", async () => {
+  it("login emits a bare { email, projectId } payload and exit 0 on success", async () => {
     mockLogin.mockResolvedValue({
       clientId: "cid",
       clientSecret: "sec",
@@ -134,7 +133,6 @@ describe("gmc auth (JSON output)", () => {
     });
     await run(["auth", "login", "--no-browser", "--json"]);
     expect(JSON.parse(writes.join(""))).toEqual({
-      ok: true,
       email: "user@example.com",
       projectId: null,
     });
@@ -164,7 +162,7 @@ describe("gmc auth (JSON output)", () => {
     mockClearStored.mockResolvedValue(true);
     mockClearTokenCache.mockResolvedValue(undefined);
     await run(["auth", "logout", "--json"]);
-    expect(JSON.parse(writes.join(""))).toEqual({ ok: true, removed: true, profile: "default" });
+    expect(JSON.parse(writes.join(""))).toEqual({ removed: true, profile: "default" });
     expect(mockClearTokenCache).toHaveBeenCalledWith(expect.any(String), "user@example.com");
     expect(process.exitCode).toBe(0);
   });
@@ -173,7 +171,7 @@ describe("gmc auth (JSON output)", () => {
     mockLoadStored.mockResolvedValue(null);
     mockClearStored.mockResolvedValue(false);
     await run(["auth", "logout", "--json"]);
-    expect(JSON.parse(writes.join(""))).toEqual({ ok: true, removed: false, profile: "default" });
+    expect(JSON.parse(writes.join(""))).toEqual({ removed: false, profile: "default" });
     expect(mockClearTokenCache).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(0);
   });

@@ -49,8 +49,7 @@ function run(args: string[]): Promise<unknown> {
 describe("gmc config", () => {
   it("path --json reports the config dir and file", async () => {
     await run(["config", "path", "--json"]);
-    const out = JSON.parse(writes.join("")) as { ok: boolean; configDir: string; configFile: string };
-    expect(out.ok).toBe(true);
+    const out = JSON.parse(writes.join("")) as { configDir: string; configFile: string };
     expect(out.configDir).toBe(dir);
     expect(out.configFile).toBe(configFile);
   });
@@ -65,7 +64,6 @@ describe("gmc config", () => {
     );
     await run(["config", "list", "--json"]);
     expect(JSON.parse(writes.join(""))).toEqual({
-      ok: true,
       defaultProfile: "prod",
       profiles: [
         { name: "prod", accountId: "1", default: true },
@@ -80,7 +78,7 @@ describe("gmc config", () => {
       JSON.stringify({ defaultProfile: "prod", profiles: { prod: { accountId: "1" } } }),
     );
     await run(["config", "current", "--json"]);
-    expect(JSON.parse(writes.join(""))).toEqual({ ok: true, profile: "prod", accountId: "1" });
+    expect(JSON.parse(writes.join(""))).toEqual({ profile: "prod", accountId: "1" });
   });
 
   it("--profile overrides the default profile", async () => {
@@ -92,7 +90,7 @@ describe("gmc config", () => {
       }),
     );
     await run(["--profile", "staging", "config", "current", "--json"]);
-    expect(JSON.parse(writes.join(""))).toEqual({ ok: true, profile: "staging", accountId: "2" });
+    expect(JSON.parse(writes.join(""))).toEqual({ profile: "staging", accountId: "2" });
   });
 
   it("surfaces a malformed config as exit 4", async () => {
