@@ -36,4 +36,6 @@ See [Configuration & profiles](/guide/configuration) for how `--profile` / `--ac
 
 ## JSON & exit codes
 
-With `--json`, success prints the result payload bare; failures print `{ "ok": false, "error": { "code", "message", "suggestion" } }`. Exit codes are classed: `0` success, `2` usage, `3` auth, `4` config, `5` Merchant API, `6` preflight (gating compliance findings).
+With `--json`, success prints the result payload **bare** (a list command wraps its array under a named key, e.g. `{ "products": [...] }`; a single resource prints as-is) and failure prints `{ "ok": false, "error": { "code", "message", "suggestion" } }` — uniform across every command. (Some payloads carry their own `ok` field — `doctor`, `preflight`, `migrate scopes`, `reports check` — which is a *domain* verdict, distinct from the failure envelope.)
+
+Exit codes are classed: `0` success · `1` a gating check failed (e.g. `feeds push`/`migrate products` partial failure, `reports check` breach) · `2` usage · `3` auth · `4` config · `5` Merchant API · `6` preflight (gating compliance findings).

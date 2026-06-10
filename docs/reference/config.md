@@ -8,7 +8,7 @@ Print the config directory and file paths.
 
 ```sh
 gmc config path
-gmc config path --json   # { "ok": true, "configDir": "...", "configFile": "..." }
+gmc config path --json   # { "configDir": "...", "configFile": "..." }
 ```
 
 ## `gmc config list`
@@ -32,5 +32,5 @@ Show the profile (and account id) resolved for this invocation — after applyin
 ```sh
 gmc config current
 gmc --profile staging config current
-gmc config current --json   # { "ok": true, "profile": "...", "accountId": "..." }
+gmc config current --json   # { "profile": "...", "accountId": "..." }
 ```
