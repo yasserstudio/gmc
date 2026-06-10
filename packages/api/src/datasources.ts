@@ -1,4 +1,4 @@
-// Typed Data Sources sub-API service (Merchant API `datasources/v1beta`). A data
+// Typed Data Sources sub-API service (Merchant API `datasources/v1`). A data
 // source is the container a product feed lives in — a primary product source can
 // receive products via the API (what `productInputs.insert` targets) or via a
 // scheduled file fetch. This service wraps a MerchantClient scoped to one account
@@ -7,7 +7,7 @@
 
 import type { MerchantClient } from "./client.js";
 
-const DATASOURCES_API = "datasources/v1beta";
+const DATASOURCES_API = "datasources/v1";
 
 // The interfaces below model only the fields the CLI reads/writes; the Merchant
 // API returns and accepts more. `client.get`/`post` round-trip the full JSON —

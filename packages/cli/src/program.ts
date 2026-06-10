@@ -9,6 +9,7 @@ import { registerFeedsCommands } from "./commands/feeds.js";
 import { registerPreflightCommand } from "./commands/preflight.js";
 import { registerMigrateCommands } from "./commands/migrate.js";
 import { registerInventoryCommands } from "./commands/inventory.js";
+import { registerPromotionsCommands } from "./commands/promotions.js";
 
 /**
  * Build the root `gmc` command tree.
@@ -17,7 +18,7 @@ import { registerInventoryCommands } from "./commands/inventory.js";
  * Phase 3: `datasources` (v0.8) and `feeds` (v0.9) — feeds as code.
  * Phase 4: `preflight` (v0.9.3) — offline feed-compliance scanner.
  * Phase 5: `migrate` (v0.9.6) — Content API → Merchant API assistant.
- * Phase 6: `inventory` (v0.9.9) — local + regional inventory overrides.
+ * Phase 6: `inventory` (v0.9.9) + `promotions` (v0.9.10).
  */
 export function createProgram(): Command {
   // `__GMC_VERSION` is injected at build time by tsup's `define` (see tsup.config.ts).
@@ -43,6 +44,7 @@ export function createProgram(): Command {
   registerPreflightCommand(program);
   registerMigrateCommands(program);
   registerInventoryCommands(program);
+  registerPromotionsCommands(program);
 
   return program;
 }

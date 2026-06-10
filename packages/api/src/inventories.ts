@@ -1,4 +1,4 @@
-// Typed Inventories sub-API service (Merchant API `inventories/v1beta`). Local and
+// Typed Inventories sub-API service (Merchant API `inventories/v1`). Local and
 // regional inventories are sub-resources of a product — per-store and per-region
 // overrides of its price/availability. Each supports list / insert (upsert) /
 // delete only (no get/patch; insert replaces by storeCode / region). This service
@@ -9,7 +9,7 @@ import type { MerchantClient } from "./client.js";
 import { productSegment } from "./products.js";
 import type { CustomAttribute, Price } from "./products.js";
 
-const INVENTORIES_API = "inventories/v1beta";
+const INVENTORIES_API = "inventories/v1";
 
 // Like the other services, these model only the fields the CLI reads/writes; the
 // Merchant API accepts and returns more, and `client.post`/`paginate` round-trip

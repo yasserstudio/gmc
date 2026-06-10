@@ -40,10 +40,10 @@ describe("MerchantClient", () => {
     }) as unknown as typeof fetch;
 
     const client = makeClient(fetchImpl);
-    const res = await client.get<{ name: string }>("accounts", "accounts/v1beta/accounts/123");
+    const res = await client.get<{ name: string }>("accounts", "accounts/v1/accounts/123");
 
     expect(res.name).toBe("accounts/123");
-    expect(capturedUrl).toBe("https://merchantapi.googleapis.com/accounts/v1beta/accounts/123");
+    expect(capturedUrl).toBe("https://merchantapi.googleapis.com/accounts/v1/accounts/123");
     expect((capturedInit?.headers as Record<string, string>)["authorization"]).toBe("Bearer tok");
   });
 
@@ -55,7 +55,7 @@ describe("MerchantClient", () => {
     }) as unknown as typeof fetch;
 
     const client = makeClient(fetchImpl);
-    await client.post("products", "products/v1beta/x", { value: 1 });
+    await client.post("products", "products/v1/x", { value: 1 });
 
     expect(init?.method).toBe("POST");
     expect(JSON.parse(init?.body as string)).toEqual({ value: 1 });
@@ -65,7 +65,7 @@ describe("MerchantClient", () => {
   it("returns undefined for a 204 No Content", async () => {
     const fetchImpl = (async () => jsonResponse(204)) as unknown as typeof fetch;
     const client = makeClient(fetchImpl);
-    expect(await client.delete("products", "products/v1beta/x")).toBeUndefined();
+    expect(await client.delete("products", "products/v1/x")).toBeUndefined();
   });
 
   it("throws MerchantApiError carrying the reason and exit code on a 4xx", async () => {
@@ -135,7 +135,7 @@ describe("MerchantClient", () => {
       return jsonResponse(200, {});
     }) as unknown as typeof fetch;
     const client = makeClient(fetchImpl);
-    await client.get("products", "products/v1beta/x", { pageSize: 50, filter: undefined });
+    await client.get("products", "products/v1/x", { pageSize: 50, filter: undefined });
     const u = new URL(capturedUrl);
     expect(u.searchParams.get("pageSize")).toBe("50");
     expect(u.searchParams.has("filter")).toBe(false);
@@ -219,7 +219,7 @@ describe("MerchantClient", () => {
 
     const client = makeClient(fetchImpl);
     const ids: number[] = [];
-    for await (const item of client.paginate<{ id: number }>("accounts", "accounts/v1beta/accounts", {
+    for await (const item of client.paginate<{ id: number }>("accounts", "accounts/v1/accounts", {
       select: (page) => (page as { accounts?: { id: number }[] }).accounts ?? [],
     })) {
       ids.push(item.id);

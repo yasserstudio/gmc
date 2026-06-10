@@ -48,8 +48,8 @@ export async function probeMerchantApi(
 ): Promise<ProbeResult> {
   const base = options.baseUrl ?? DEFAULT_BASE_URL;
   const path = options.accountId
-    ? `/accounts/v1beta/accounts/${encodeURIComponent(options.accountId)}`
-    : "/accounts/v1beta/accounts";
+    ? `/accounts/v1/accounts/${encodeURIComponent(options.accountId)}`
+    : "/accounts/v1/accounts";
   const doFetch = options.fetchImpl ?? globalThis.fetch;
 
   let res: Response;

@@ -15,6 +15,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc products`](/reference/products) | Manage products (`list` / `get` / `insert` / `delete`) |
 | [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`) |
 | [`gmc inventory`](/reference/inventory) | Local + regional inventory overrides (`local` / `regional` · `list` / `insert` / `delete`) |
+| [`gmc promotions`](/reference/promotions) | Manage promotions (`list` / `get` / `insert`) |
 | [`gmc feeds`](/reference/feeds) | Feeds as code (`pull` / `push` / `diff`) |
 | [`gmc preflight`](/reference/preflight) | Offline feed-compliance scanner — catch disapprovals before upload |
 | [`gmc migrate`](/reference/migrate) | Content API → Merchant API assistant (`scopes` / `products` / `feed-labels`) |
