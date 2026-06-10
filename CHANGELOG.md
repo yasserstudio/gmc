@@ -7,6 +7,18 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.13 — reports: CI threshold gate
+
+Phase 7, part 3 — **Phase 7 complete**.
+
+- **`gmc reports check --metric <clicks|impressions|conversions|ctr> [--min] [--max]`** — aggregates
+  `product_performance_view` over a window and **exits non-zero when the metric breaches the
+  threshold**, so a Shopping performance regression fails CI (mirrors the GPC vitals gate). `ctr` is a
+  0–1 fraction; aggregation is client-side (sums for counts, clicks ÷ impressions for CTR).
+  `--json` emits a `{ metric, value, min, max, ok, since, until }` verdict.
+
+_`@gmc-cli/cli` → 0.9.13 (patch); other packages unchanged._
+
 ## v0.9.12 — reports: competitive visibility + price competitiveness
 
 Phase 7, part 2 — two more report presets.
