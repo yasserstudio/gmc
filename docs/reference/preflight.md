@@ -54,8 +54,8 @@ Each rule has a stable dotted id and a default severity. Rules come in families:
 
 The `policy.*` family predicts editorial **disapproval** triggers — these are heuristic, so all default to `warning` except `policy.promotional-title` (a well-known hard disapproval, an `error`). Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc); `warning` findings don't fail the run unless you pass `--strict`.
 
-::: tip Coming next
-Phase 5 (v0.9.6+) adds `gmc migrate` — Content API → Merchant API feed migration.
+::: tip Related
+[`gmc migrate`](/reference/migrate) helps you move off the Content API for Shopping (retiring Aug 18, 2026); migrated feeds drop straight into `preflight`.
 :::
 
 ## Findings

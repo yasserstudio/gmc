@@ -16,6 +16,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`) |
 | [`gmc feeds`](/reference/feeds) | Feeds as code (`pull` / `push` / `diff`) |
 | [`gmc preflight`](/reference/preflight) | Offline feed-compliance scanner — catch disapprovals before upload |
+| [`gmc migrate`](/reference/migrate) | Content API → Merchant API assistant (`scopes`) |
 
 ## Global options
 
