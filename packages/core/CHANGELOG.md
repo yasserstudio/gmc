@@ -1,5 +1,12 @@
 # @gmc-cli/core
 
+## 0.7.9
+
+### Patch Changes
+
+- Updated dependencies [ba9415f]
+  - @gmc-cli/api@0.9.6
+
 ## 0.7.8
 
 ### Patch Changes
