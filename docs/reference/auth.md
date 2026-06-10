@@ -29,7 +29,7 @@ Show the resolved credential identity — **no network call**.
 
 ```sh
 gmc auth whoami
-gmc auth whoami --json   # { "ok": true, "email": "...", "projectId": "..." }
+gmc auth whoami --json   # { "email": "...", "projectId": "..." }
 ```
 
 ## `gmc auth test`

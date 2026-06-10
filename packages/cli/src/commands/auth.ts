@@ -14,7 +14,7 @@ import { contextFrom, wantsJson } from "../context.js";
 function printIdentity(client: AuthClient, ctx: CommandContext, successText: string): void {
   const identity = { email: client.getClientEmail(), projectId: client.getProjectId() ?? null };
   if (ctx.json) {
-    emitJson({ ok: true, ...identity });
+    emitJson(identity);
   } else {
     const project = identity.projectId ? ` (project ${identity.projectId})` : "";
     process.stdout.write(`${successText} ${identity.email}${project}\n`);
@@ -43,7 +43,7 @@ export function registerAuthCommands(program: Command): void {
           },
         });
         if (ctx.json) {
-          emitJson({ ok: true, email: cred.email, projectId: null });
+          emitJson({ email: cred.email, projectId: null });
         } else {
           process.stdout.write(`✓ Logged in as ${cred.email}\n`);
         }
@@ -64,7 +64,7 @@ export function registerAuthCommands(program: Command): void {
         const removed = await clearStoredCredential(configDir, ctx.profile);
         if (stored) await clearTokenCache(configDir, stored.email).catch(() => {});
         if (ctx.json) {
-          emitJson({ ok: true, removed, profile: ctx.profile });
+          emitJson({ removed, profile: ctx.profile });
         } else if (removed) {
           const who = stored ? ` (${stored.email})` : "";
           process.stdout.write(`✓ Logged out${who} — profile "${ctx.profile}"\n`);
