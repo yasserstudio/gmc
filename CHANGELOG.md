@@ -7,6 +7,27 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.7 — migrate: products
+
+Phase 5, part 2 — the heart of the migration: converting product **data**.
+
+- **`gmc migrate products`** — transforms Content API for Shopping v2.1 product JSON into
+  push-ready Merchant API `ProductInput` files, so the output drops straight into
+  [`feeds push`](/reference/feeds) and [`preflight`](/reference/preflight) — completing the
+  migrate → validate → upload pipeline.
+- **`--from <dir>`** of per-product files or **`--file`** for a single product, a JSON array,
+  or a `products.list` response; **`--out <dir>`** (default `feeds`) of files named like
+  `feeds pull`, plus a migration report (or `--json`).
+- **the remaps** — price `{value, currency}` → `{amountMicros, currencyCode}` (BigInt, no float
+  error; also `salePrice` and nested `shipping[].price`); `availability` enum spaces → underscores
+  (`in stock` → `in_stock`); `targetCountry` → `feedLabel`; the Content API REST `id` parsed to
+  backfill identity, then dropped along with the other output-only fields.
+- **CI gate** — exits non-zero if any product can't be converted (the good ones are still written).
+- **internal** — the transform engine lands in `@gmc-cli/migrate` (now depending on `@gmc-cli/api`
+  for the product types); the per-product filename helper is shared with `feeds pull`.
+
+_`@gmc-cli/cli` → 0.9.7, `@gmc-cli/migrate` → 0.1.2 (both patch); other packages unchanged._
+
 ## v0.9.6 — migrate: scope swap
 
 Phase 5, part 1 — opens the **Content API for Shopping → Merchant API** migration
