@@ -7,6 +7,28 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.6 — migrate: scope swap
+
+Phase 5, part 1 — opens the **Content API for Shopping → Merchant API** migration
+assistant (the Content API retires **Aug 18, 2026**).
+
+- **`gmc migrate scopes`** — audits Content API → Merchant API auth readiness, then
+  optionally migrates a legacy config into a `gmc` profile. Dry-run by default; `--write`
+  applies it, `--set-default` makes the profile default.
+- **the scope, in one line** — the Merchant API uses the *same* OAuth scope as the
+  Content API, so existing tokens keep working with no re-consent. The real blockers
+  (GCP project registration + Merchant API enablement) are checked with the same live
+  probe behind `gmc doctor`; the audit degrades gracefully when run mid-migration.
+- **config migration** — `--from merchant-info.json` (or `--account`) seeds a profile,
+  backed by the first config-write API in `@gmc-cli/config` (`saveConfig` / `upsertProfile`,
+  atomic and owner-only).
+- **new package** — `@gmc-cli/migrate`, a pure engine (no network / fs / auth) mirroring
+  `@gmc-cli/preflight`. `@gmc-cli/auth` adds the `datasources` sub-API (aligning with
+  `@gmc-cli/api`) and exports a canonical `SUB_APIS`.
+
+_`@gmc-cli/cli` → 0.9.6; `@gmc-cli/migrate` → 0.1.1 (new); `@gmc-cli/auth`, `@gmc-cli/config`
+→ 0.7.1, `@gmc-cli/api` → 0.9.2, `@gmc-cli/core` → 0.7.5, `@gmc-cli/preflight` → 0.1.3 (all patch)._
+
 ## v0.9.5 — policy / disapproval-trigger checks
 
 Phase 4, part 3 — **Phase 4 complete**. `gmc preflight` now predicts editorial
