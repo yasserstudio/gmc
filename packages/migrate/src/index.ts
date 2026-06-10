@@ -19,6 +19,12 @@ export type {
   ProfilePlan,
   ProfileAction,
 } from "./profile-plan.js";
+export { transformProduct, toMicros, parseContentApiId, isTransformError } from "./products.js";
+export type {
+  ProductTransform,
+  ProductTransformError,
+  ProductTransformResult,
+} from "./products.js";
 export { MigrateError } from "./errors.js";
 export type {
   CheckStatus,

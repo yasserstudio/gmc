@@ -40,6 +40,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@gmc-cli/api": "workspace:*",
     "@gmc-cli/auth": "workspace:*"
   },
   "devDependencies": {
