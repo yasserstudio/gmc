@@ -17,12 +17,12 @@ gmc reports query "SELECT clicks, impressions FROM product_performance_view WHER
 Product performance (clicks, impressions, CTR, conversions) over a date window, from the
 `product_performance_view`.
 
-| Option | Description |
-|--------|-------------|
-| `--days <n>` | Window size in days, ending today (default `30`) |
-| `--since <date>` | Start date (ISO `YYYY-MM-DD`); overrides `--days` |
-| `--until <date>` | End date (ISO; default today) |
-| `--page-size <n>` | Max rows per API page |
+| Option            | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| `--days <n>`      | Window size in days, ending today (default `30`)  |
+| `--since <date>`  | Start date (ISO `YYYY-MM-DD`); overrides `--days` |
+| `--until <date>`  | End date (ISO; default today)                     |
+| `--page-size <n>` | Max rows per API page                             |
 
 Human output is a date-sorted table; `--json` emits `{ "results": [...], "since", "until" }` with the
 raw `ReportRow`s.
@@ -38,13 +38,13 @@ gmc reports competitive-visibility --country US --category 536
 gmc reports competitive-visibility --country US --category 536 --traffic-source ORGANIC --since 2026-05-01 --until 2026-05-31
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--country <code>` | 2-letter report country code, e.g. `US` (required) |
-| `--category <id>` | Numeric Google product category id, e.g. `536` (required) |
-| `--traffic-source <src>` | `ADS`, `ORGANIC`, or `ALL` (default `ADS`) |
-| `--days` / `--since` / `--until` | Date window (default last 30 days) |
-| `--page-size <n>` | Max rows per API page |
+| Option                           | Description                                               |
+| -------------------------------- | --------------------------------------------------------- |
+| `--country <code>`               | 2-letter report country code, e.g. `US` (required)        |
+| `--category <id>`                | Numeric Google product category id, e.g. `536` (required) |
+| `--traffic-source <src>`         | `ADS`, `ORGANIC`, or `ALL` (default `ADS`)                |
+| `--days` / `--since` / `--until` | Date window (default last 30 days)                        |
+| `--page-size <n>`                | Max rows per API page                                     |
 
 Output is a table of competitor domains with rank, relative visibility, page overlap, and
 higher-position rate (your own domain is marked); `--json` for the raw rows.
@@ -59,10 +59,10 @@ gmc reports price-competitiveness
 gmc reports price-competitiveness --country US
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option             | Description                              |
+| ------------------ | ---------------------------------------- |
 | `--country <code>` | Filter to a 2-letter report country code |
-| `--page-size <n>` | Max rows per API page |
+| `--page-size <n>`  | Max rows per API page                    |
 
 ## `gmc reports check`
 
@@ -76,13 +76,13 @@ gmc reports check --metric ctr --min 0.02             # fail if CTR < 2%
 gmc reports check --metric conversions --min 50 --since 2026-05-01 --until 2026-05-31
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--metric <name>` | `clicks`, `impressions`, `conversions`, or `ctr` (a fraction, e.g. `0.02` = 2%) |
-| `--min <n>` | Fail if the metric is below this |
-| `--max <n>` | Fail if the metric is above this |
-| `--days` / `--since` / `--until` | Date window (default last 30 days) |
-| `--page-size <n>` | Max rows per API page |
+| Option                           | Description                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| `--metric <name>`                | `clicks`, `impressions`, `conversions`, or `ctr` (a fraction, e.g. `0.02` = 2%) |
+| `--min <n>`                      | Fail if the metric is below this                                                |
+| `--max <n>`                      | Fail if the metric is above this                                                |
+| `--days` / `--since` / `--until` | Date window (default last 30 days)                                              |
+| `--page-size <n>`                | Max rows per API page                                                           |
 
 At least one of `--min`/`--max` is required. Exit `0` within bounds, **`1` on breach** (CI gate),
 `2` usage. `--json` emits `{ metric, value, min, max, ok, since, until }` — `min` and `max` are omitted when not passed.
@@ -96,8 +96,8 @@ for `{ "results": [...] }`. This is the escape hatch for views and columns the p
 gmc reports query "SELECT clicks, conversions, conversion_value FROM product_performance_view WHERE date BETWEEN '2026-05-01' AND '2026-05-31'" --json
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description           |
+| ----------------- | --------------------- |
 | `--page-size <n>` | Max rows per API page |
 
 ## Exit codes

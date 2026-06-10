@@ -107,7 +107,8 @@ export const requiredRules: Rule[] = [
           {
             attribute: "availability",
             message: "Missing availability — every product must declare `availability`.",
-            suggestion: "Set attributes.availability to in_stock, out_of_stock, preorder, or backorder.",
+            suggestion:
+              "Set attributes.availability to in_stock, out_of_stock, preorder, or backorder.",
             documentation: SPEC,
           },
         ];

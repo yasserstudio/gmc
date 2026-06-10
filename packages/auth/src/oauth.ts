@@ -54,7 +54,12 @@ export function parseClientSecretsJson(raw: string): OAuthClientConfig {
   const clientId = node["client_id"];
   const clientSecret = node["client_secret"];
 
-  if (typeof clientId !== "string" || typeof clientSecret !== "string" || !clientId || !clientSecret) {
+  if (
+    typeof clientId !== "string" ||
+    typeof clientSecret !== "string" ||
+    !clientId ||
+    !clientSecret
+  ) {
     throw new AuthError(
       "client_secret.json is missing client_id or client_secret.",
       "AUTH_OAUTH_CLIENT_MISSING",
@@ -64,7 +69,10 @@ export function parseClientSecretsJson(raw: string): OAuthClientConfig {
   return { clientId, clientSecret };
 }
 
-async function readClientSecretsFile(path: string, required: boolean): Promise<OAuthClientConfig | null> {
+async function readClientSecretsFile(
+  path: string,
+  required: boolean,
+): Promise<OAuthClientConfig | null> {
   let raw: string;
   try {
     raw = await readFile(path, "utf-8");

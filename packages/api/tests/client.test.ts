@@ -74,7 +74,10 @@ describe("MerchantClient", () => {
         code: 403,
         status: "PERMISSION_DENIED",
         details: [
-          { "@type": "type.googleapis.com/google.rpc.ErrorInfo", reason: "ACCESS_TOKEN_SCOPE_INSUFFICIENT" },
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            reason: "ACCESS_TOKEN_SCOPE_INSUFFICIENT",
+          },
         ],
       },
     };
@@ -113,7 +116,10 @@ describe("MerchantClient", () => {
     }) as unknown as typeof fetch;
 
     const client = makeClient(fetchImpl);
-    await expect(client.get("reports", "x")).rejects.toMatchObject({ httpStatus: 503, retryable: true });
+    await expect(client.get("reports", "x")).rejects.toMatchObject({
+      httpStatus: 503,
+      retryable: true,
+    });
     expect(calls).toBe(4); // initial attempt + 3 retries
   });
 
@@ -190,7 +196,10 @@ describe("MerchantClient", () => {
 
   it("aborts pagination if the server repeats a pageToken", async () => {
     const fetchImpl = (async () =>
-      jsonResponse(200, { accounts: [{ id: 1 }], nextPageToken: "same" })) as unknown as typeof fetch;
+      jsonResponse(200, {
+        accounts: [{ id: 1 }],
+        nextPageToken: "same",
+      })) as unknown as typeof fetch;
     const client = makeClient(fetchImpl);
     const run = async (): Promise<number[]> => {
       const out: number[] = [];

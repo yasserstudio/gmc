@@ -13,12 +13,7 @@ export type { ScopeAuditInput } from "./scopes.js";
 export { parseMerchantInfo } from "./legacy.js";
 export type { LegacyMerchantInfo } from "./legacy.js";
 export { planProfileMigration } from "./profile-plan.js";
-export type {
-  ConfigView,
-  ProfilePlanInput,
-  ProfilePlan,
-  ProfileAction,
-} from "./profile-plan.js";
+export type { ConfigView, ProfilePlanInput, ProfilePlan, ProfileAction } from "./profile-plan.js";
 export { transformProduct, parseContentApiId, isTransformError } from "./products.js";
 // toMicros now lives with the Price type in @gmc-cli/api; re-exported so existing
 // `@gmc-cli/migrate` consumers keep importing it from one place.
@@ -40,9 +35,4 @@ export type {
   CheckFeedLabelsOptions,
 } from "./feed-labels.js";
 export { MigrateError } from "./errors.js";
-export type {
-  CheckStatus,
-  SubApiScopeMapping,
-  MigrationCheck,
-  ScopeAuditReport,
-} from "./types.js";
+export type { CheckStatus, SubApiScopeMapping, MigrationCheck, ScopeAuditReport } from "./types.js";

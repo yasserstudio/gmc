@@ -59,11 +59,7 @@ export { toMicros } from "./money.js";
 
 export { MerchantApiError } from "./errors.js";
 
-export {
-  RateLimiter,
-  systemClock,
-  DEFAULT_RATE_LIMITS,
-} from "./rate-limiter.js";
+export { RateLimiter, systemClock, DEFAULT_RATE_LIMITS } from "./rate-limiter.js";
 export type { RateLimitConfig, BucketConfig, Clock } from "./rate-limiter.js";
 
 export { probeMerchantApi } from "./probe.js";

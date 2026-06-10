@@ -4,7 +4,7 @@
 
 **gmc** is a command-line interface for the [Google Merchant API](https://developers.google.com/merchant/api) — the successor to the Content API for Shopping. It gives you typed, scriptable, CI-friendly access to your Merchant Center accounts and product catalog from a single binary, without a browser.
 
-It is built for the **Content API → Merchant API migration** (the Content API is being retired), and around the three things that API makes harder than it should: catching the *silent* setup failures (`doctor`), validating feeds offline before they get disapproved (preflight), and moving off the Content API cleanly (migrate).
+It is built for the **Content API → Merchant API migration** (the Content API is being retired), and around the three things that API makes harder than it should: catching the _silent_ setup failures (`doctor`), validating feeds offline before they get disapproved (preflight), and moving off the Content API cleanly (migrate).
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@gmc-cli/cli"><img src="https://img.shields.io/npm/v/%40gmc-cli%2Fcli?style=for-the-badge&color=1a73e8&label=npm" alt="npm version"></a>
@@ -48,14 +48,14 @@ Set an account once in a [profile](https://yasserstudio.github.io/gmc/guide/conf
 
 Most Merchant Center work is still done by hand in the web UI, and the Content API that powered automation is being retired. gmc makes the move scriptable.
 
-|  | **gmc** | Merchant Center UI | Raw API / client libs |
-| --- | :---: | :---: | :---: |
-| Typed CLI, one binary | ✅ | — | you write the code |
-| `--json` + classed exit codes | ✅ | — | DIY |
-| Diagnoses the silent GCP-registration trap | ✅ `doctor` | — | — |
-| Catalog as version-controllable files | ✅ | — | DIY |
-| Offline feed-compliance preflight | ✅ `preflight` | — | — |
-| Content API → Merchant API migrate | ✅ `migrate` | — | — |
+|                                            |    **gmc**     | Merchant Center UI | Raw API / client libs |
+| ------------------------------------------ | :------------: | :----------------: | :-------------------: |
+| Typed CLI, one binary                      |       ✅       |         —          |  you write the code   |
+| `--json` + classed exit codes              |       ✅       |         —          |          DIY          |
+| Diagnoses the silent GCP-registration trap |  ✅ `doctor`   |         —          |           —           |
+| Catalog as version-controllable files      |       ✅       |         —          |          DIY          |
+| Offline feed-compliance preflight          | ✅ `preflight` |         —          |           —           |
+| Content API → Merchant API migrate         |  ✅ `migrate`  |         —          |           —           |
 
 The differentiators — `doctor` and `preflight` (shipped), and `migrate` — are front-loaded over breadth. See the [roadmap](#roadmap).
 
@@ -144,7 +144,7 @@ Every command supports `--json` and uses classed exit codes, so pipelines can br
 
 ```yaml
 # GitHub Actions
-- run: npm install -g @gmc-cli/cli   # (once published)
+- run: npm install -g @gmc-cli/cli # (once published)
 - env:
     GMC_SERVICE_ACCOUNT: ${{ secrets.GMC_SERVICE_ACCOUNT }}
     GMC_ACCOUNT_ID: "123456789"
@@ -153,15 +153,15 @@ Every command supports `--json` and uses classed exit codes, so pipelines can br
     gmc products list --json | jq '.products | length'
 ```
 
-| Code | Meaning |
-| --- | --- |
-| `0` | Success |
-| `1` | General error |
-| `2` | Usage (bad arguments) |
-| `3` | Authentication error |
-| `4` | Configuration error |
-| `5` | Merchant API error |
-| `6` | Preflight found gating compliance issues |
+| Code | Meaning                                  |
+| ---- | ---------------------------------------- |
+| `0`  | Success                                  |
+| `1`  | General error                            |
+| `2`  | Usage (bad arguments)                    |
+| `3`  | Authentication error                     |
+| `4`  | Configuration error                      |
+| `5`  | Merchant API error                       |
+| `6`  | Preflight found gating compliance issues |
 
 A [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) and a [GitLab CI recipe](https://yasserstudio.github.io/gmc/guide/gitlab-ci) are available for drop-in pipeline integration.
 
@@ -171,15 +171,15 @@ A [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) and a 
 
 A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the packages as a typed Merchant API SDK.
 
-| Package | Description |
-| --- | --- |
-| [`@gmc-cli/cli`](packages/cli) | CLI entry point — the `gmc` command |
-| [`@gmc-cli/core`](packages/core) | Command orchestration, `doctor`, exit-code conventions |
-| [`@gmc-cli/api`](packages/api) | Typed Merchant API client (rate limiter, retry, pagination) |
-| [`@gmc-cli/auth`](packages/auth) | Authentication — service account, OAuth, ADC |
-| [`@gmc-cli/config`](packages/config) | Configuration loading and profiles |
-| [`@gmc-cli/preflight`](packages/preflight) | Offline feed-compliance rule engine + `.gmcpreflightrc` |
-| [`@gmc-cli/migrate`](packages/migrate) | Content API → Merchant API transform + feed-label checker |
+| Package                                    | Description                                                 |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| [`@gmc-cli/cli`](packages/cli)             | CLI entry point — the `gmc` command                         |
+| [`@gmc-cli/core`](packages/core)           | Command orchestration, `doctor`, exit-code conventions      |
+| [`@gmc-cli/api`](packages/api)             | Typed Merchant API client (rate limiter, retry, pagination) |
+| [`@gmc-cli/auth`](packages/auth)           | Authentication — service account, OAuth, ADC                |
+| [`@gmc-cli/config`](packages/config)       | Configuration loading and profiles                          |
+| [`@gmc-cli/preflight`](packages/preflight) | Offline feed-compliance rule engine + `.gmcpreflightrc`     |
+| [`@gmc-cli/migrate`](packages/migrate)     | Content API → Merchant API transform + feed-label checker   |
 
 ---
 
@@ -187,18 +187,18 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 
 gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0` at launch.
 
-| Phase | Versions | Theme | Status |
-| --- | --- | --- | :---: |
-| 0 | v0.0 | Scaffold — monorepo, `gmc` shell, docs site | ✅ |
-| 1 | v0.1–v0.4 | Spike pt 1 — auth, CLI shell, `doctor` | ✅ |
-| 2 | v0.5–v0.7 | Spike pt 2 — typed client, accounts, products | ✅ |
-| 3 | v0.8–v0.9.2 | Feeds as code — data sources, pull, push, diff | ✅ |
-| 4 | v0.9.3–v0.9.5 | **Preflight** — offline feed-compliance scanner | ✅ |
-| 5 | v0.9.6–v0.9.8 | **Migrate** — Content API → Merchant API assistant | ✅ |
-| 6 | v0.9.9–v0.9.10 | Inventories + promotions | ✅ |
-| 7 | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights | ✅ |
-| 8 | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening | ✅ |
-| 9 | v0.9.17+ | Polish & launch → **v1.0.0** | 🚧 |
+| Phase | Versions        | Theme                                                     | Status |
+| ----- | --------------- | --------------------------------------------------------- | :----: |
+| 0     | v0.0            | Scaffold — monorepo, `gmc` shell, docs site               |   ✅   |
+| 1     | v0.1–v0.4       | Spike pt 1 — auth, CLI shell, `doctor`                    |   ✅   |
+| 2     | v0.5–v0.7       | Spike pt 2 — typed client, accounts, products             |   ✅   |
+| 3     | v0.8–v0.9.2     | Feeds as code — data sources, pull, push, diff            |   ✅   |
+| 4     | v0.9.3–v0.9.5   | **Preflight** — offline feed-compliance scanner           |   ✅   |
+| 5     | v0.9.6–v0.9.8   | **Migrate** — Content API → Merchant API assistant        |   ✅   |
+| 6     | v0.9.9–v0.9.10  | Inventories + promotions                                  |   ✅   |
+| 7     | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights         |   ✅   |
+| 8     | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening |   ✅   |
+| 9     | v0.9.17+        | Polish & launch → **v1.0.0**                              |   🚧   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

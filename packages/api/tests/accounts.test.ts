@@ -61,7 +61,10 @@ describe("AccountsService", () => {
   it("getInfo composes account+businessInfo+homepage and folds a 404 sub-resource to null", async () => {
     const fetchImpl = (async (u: string) => {
       if (u.endsWith("/businessInfo")) {
-        return jsonResponse(200, { name: "accounts/123/businessInfo", address: { regionCode: "US" } });
+        return jsonResponse(200, {
+          name: "accounts/123/businessInfo",
+          address: { regionCode: "US" },
+        });
       }
       if (u.endsWith("/homepage")) {
         return jsonResponse(404, { error: { code: 404, status: "NOT_FOUND" } });

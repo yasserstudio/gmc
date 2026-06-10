@@ -14,7 +14,10 @@ function jsonResponse(status: number, body?: unknown): Response {
   return new Response(body === undefined ? null : JSON.stringify(body), { status });
 }
 
-function capturing(body: unknown): { service: PromotionsService; calls: { url: string; method?: string; body?: unknown }[] } {
+function capturing(body: unknown): {
+  service: PromotionsService;
+  calls: { url: string; method?: string; body?: unknown }[];
+} {
   const calls: { url: string; method?: string; body?: unknown }[] = [];
   const fetchImpl = (async (u: string, init?: RequestInit) => {
     calls.push({
@@ -80,6 +83,8 @@ describe("PromotionsService", () => {
   it("accepts a full data source resource name on insert", async () => {
     const { service, calls } = capturing({});
     await service.insertPromotion({ promotionId: "P" }, "accounts/123/dataSources/DS9");
-    expect((calls[0]?.body as { dataSource: string }).dataSource).toBe("accounts/123/dataSources/DS9");
+    expect((calls[0]?.body as { dataSource: string }).dataSource).toBe(
+      "accounts/123/dataSources/DS9",
+    );
   });
 });

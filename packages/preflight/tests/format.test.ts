@@ -118,8 +118,12 @@ describe("format length limits", () => {
   it("warns past the cap, passes within (and ignores absent)", () => {
     expect(rule("format.title-length").defaultSeverity).toBe("warning");
     expect(check("format.title-length", { attributes: {} })).toHaveLength(0);
-    expect(check("format.title-length", { attributes: { title: "x".repeat(150) } })).toHaveLength(0);
-    expect(check("format.title-length", { attributes: { title: "x".repeat(151) } })).toHaveLength(1);
+    expect(check("format.title-length", { attributes: { title: "x".repeat(150) } })).toHaveLength(
+      0,
+    );
+    expect(check("format.title-length", { attributes: { title: "x".repeat(151) } })).toHaveLength(
+      1,
+    );
     expect(
       check("format.description-length", { attributes: { description: "x".repeat(5000) } }),
     ).toHaveLength(0);

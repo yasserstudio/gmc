@@ -58,7 +58,9 @@ function strOr(v: unknown): string | undefined {
 }
 
 /** True when an object is a Content API money value (`{value, currency}`). */
-function isPriceShape(obj: Record<string, unknown>): obj is { value: string | number; currency: string } {
+function isPriceShape(
+  obj: Record<string, unknown>,
+): obj is { value: string | number; currency: string } {
   return (
     "value" in obj &&
     "currency" in obj &&

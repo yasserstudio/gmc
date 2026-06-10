@@ -17,7 +17,9 @@ export function registerConfigCommands(program: Command): void {
         if (json) {
           emitJson(paths);
         } else {
-          process.stdout.write(`config dir:  ${paths.configDir}\nconfig file: ${paths.configFile}\n`);
+          process.stdout.write(
+            `config dir:  ${paths.configDir}\nconfig file: ${paths.configFile}\n`,
+          );
         }
       } catch (err) {
         reportError(err, { json }, "gmc config path");
@@ -48,7 +50,9 @@ export function registerConfigCommands(program: Command): void {
         }
 
         if (names.length === 0) {
-          process.stdout.write(`No profiles configured.\nEdit ${getUserConfigPath()} to add one.\n`);
+          process.stdout.write(
+            `No profiles configured.\nEdit ${getUserConfigPath()} to add one.\n`,
+          );
           return;
         }
         for (const name of names) {

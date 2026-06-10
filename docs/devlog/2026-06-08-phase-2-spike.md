@@ -14,7 +14,7 @@ But before building breadth, the plan front-loads one question: **does the wedge
 ## The arc
 
 - **auth** — service account, OAuth, and Application Default Credentials, with the new per-sub-API scopes.
-- **`doctor`** — diagnose the *silent* failure where a credential authenticates fine but the Cloud project was never registered, so every call returns a cryptic empty result. This is the number-one migration trap, and catching it offline is the whole point.
+- **`doctor`** — diagnose the _silent_ failure where a credential authenticates fine but the Cloud project was never registered, so every call returns a cryptic empty result. This is the number-one migration trap, and catching it offline is the whole point.
 - **accounts** — `list` / `get` / `info`, where `info` composes the account with its business info and homepage.
 - **products** — `list` / `get` / `insert` / `delete`: read processed products (with their disapproval status) and write product inputs from version-controllable JSON.
 
@@ -27,7 +27,7 @@ A few sharp edges shaped the design:
 - **Products are two resources, not one.** The processed `products` resource is read-only and carries status; writes go through a separate `productInputs` resource (insert/delete only). gmc presents both under `gmc products`, but the split is real.
 - **Inserts need a data source.** You can't insert a product without naming a primary API data source — so `insert` and `delete` take a `--data-source`. Managing data sources is its own phase (v0.8).
 - **Everything is rate-limited per sub-API.** The typed client carries a six-bucket rate limiter, retry/backoff, and pagination so commands don't each reinvent them.
-- **Failures need classes.** Every command emits `--json` and a classed exit code (usage, auth, config, api) so CI can branch on *why* something failed.
+- **Failures need classes.** Every command emits `--json` and a classed exit code (usage, auth, config, api) so CI can branch on _why_ something failed.
 
 ## Where this lands
 

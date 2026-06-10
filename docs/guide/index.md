@@ -4,7 +4,7 @@
 
 It is built around three things the Merchant API makes harder than it should be:
 
-- **`gmc doctor`** — catches the *silent* failure mode where a credential authenticates fine but the Cloud project was never registered / the API was never enabled, so calls return cryptic empty results.
+- **`gmc doctor`** — catches the _silent_ failure mode where a credential authenticates fine but the Cloud project was never registered / the API was never enabled, so calls return cryptic empty results.
 - **[`gmc preflight`](/reference/preflight)** — an offline scanner that flags the attribute, format, and policy problems that get products disapproved, before you upload.
 - **[`gmc migrate`](/reference/migrate)** — an assistant for moving off the Content API: scope swaps, price-to-micros, identifier remaps, and the feed-label transfer check.
 
@@ -14,7 +14,7 @@ Most Merchant Center work is still done by hand in the web UI. A CLI makes it:
 
 - **scriptable** — feeds become version-controllable JSON you can diff and review;
 - **CI-friendly** — `--json` on every command and classed exit codes so pipelines can branch on the failure class;
-- **honest** — `doctor` tells you *why* something is broken instead of returning an empty list.
+- **honest** — `doctor` tells you _why_ something is broken instead of returning an empty list.
 
 ## Status
 

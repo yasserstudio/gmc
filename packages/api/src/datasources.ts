@@ -92,9 +92,13 @@ export class DataSourcesService {
   /** List every data source for the account, following pagination. */
   async listDataSources(): Promise<DataSource[]> {
     const dataSources: DataSource[] = [];
-    for await (const ds of this.client.paginate<DataSource>("datasources", `${this.base}/dataSources`, {
-      select: (page) => (page as DataSourcesListPage).dataSources ?? [],
-    })) {
+    for await (const ds of this.client.paginate<DataSource>(
+      "datasources",
+      `${this.base}/dataSources`,
+      {
+        select: (page) => (page as DataSourcesListPage).dataSources ?? [],
+      },
+    )) {
       dataSources.push(ds);
     }
     return dataSources;

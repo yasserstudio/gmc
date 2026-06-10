@@ -110,7 +110,10 @@ describe("loadOAuthClientConfig", () => {
     const dir = await mkdtemp(join(tmpdir(), "gmc-oauth-"));
     try {
       const file = join(dir, "client_secret.json");
-      await writeFile(file, JSON.stringify({ installed: { client_id: "f-id", client_secret: "f-sec" } }));
+      await writeFile(
+        file,
+        JSON.stringify({ installed: { client_id: "f-id", client_secret: "f-sec" } }),
+      );
       process.env["GMC_OAUTH_CLIENT_SECRETS"] = file;
       await expect(loadOAuthClientConfig()).resolves.toEqual({
         clientId: "f-id",

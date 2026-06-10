@@ -35,7 +35,11 @@ function parseQuantity(raw: string): string {
 }
 
 /** Build a Price from `--price <decimal>` + `--currency`, falling back to a file currency. */
-function buildPrice(amount: string, currency: string | undefined, existing: Price | undefined): Price {
+function buildPrice(
+  amount: string,
+  currency: string | undefined,
+  existing: Price | undefined,
+): Price {
   const amountMicros = toMicros(amount);
   if (amountMicros === null) {
     throw new UsageError(`Invalid --price "${amount}".`, "Use a non-negative decimal, e.g. 19.99.");
@@ -164,7 +168,9 @@ export function registerInventoryCommands(program: Command): void {
           process.stdout.write(`Set local inventory for store ${input.storeCode} on ${product}.\n`);
           // insert is a full replace — fields not sent are cleared, so a partial
           // flag update wipes anything previously set for this store.
-          process.stdout.write("This replaces the store's entire entry (unsent fields are cleared).\n");
+          process.stdout.write(
+            "This replaces the store's entire entry (unsent fields are cleared).\n",
+          );
         }
       } catch (err) {
         reportError(err, { json }, "gmc inventory local insert");
@@ -190,7 +196,10 @@ export function registerInventoryCommands(program: Command): void {
         const service = new InventoriesService(await clientFor(ctx, account));
         await service.deleteLocal(product, opts.storeCode);
         if (ctx.json) emitJson({ deleted: opts.storeCode, product });
-        else process.stdout.write(`Deleted local inventory for store ${opts.storeCode} on ${product}.\n`);
+        else
+          process.stdout.write(
+            `Deleted local inventory for store ${opts.storeCode} on ${product}.\n`,
+          );
       } catch (err) {
         reportError(err, { json }, "gmc inventory local delete");
       }
@@ -234,8 +243,12 @@ export function registerInventoryCommands(program: Command): void {
         const result = await service.insertRegional(product, input);
         if (ctx.json) emitJson(result);
         else {
-          process.stdout.write(`Set regional inventory for region ${input.region} on ${product}.\n`);
-          process.stdout.write("This replaces the region's entire entry (unsent fields are cleared).\n");
+          process.stdout.write(
+            `Set regional inventory for region ${input.region} on ${product}.\n`,
+          );
+          process.stdout.write(
+            "This replaces the region's entire entry (unsent fields are cleared).\n",
+          );
         }
       } catch (err) {
         reportError(err, { json }, "gmc inventory regional insert");
@@ -261,7 +274,10 @@ export function registerInventoryCommands(program: Command): void {
         const service = new InventoriesService(await clientFor(ctx, account));
         await service.deleteRegional(product, opts.region);
         if (ctx.json) emitJson({ deleted: opts.region, product });
-        else process.stdout.write(`Deleted regional inventory for region ${opts.region} on ${product}.\n`);
+        else
+          process.stdout.write(
+            `Deleted regional inventory for region ${opts.region} on ${product}.\n`,
+          );
       } catch (err) {
         reportError(err, { json }, "gmc inventory regional delete");
       }

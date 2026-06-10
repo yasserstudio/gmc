@@ -25,14 +25,14 @@ jobs:
 
 ## Inputs
 
-| Input | Default | Description |
-|-------|---------|-------------|
-| `command` | `preflight` | The gmc command (e.g. `preflight`, `"reports check"`, `"feeds diff"`) |
-| `args` | `""` | Extra arguments, e.g. `--dir feeds --strict` |
-| `account` | `""` | Merchant Center account id (`GMC_ACCOUNT_ID`) — for authenticated commands |
-| `credentials` | `""` | A Google service-account key JSON — **pass a secret**, never inline |
-| `version` | `latest` | The `@gmc-cli/cli` version to run |
-| `working-directory` | `.` | Where your feeds / `.gmcpreflightrc` live |
+| Input               | Default     | Description                                                                |
+| ------------------- | ----------- | -------------------------------------------------------------------------- |
+| `command`           | `preflight` | The gmc command (e.g. `preflight`, `"reports check"`, `"feeds diff"`)      |
+| `args`              | `""`        | Extra arguments, e.g. `--dir feeds --strict`                               |
+| `account`           | `""`        | Merchant Center account id (`GMC_ACCOUNT_ID`) — for authenticated commands |
+| `credentials`       | `""`        | A Google service-account key JSON — **pass a secret**, never inline        |
+| `version`           | `latest`    | The `@gmc-cli/cli` version to run                                          |
+| `working-directory` | `.`         | Where your feeds / `.gmcpreflightrc` live                                  |
 
 ## Authenticated commands
 
@@ -41,12 +41,12 @@ a service-account key as a repository secret and pass it via `credentials` — t
 temporary file and points Application Default Credentials at it:
 
 ```yaml
-      - uses: yasserstudio/gmc@v1
-        with:
-          command: reports check
-          args: --metric clicks --min 1000
-          account: "123456789"
-          credentials: ${{ secrets.GMC_SERVICE_ACCOUNT_KEY }}
+- uses: yasserstudio/gmc@v1
+  with:
+    command: reports check
+    args: --metric clicks --min 1000
+    account: "123456789"
+    credentials: ${{ secrets.GMC_SERVICE_ACCOUNT_KEY }}
 ```
 
 Inputs are passed to the shell through environment variables (not interpolated into the command line),

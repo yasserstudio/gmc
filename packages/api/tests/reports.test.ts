@@ -31,9 +31,12 @@ describe("ReportsService.search", () => {
       new MerchantClient({ auth, accountId: "123", fetchImpl, clock: instantClock }),
     );
 
-    const rows = await service.search("SELECT product_performance_view.clicks FROM product_performance_view", {
-      pageSize: 100,
-    });
+    const rows = await service.search(
+      "SELECT product_performance_view.clicks FROM product_performance_view",
+      {
+        pageSize: 100,
+      },
+    );
     expect(rows).toEqual([{ productPerformanceView: { clicks: "5" } }]);
     expect(calls[0]?.method).toBe("POST");
     expect(calls[0]?.url).toBe(BASE);

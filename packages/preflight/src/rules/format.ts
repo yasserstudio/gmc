@@ -160,7 +160,8 @@ export const formatRules: Rule[] = [
         {
           attribute: "gtin",
           message: `GTIN "${quote(gtin)}" is not a valid GTIN-8/12/13/14 (wrong length or check digit).`,
-          suggestion: "Verify the barcode: GTINs are 8, 12, 13, or 14 digits with a mod-10 check digit.",
+          suggestion:
+            "Verify the barcode: GTINs are 8, 12, 13, or 14 digits with a mod-10 check digit.",
           documentation: IDENTIFIER_DOC,
         },
       ];

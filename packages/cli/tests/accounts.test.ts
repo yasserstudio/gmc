@@ -106,7 +106,11 @@ describe("gmc accounts", () => {
   });
 
   it("get <id> --json emits the account resource and targets that id", async () => {
-    getAccount.mockResolvedValue({ name: "accounts/123", accountId: "123", accountName: "My Store" });
+    getAccount.mockResolvedValue({
+      name: "accounts/123",
+      accountId: "123",
+      accountName: "My Store",
+    });
 
     await run(["accounts", "get", "123", "--json"]);
 

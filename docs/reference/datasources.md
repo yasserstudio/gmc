@@ -1,6 +1,6 @@
 # gmc datasources
 
-Manage Merchant Center **data sources** — the container every product feed lives in. A *primary product* data source can receive products via the API (what [`products insert`](/reference/products) targets) or via a scheduled file fetch. Every subcommand operates on the account resolved from `--account` / `GMC_ACCOUNT_ID` / your profile.
+Manage Merchant Center **data sources** — the container every product feed lives in. A _primary product_ data source can receive products via the API (what [`products insert`](/reference/products) targets) or via a scheduled file fetch. Every subcommand operates on the account resolved from `--account` / `GMC_ACCOUNT_ID` / your profile.
 
 ## `gmc datasources list`
 
@@ -42,20 +42,20 @@ gmc datasources create --file datasource.json
 cat datasource.json | gmc datasources create
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--name <displayName>` | Display name (required in flag mode) |
-| `--type <type>` | Source type — `primary` (default); use `--file` for other types |
-| `--content-language <lang>` | Content language, e.g. `en` (required) |
-| `--feed-label <label>` | Feed label, e.g. `US` (required) |
-| `--legacy-local` | Boolean flag — present means a legacy-local feed for in-store-only products; absent (default) means a normal online feed |
-| `--countries <list>` | Comma-separated target countries, e.g. `US,CA` |
-| `--fetch-url <uri>` | Make it a scheduled file fetch from this URL |
-| `--fetch-schedule <freq>` | `daily` (default), `weekly`, or `monthly` |
-| `--fetch-time <HH:MM>` | Fetch time of day (24-hour) |
-| `--fetch-timezone <tz>` | Fetch time zone, e.g. `America/New_York` |
-| `--fetch-filename <name>` | Fetched file name (default derived from `--fetch-url`) |
-| `--file <path>` | Create from a full DataSource JSON file (else stdin) |
+| Option                      | Description                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `--name <displayName>`      | Display name (required in flag mode)                                                                                     |
+| `--type <type>`             | Source type — `primary` (default); use `--file` for other types                                                          |
+| `--content-language <lang>` | Content language, e.g. `en` (required)                                                                                   |
+| `--feed-label <label>`      | Feed label, e.g. `US` (required)                                                                                         |
+| `--legacy-local`            | Boolean flag — present means a legacy-local feed for in-store-only products; absent (default) means a normal online feed |
+| `--countries <list>`        | Comma-separated target countries, e.g. `US,CA`                                                                           |
+| `--fetch-url <uri>`         | Make it a scheduled file fetch from this URL                                                                             |
+| `--fetch-schedule <freq>`   | `daily` (default), `weekly`, or `monthly`                                                                                |
+| `--fetch-time <HH:MM>`      | Fetch time of day (24-hour)                                                                                              |
+| `--fetch-timezone <tz>`     | Fetch time zone, e.g. `America/New_York`                                                                                 |
+| `--fetch-filename <name>`   | Fetched file name (default derived from `--fetch-url`)                                                                   |
+| `--file <path>`             | Create from a full DataSource JSON file (else stdin)                                                                     |
 
 Input precedence: `--file` → flags → piped stdin. Passing both `--file` and flags is an error. `--json` returns the created `DataSource`.
 

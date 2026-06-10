@@ -1,5 +1,11 @@
 import type { Command } from "commander";
-import { runDoctor, emitJson, reportError, type DoctorReport, type CheckStatus } from "@gmc-cli/core";
+import {
+  runDoctor,
+  emitJson,
+  reportError,
+  type DoctorReport,
+  type CheckStatus,
+} from "@gmc-cli/core";
 import { getConfigDir } from "@gmc-cli/config";
 import { contextFrom, wantsJson } from "../context.js";
 
@@ -19,7 +25,9 @@ function renderHuman(report: DoctorReport): void {
       process.stdout.write(`    ${check.suggestion}\n`);
     }
   }
-  process.stdout.write(`\n${report.ok ? "All checks passed." : "Problems found — see suggestions above."}\n`);
+  process.stdout.write(
+    `\n${report.ok ? "All checks passed." : "Problems found — see suggestions above."}\n`,
+  );
 }
 
 /** Register the `gmc doctor` command. */

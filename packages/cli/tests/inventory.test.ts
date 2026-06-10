@@ -3,16 +3,23 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 
-const { resolveAuth, listLocal, insertLocal, deleteLocal, listRegional, insertRegional, deleteRegional } =
-  vi.hoisted(() => ({
-    resolveAuth: vi.fn(),
-    listLocal: vi.fn(),
-    insertLocal: vi.fn(),
-    deleteLocal: vi.fn(),
-    listRegional: vi.fn(),
-    insertRegional: vi.fn(),
-    deleteRegional: vi.fn(),
-  }));
+const {
+  resolveAuth,
+  listLocal,
+  insertLocal,
+  deleteLocal,
+  listRegional,
+  insertRegional,
+  deleteRegional,
+} = vi.hoisted(() => ({
+  resolveAuth: vi.fn(),
+  listLocal: vi.fn(),
+  insertLocal: vi.fn(),
+  deleteLocal: vi.fn(),
+  listRegional: vi.fn(),
+  insertRegional: vi.fn(),
+  deleteRegional: vi.fn(),
+}));
 
 vi.mock("@gmc-cli/auth", async (importActual) => {
   const actual = await importActual<typeof import("@gmc-cli/auth")>();
@@ -90,8 +97,16 @@ describe("gmc inventory", () => {
   it("inserts a local inventory from flags only", async () => {
     insertLocal.mockResolvedValue({ storeCode: "S1" });
     await run([
-      "inventory", "local", "insert", PROD,
-      "--store-code", "S1", "--availability", "out_of_stock", "--quantity", "0",
+      "inventory",
+      "local",
+      "insert",
+      PROD,
+      "--store-code",
+      "S1",
+      "--availability",
+      "out_of_stock",
+      "--quantity",
+      "0",
     ]);
     expect(insertLocal).toHaveBeenCalledWith(PROD, {
       storeCode: "S1",
@@ -105,8 +120,16 @@ describe("gmc inventory", () => {
   it("converts --price to micros with --currency", async () => {
     insertLocal.mockResolvedValue({});
     await run([
-      "inventory", "local", "insert", PROD,
-      "--store-code", "S1", "--price", "19.99", "--currency", "USD",
+      "inventory",
+      "local",
+      "insert",
+      PROD,
+      "--store-code",
+      "S1",
+      "--price",
+      "19.99",
+      "--currency",
+      "USD",
     ]);
     expect(insertLocal).toHaveBeenCalledWith(PROD, {
       storeCode: "S1",
@@ -182,8 +205,20 @@ describe("gmc inventory", () => {
 
   it("inserts a regional inventory and requires a region", async () => {
     insertRegional.mockResolvedValue({});
-    await run(["inventory", "regional", "insert", PROD, "--region", "US-CA", "--availability", "in_stock"]);
-    expect(insertRegional).toHaveBeenCalledWith(PROD, { region: "US-CA", availability: "in_stock" });
+    await run([
+      "inventory",
+      "regional",
+      "insert",
+      PROD,
+      "--region",
+      "US-CA",
+      "--availability",
+      "in_stock",
+    ]);
+    expect(insertRegional).toHaveBeenCalledWith(PROD, {
+      region: "US-CA",
+      availability: "in_stock",
+    });
 
     await run(["inventory", "regional", "insert", PROD, "--availability", "in_stock"]);
     expect(process.exitCode).toBe(2);

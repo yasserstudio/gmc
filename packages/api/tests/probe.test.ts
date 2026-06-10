@@ -35,7 +35,9 @@ describe("probeMerchantApi", () => {
   });
 
   it("fails on a 401 (token rejected)", async () => {
-    const r = await probeMerchantApi("tok", { fetchImpl: fetchReturning(401, { error: { code: 401 } }) });
+    const r = await probeMerchantApi("tok", {
+      fetchImpl: fetchReturning(401, { error: { code: 401 } }),
+    });
     expect(r.status).toBe("fail");
     expect(r.httpStatus).toBe(401);
   });

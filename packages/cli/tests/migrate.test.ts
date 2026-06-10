@@ -122,7 +122,9 @@ describe("gmc migrate scopes", () => {
 
   it("warns when the credential cannot be resolved", async () => {
     const { AuthError } = await import("@gmc-cli/auth");
-    resolveAuth.mockRejectedValue(new AuthError("No credential found.", "AUTH_NONE", "Run gmc auth login."));
+    resolveAuth.mockRejectedValue(
+      new AuthError("No credential found.", "AUTH_NONE", "Run gmc auth login."),
+    );
     await run(["migrate", "scopes"]);
     expect(out()).toContain("⚠ Credential resolved");
     expect(out()).toContain("No credential found.");
@@ -146,7 +148,10 @@ describe("gmc migrate scopes", () => {
     expect(out()).toContain('Created profile "store" → account 123456789');
     expect(out()).toContain("Verify with `gmc doctor`");
     const saved = JSON.parse(readFileSync(configPath(), "utf-8"));
-    expect(saved).toEqual({ defaultProfile: "store", profiles: { store: { accountId: "123456789" } } });
+    expect(saved).toEqual({
+      defaultProfile: "store",
+      profiles: { store: { accountId: "123456789" } },
+    });
     expect(process.exitCode).toBe(0);
   });
 
@@ -180,7 +185,11 @@ describe("gmc migrate scopes", () => {
     await run(["-j", "-p", "store", "migrate", "scopes", "--from", from]);
     const parsed = JSON.parse(out());
     expect(parsed.audit.scopeUnchanged).toBe(true);
-    expect(parsed.plan).toMatchObject({ profileName: "store", accountId: "123456789", action: "create" });
+    expect(parsed.plan).toMatchObject({
+      profileName: "store",
+      accountId: "123456789",
+      action: "create",
+    });
     expect(parsed.written).toBe(false);
   });
 });
@@ -280,10 +289,7 @@ describe("gmc migrate products", () => {
       }),
     );
     await run(["migrate", "products", "--from", inDir, "--out", outDir]);
-    expect(readdirSync(outDir).sort()).toEqual([
-      "en~US~SKU1.json",
-      "en~US~SKU2.json",
-    ]);
+    expect(readdirSync(outDir).sort()).toEqual(["en~US~SKU1.json", "en~US~SKU2.json"]);
     expect(process.exitCode).toBe(0);
   });
 
@@ -437,9 +443,7 @@ describe("gmc migrate feed-labels", () => {
 
   it("checks the live catalog with --remote", async () => {
     process.env["GMC_ACCOUNT_ID"] = "123";
-    listProducts.mockResolvedValue([
-      { offerId: "A", contentLanguage: "en", feedLabel: "US" },
-    ]);
+    listProducts.mockResolvedValue([{ offerId: "A", contentLanguage: "en", feedLabel: "US" }]);
     listDataSources.mockResolvedValue([source("US")]);
     await run(["migrate", "feed-labels", "--remote"]);
     expect(out()).toContain("scanned 1 product(s)");

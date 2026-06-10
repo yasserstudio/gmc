@@ -1,0 +1,11 @@
+dist
+build
+out
+coverage
+.turbo
+node_modules
+**/cache
+**/dist
+pnpm-lock.yaml
+docs/.vitepress/cache
+docs/.vitepress/dist

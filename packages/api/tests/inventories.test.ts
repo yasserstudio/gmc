@@ -21,7 +21,10 @@ interface Captured {
 }
 
 /** A service whose fetch captures the request, returning `body` for every call. */
-function capturing(body: unknown, status = 200): { service: InventoriesService; calls: Captured[] } {
+function capturing(
+  body: unknown,
+  status = 200,
+): { service: InventoriesService; calls: Captured[] } {
   const calls: Captured[] = [];
   const fetchImpl = (async (u: string, init?: RequestInit) => {
     calls.push({
@@ -41,7 +44,9 @@ const BASE = "https://merchantapi.googleapis.com/inventories/v1/accounts/123/pro
 
 describe("InventoriesService — local", () => {
   it("lists local inventories at the product sub-resource path", async () => {
-    const { service, calls } = capturing({ localInventories: [{ storeCode: "S1" }, { storeCode: "S2" }] });
+    const { service, calls } = capturing({
+      localInventories: [{ storeCode: "S1" }, { storeCode: "S2" }],
+    });
     const items = await service.listLocal("online~en~US~SKU1");
     expect(items.map((i) => i.storeCode)).toEqual(["S1", "S2"]);
     expect(calls[0]?.url).toBe(`${BASE}/online~en~US~SKU1/localInventories`);
@@ -63,7 +68,10 @@ describe("InventoriesService — local", () => {
 
   it("inserts via the :insert custom verb with the body", async () => {
     const { service, calls } = capturing({ storeCode: "S1", availability: "out_of_stock" });
-    await service.insertLocal("online~en~US~SKU1", { storeCode: "S1", availability: "out_of_stock" });
+    await service.insertLocal("online~en~US~SKU1", {
+      storeCode: "S1",
+      availability: "out_of_stock",
+    });
     expect(calls[0]?.method).toBe("POST");
     expect(calls[0]?.url).toBe(`${BASE}/online~en~US~SKU1/localInventories:insert`);
     expect(calls[0]?.body).toEqual({ storeCode: "S1", availability: "out_of_stock" });

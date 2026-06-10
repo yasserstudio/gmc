@@ -14,8 +14,8 @@ gmc products list --page-size 50
 gmc products list --json   # { "products": [ … ] }
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description               |
+| ----------------- | ------------------------- |
 | `--page-size <n>` | Max products per API page |
 
 ## `gmc products get <productId>`
@@ -36,10 +36,10 @@ gmc products insert --data-source 11223344 --file product.json
 cat product.json | gmc products insert --data-source 11223344
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option               | Description                                                   |
+| -------------------- | ------------------------------------------------------------- |
 | `--data-source <id>` | **Required.** A primary API data source (id or resource name) |
-| `--file <path>` | Read the ProductInput JSON from this file (else stdin) |
+| `--file <path>`      | Read the ProductInput JSON from this file (else stdin)        |
 
 ```json
 {
@@ -67,8 +67,8 @@ Delete a product input from a data source.
 gmc products delete en~US~SKU1 --data-source 11223344
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option               | Description                                                        |
+| -------------------- | ------------------------------------------------------------------ |
 | `--data-source <id>` | **Required.** The data source (id or resource name) to delete from |
 
 ## Exit codes

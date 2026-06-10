@@ -75,10 +75,12 @@ describe("rate limiter buckets", () => {
 
   it("rejects a bucket config that would hang (capacity < 1 or refill <= 0)", () => {
     expect(
-      () => new RateLimiter({ ...DEFAULT_RATE_LIMITS, products: { capacity: 0, refillPerSecond: 1 } }),
+      () =>
+        new RateLimiter({ ...DEFAULT_RATE_LIMITS, products: { capacity: 0, refillPerSecond: 1 } }),
     ).toThrow();
     expect(
-      () => new RateLimiter({ ...DEFAULT_RATE_LIMITS, products: { capacity: 1, refillPerSecond: 0 } }),
+      () =>
+        new RateLimiter({ ...DEFAULT_RATE_LIMITS, products: { capacity: 1, refillPerSecond: 0 } }),
     ).toThrow();
   });
 });

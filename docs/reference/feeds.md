@@ -12,10 +12,10 @@ gmc feeds pull --dir catalog        # custom directory
 gmc feeds pull --json               # { "pulled": N, "dir": "feeds" }
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--dir <path>` | Output directory (default `feeds`) |
-| `--page-size <n>` | Max products per API page |
+| Option            | Description                        |
+| ----------------- | ---------------------------------- |
+| `--dir <path>`    | Output directory (default `feeds`) |
+| `--page-size <n>` | Max products per API page          |
 
 Each file is named by the product's composite id and contains a push-ready input:
 
@@ -31,7 +31,10 @@ feeds/
   "offerId": "SKU1",
   "contentLanguage": "en",
   "feedLabel": "US",
-  "attributes": { "title": "Trail Runner", "price": { "amountMicros": "49990000", "currencyCode": "USD" } }
+  "attributes": {
+    "title": "Trail Runner",
+    "price": { "amountMicros": "49990000", "currencyCode": "USD" }
+  }
 }
 ```
 
@@ -49,9 +52,9 @@ gmc feeds push --dir catalog --data-source 1234567
 gmc feeds push --data-source 1234567 --json # { "pushed": N, "dataSource": "1234567", "dir": "feeds" }
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--dir <path>` | Input directory (default `feeds`) |
+| Option               | Description                                           |
+| -------------------- | ----------------------------------------------------- |
+| `--dir <path>`       | Input directory (default `feeds`)                     |
 | `--data-source <id>` | Target data source id or resource name (**required**) |
 
 `--data-source` is always explicit: pulled files don't record their origin source. Create one with [`gmc datasources create`](/reference/datasources).
@@ -69,11 +72,11 @@ gmc feeds diff --data-source 1234567    # scope to one source (exact push previe
 gmc feeds diff --json                   # { "added": [...], "updated": [...], "unchanged": N, "orphaned": [...], "dir": "feeds" }
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--dir <path>` | Input directory (default `feeds`) |
+| Option               | Description                                         |
+| -------------------- | --------------------------------------------------- |
+| `--dir <path>`       | Input directory (default `feeds`)                   |
 | `--data-source <id>` | Only compare against products from this data source |
-| `--page-size <n>` | Max products per API page |
+| `--page-size <n>`    | Max products per API page                           |
 
 Each product is matched by its composite id (`{contentLanguage}~{feedLabel}~{offerId}`, or `local~{contentLanguage}~{feedLabel}~{offerId}` for legacy-local products), independent of filename, and bucketed:
 

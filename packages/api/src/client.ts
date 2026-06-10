@@ -85,10 +85,7 @@ export class MerchantClient {
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.clock = options.clock ?? systemClock;
-    this.limiter = new RateLimiter(
-      { ...DEFAULT_RATE_LIMITS, ...options.rateLimits },
-      this.clock,
-    );
+    this.limiter = new RateLimiter({ ...DEFAULT_RATE_LIMITS, ...options.rateLimits }, this.clock);
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
   }
 

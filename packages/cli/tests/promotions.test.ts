@@ -95,7 +95,11 @@ describe("gmc promotions", () => {
   });
 
   it("gets one promotion", async () => {
-    getPromotion.mockResolvedValue({ promotionId: "P1", attributes: { longTitle: "Sale" }, targetCountry: "US" });
+    getPromotion.mockResolvedValue({
+      promotionId: "P1",
+      attributes: { longTitle: "Sale" },
+      targetCountry: "US",
+    });
     await run(["promotions", "get", "P1"]);
     expect(getPromotion).toHaveBeenCalledWith("P1");
     expect(out()).toContain("Sale");
@@ -110,7 +114,10 @@ describe("gmc promotions", () => {
 
   it("inserts a promotion from a file under a data source", async () => {
     const file = join(dir, "p.json");
-    writeFileSync(file, JSON.stringify({ promotionId: "P1", contentLanguage: "en", targetCountry: "US" }));
+    writeFileSync(
+      file,
+      JSON.stringify({ promotionId: "P1", contentLanguage: "en", targetCountry: "US" }),
+    );
     insertPromotion.mockResolvedValue({ promotionId: "P1" });
     await run(["promotions", "insert", "--data-source", "DS1", "--file", file]);
     expect(insertPromotion).toHaveBeenCalledWith(

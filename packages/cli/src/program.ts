@@ -28,7 +28,9 @@ export function createProgram(): Command {
 
   program
     .name("gmc")
-    .description("Google Merchant Center CLI — typed, CI-friendly access to the Google Merchant API")
+    .description(
+      "Google Merchant Center CLI — typed, CI-friendly access to the Google Merchant API",
+    )
     .version(process.env["__GMC_VERSION"] || "0.0.0", "-V, --version")
     .option("-j, --json", "Output machine-readable JSON")
     .option("-p, --profile <name>", "Auth/account profile to use")

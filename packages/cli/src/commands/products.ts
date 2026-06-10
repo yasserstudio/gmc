@@ -1,11 +1,6 @@
 import type { Command } from "commander";
 import { emitJson, reportError } from "@gmc-cli/core";
-import {
-  ProductsService,
-  productSegment,
-  type Product,
-  type ProductInput,
-} from "@gmc-cli/api";
+import { ProductsService, productSegment, type Product, type ProductInput } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
 import {
   clientFor,
@@ -25,7 +20,9 @@ function issueSummary(product: Product): string {
   const issues = product.productStatus?.itemLevelIssues ?? [];
   if (issues.length === 0) return "no issues";
   const disapproved = issues.filter((i) => i.servability === "disapproved").length;
-  return disapproved > 0 ? `${disapproved} disapproved / ${issues.length} issue(s)` : `${issues.length} issue(s)`;
+  return disapproved > 0
+    ? `${disapproved} disapproved / ${issues.length} issue(s)`
+    : `${issues.length} issue(s)`;
 }
 
 function renderProducts(products: Product[]): void {
@@ -119,7 +116,9 @@ export function registerProductsCommands(program: Command): void {
         else {
           const id = result.offerId ?? input.offerId ?? "product";
           process.stdout.write(`Inserted ${id}${result.name ? ` (${result.name})` : ""}.\n`);
-          process.stdout.write("Processing is async; the product may take a few minutes to appear in `products get`.\n");
+          process.stdout.write(
+            "Processing is async; the product may take a few minutes to appear in `products get`.\n",
+          );
         }
       } catch (err) {
         reportError(err, { json }, "gmc products insert");

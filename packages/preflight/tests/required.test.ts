@@ -29,7 +29,9 @@ describe("required.description", () => {
   it("flags a missing or blank description", () => {
     expect(check("required.description", { attributes: {} })).toHaveLength(1);
     expect(check("required.description", { attributes: { description: "  " } })).toHaveLength(1);
-    expect(check("required.description", { attributes: { description: "A shoe." } })).toHaveLength(0);
+    expect(check("required.description", { attributes: { description: "A shoe." } })).toHaveLength(
+      0,
+    );
   });
 });
 
@@ -65,9 +67,9 @@ describe("required.price", () => {
     expect(
       check("required.price", { attributes: { price: { currencyCode: "USD" } } }),
     ).toHaveLength(1);
-    expect(check("required.price", { attributes: { price: { amountMicros: "1000" } } })).toHaveLength(
-      0,
-    );
+    expect(
+      check("required.price", { attributes: { price: { amountMicros: "1000" } } }),
+    ).toHaveLength(0);
   });
 
   it("does not flag a present-but-malformed amount (format.price-amount's job)", () => {
