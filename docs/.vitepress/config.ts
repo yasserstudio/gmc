@@ -31,6 +31,7 @@ export default defineConfig({
             { text: "Getting started", link: "/guide/getting-started" },
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Configuration & profiles", link: "/guide/configuration" },
+            { text: "GitHub Action (CI)", link: "/guide/github-action" },
             { text: "Roadmap", link: "/guide/roadmap" },
           ],
         },

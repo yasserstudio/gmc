@@ -1,0 +1,61 @@
+name: "gmc — Google Merchant Center CLI"
+description: "Run gmc in CI — e.g. an offline feed-compliance preflight gate that fails the build on disapproval triggers."
+author: "Yasser Studio"
+branding:
+  icon: "shopping-cart"
+  color: "blue"
+
+inputs:
+  command:
+    description: "The gmc command to run (e.g. preflight, 'reports check', 'feeds diff'). Default: preflight."
+    required: false
+    default: "preflight"
+  args:
+    description: "Extra arguments for the command, e.g. '--dir feeds --strict'."
+    required: false
+    default: ""
+  account:
+    description: "Merchant Center account id (sets GMC_ACCOUNT_ID). Needed for authenticated commands."
+    required: false
+    default: ""
+  credentials:
+    description: "A Google service-account key JSON, for authenticated commands. Pass a repository secret — never inline."
+    required: false
+    default: ""
+  version:
+    description: "The @gmc-cli/cli version to run (npm dist-tag or version). Default: latest."
+    required: false
+    default: "latest"
+  working-directory:
+    description: "Directory to run gmc in (where your feeds / .gmcpreflightrc live)."
+    required: false
+    default: "."
+
+runs:
+  using: "composite"
+  steps:
+    # Write the service-account key to a temp file and point ADC at it. Only runs
+    # when credentials are supplied (preflight on local files needs none).
+    - name: Configure credentials
+      if: ${{ inputs.credentials != '' }}
+      shell: bash
+      env:
+        GMC_CREDENTIALS: ${{ inputs.credentials }}
+      run: |
+        key_file="$RUNNER_TEMP/gmc-credentials.json"
+        printf '%s' "$GMC_CREDENTIALS" > "$key_file"
+        chmod 600 "$key_file"
+        echo "GOOGLE_APPLICATION_CREDENTIALS=$key_file" >> "$GITHUB_ENV"
+
+    # Inputs flow through env (not `${{ }}` interpolated into the script) so a
+    # crafted `args`/`command` can't inject shell. gmc's exit code becomes the
+    # step's exit code — a failing preflight gate fails the workflow.
+    - name: Run gmc
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GMC_VERSION: ${{ inputs.version }}
+        GMC_COMMAND: ${{ inputs.command }}
+        GMC_ARGS: ${{ inputs.args }}
+        GMC_ACCOUNT_ID: ${{ inputs.account }}
+      run: npx -y "@gmc-cli/cli@$GMC_VERSION" $GMC_COMMAND $GMC_ARGS
