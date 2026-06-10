@@ -29,7 +29,7 @@ gmc products get online~en~US~SKU1 --json
 
 ## `gmc products insert`
 
-Insert (create or replace) a product input from a JSON [ProductInput](https://developers.google.com/merchant/api/reference/rest/products_v1beta/accounts.productInputs), read from `--file` or stdin, under a data source.
+Insert (create or replace) a product input from a JSON [ProductInput](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.productInputs), read from `--file` or stdin, under a data source.
 
 ```sh
 gmc products insert --data-source 11223344 --file product.json
