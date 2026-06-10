@@ -1,0 +1,42 @@
+name: Release binaries
+
+# Runs when a GitHub Release is published (at launch), not on every tag push — so
+# routine 0.9.x tags don't trigger it. Builds self-contained binaries (no Node
+# required) for macOS/Linux and attaches them to the release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @gmc-cli/cli build
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Build standalone binaries
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          entry="packages/cli/dist/bin.js"
+          for target in bun-darwin-arm64 bun-darwin-x64 bun-linux-x64 bun-linux-arm64; do
+            bun build "$entry" --compile --target="$target" --outfile "out/gmc-${target#bun-}"
+          done
+          ls -la out
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" out/gmc-* --clobber
