@@ -51,6 +51,7 @@ export default defineConfig({
           text: "Introduction",
           items: [
             { text: "What is gmc?", link: "/guide/" },
+            { text: "Installation", link: "/guide/installation" },
             { text: "Getting started", link: "/guide/getting-started" },
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Configuration & profiles", link: "/guide/configuration" },
