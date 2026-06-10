@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write # OIDC for npm staged publishing (Trusted Publisher)
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Ensure npm >= 11.15 (staged publishing)
+        run: |
+          NPM_VER=$(npm --version)
+          echo "Current npm: $NPM_VER"
+          if [ "$(printf '%s\n' "11.15.0" "$NPM_VER" | sort -V | head -1)" != "11.15.0" ]; then
+            echo "Upgrading npm for staged publishing support..."
+            npm install -g npm@11.15.0
+            echo "Upgraded to: $(npm --version)"
+          fi
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - run: pnpm build
+
+      - name: Dry-run publish (@gmc-cli/cli)
+        run: |
+          PKG_NAME=$(node -p "require('./packages/cli/package.json').name")
+          PKG_VER=$(node -p "require('./packages/cli/package.json').version")
+          REGISTRY_VER=$(npm view "$PKG_NAME" version 2>/dev/null || echo "")
+          if [ "$PKG_VER" = "$REGISTRY_VER" ]; then
+            echo "skip: $PKG_NAME@$PKG_VER already published"
+          else
+            echo "dry-run: $PKG_NAME@$PKG_VER"
+            (cd packages/cli && pnpm pack && npm publish gmc-cli-cli-*.tgz --dry-run 2>&1) || exit 1
+            rm -f packages/cli/gmc-cli-cli-*.tgz
+          fi
+
+      # When changesets exist on main, opens a "version packages" PR. When that PR is
+      # merged (versions bumped, no changesets left), runs `pnpm release-staged` to
+      # submit @gmc-cli/cli to npm's staging area for passkey approval.
+      - name: Create Release PR or stage the package
+        id: changesets
+        uses: changesets/action@c8bada60c408975afd1a20b3db81d6eee6789308 # v1
+        with:
+          publish: pnpm release-staged
+          createGithubReleases: false
+          title: "chore: version packages"
+          commit: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate SBOM
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          npx @cyclonedx/cdxgen@12.3.1 -o sbom.json -t javascript
+          echo "SBOM: $(jq '.components | length' sbom.json) components"
+
+      - name: Upload SBOM artifact
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: sbom.json
+          retention-days: 90
+
+      - name: Next steps
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "Staged @gmc-cli/cli for review. To finish the release:"
+          echo "  1. Approve the staged package with your passkey:"
+          echo "     https://www.npmjs.com/settings/gmc-cli/staged-packages"
+          echo "  2. Create the GitHub release for the new tag (fires binaries + Homebrew):"
+          echo "     gh release create vX.Y.Z --generate-notes   # see RELEASING.md"
