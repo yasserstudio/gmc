@@ -7,6 +7,21 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.11 — reports: query + performance
+
+Phase 7, part 1 — the reports sub-API (`reports/v1`, Merchant Center Query Language).
+
+- **`gmc reports performance`** — product clicks, impressions, CTR, and conversions from
+  `product_performance_view` over a date window (`--days`, default 30, or `--since`/`--until`),
+  rendered as a date-sorted table or `--json`.
+- **`gmc reports query <mcql>`** — run any MCQL query and print the rows (NDJSON) or `--json` — the
+  escape hatch for views the presets don't cover.
+- **`@gmc-cli/api`** gains `ReportsService.search`, which POSTs the MCQL query and paginates with the
+  `pageToken` in the request body (the reports API doesn't use query params for paging).
+
+_`@gmc-cli/cli` → 0.9.11, `@gmc-cli/api` → 0.9.5 (patch); `@gmc-cli/core`/`migrate`/`preflight` take the
+internal-dependency patch cascade._
+
 ## v0.9.10 — Merchant API v1 + promotions
 
 Phase 6, part 2 — closes Phase 6. Two alignment-critical changes.
