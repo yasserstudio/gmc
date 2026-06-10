@@ -1,6 +1,6 @@
 # gmc migrate
 
-**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API. Phase 5 builds it in three steps: `migrate scopes` (v0.9.6) and `migrate products` (v0.9.7) below; `migrate feed-labels` follows.
+**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API. Phase 5 builds it in three steps, all below: `migrate scopes` (v0.9.6), `migrate products` (v0.9.7), and `migrate feed-labels` (v0.9.8).
 
 ```sh
 gmc migrate scopes                                   # audit auth readiness
@@ -107,11 +107,55 @@ The Merchant API keeps only *identity* fields at the top level and nests everyth
 
 Each run prints a **migration report** — products converted, identity remaps, dropped fields, and any warnings (e.g. a price whose value isn't a number, left for `preflight` to flag) — or the full report as `--json`.
 
+## `gmc migrate feed-labels`
+
+Verifies that your migrated feed labels resolve to feeds your campaigns target. Google Ads Shopping campaigns serve products by their feed identity `(channel, feedLabel, contentLanguage)` — the same tuple a primary data source is keyed by. After migration, a product whose feed identity matches **no** data source lands in a feed no campaign targets and **silently stops serving**. This check catches that before you push.
+
+```sh
+gmc migrate feed-labels --dir feeds          # analyze the migrated feed (offline)
+gmc -a 123 migrate feed-labels --dir feeds   # + cross-check against the account's data sources
+gmc -a 123 migrate feed-labels --remote      # check the live catalog
+gmc migrate feed-labels --dir feeds --strict # warnings fail the run too
+```
+
+| Option | Description |
+|--------|-------------|
+| `--dir <path>` | Directory of product files to check (default `feeds`) |
+| `--remote` | Pull and check the live catalog instead (needs auth) |
+| `--strict` | Treat warnings as failures (non-zero exit) |
+| `--page-size <n>` | Max products per API page (with `--remote`) |
+
+The **cross-check** runs whenever an account is resolved (`-a` / profile / env): it lists the account's data sources and matches each product group against them. With `--dir` and no account it degrades to offline analysis (a note says so); `--remote` requires auth, so it always cross-checks.
+
+| Rule | Severity | Catches |
+|------|----------|---------|
+| `feed-label.missing` | error | A product with no `feedLabel` — it can't be grouped or served |
+| `feed-label.unmatched` | error (cross-check) | A group that matches no primary data source → products land in a feed no campaign targets |
+| `feed-label.case-variant` | warning | The same label in different cases (`US` vs `us`) — Merchant Center treats them as two feeds |
+| `feed-label.orphaned-source` | info (cross-check) | A data source with no products to fill it |
+
+The report prints the feed-label **distribution** — each group, its product count, and whether it matches a data source — so you can confirm migrated labels line up with your campaigns.
+
+```
+gmc migrate feed-labels — scanned 120 product(s) across 2 feed-label group(s)
+
+feed labels:
+  CA / en  18 product(s)  ✗ no matching data source
+  US / en  102 product(s) ✓ matches a data source
+
+✗ No primary data source has feedLabel "CA" (contentLanguage en) — 18 product(s) would land in a feed no campaign targets.
+    → Create a matching data source (gmc datasources create) or correct the feed label.
+
+1 error across 2 group(s).
+Failed.
+```
+
 ## Exit codes
 
 - **`migrate scopes`** is an *assistant, not a CI gate* — audit findings are advisory, so a reachability warning or a failing probe still exits `0`. Only real errors fail: `2` usage (a non-numeric `--account`, an unreadable `--from`, or a legacy file with no valid `merchantId`) · `4` config (writing an invalid profile).
 - **`migrate products`** writes every product it can convert, but exits `1` if **any** product couldn't be converted (not an object, no derivable `offerId`, unparseable file) — so CI gates an incomplete migration. Dropped-field and price warnings are informational (exit `0`). `2` usage for an unreadable `--from`/`--file`.
+- **`migrate feed-labels`** is a CI gate like `preflight`: exits `1` on error findings (missing or unmatched feed labels) or an unparseable file; warnings (case variants) gate only with `--strict`. `2`/`3` usage/auth for `--remote`.
 
-## Coming next
+## Phase 5 complete
 
-- **`gmc migrate feed-labels`** (v0.9.8) — verify the `targetCountry` → `feedLabel` remap matches what your Google Ads Shopping campaigns expect, so products keep serving (the silent campaign-killer).
+`scopes` + `products` + `feed-labels` cover the full Content API → Merchant API move: auth, product data, and the feed-label safety net. Next up is breadth — inventories, promotions, and reports.

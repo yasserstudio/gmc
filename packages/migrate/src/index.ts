@@ -25,6 +25,17 @@ export type {
   ProductTransformError,
   ProductTransformResult,
 } from "./products.js";
+export { checkFeedLabels } from "./feed-labels.js";
+export type {
+  FeedLabelProduct,
+  FeedLabelSource,
+  FeedLabelSeverity,
+  FeedLabelGroup,
+  FeedLabelFinding,
+  FeedLabelCounts,
+  FeedLabelReport,
+  CheckFeedLabelsOptions,
+} from "./feed-labels.js";
 export { MigrateError } from "./errors.js";
 export type {
   CheckStatus,
