@@ -32,6 +32,7 @@ export default defineConfig({
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Configuration & profiles", link: "/guide/configuration" },
             { text: "GitHub Action (CI)", link: "/guide/github-action" },
+            { text: "GitLab CI", link: "/guide/gitlab-ci" },
             { text: "Roadmap", link: "/guide/roadmap" },
           ],
         },
