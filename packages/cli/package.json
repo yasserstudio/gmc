@@ -54,7 +54,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.2",
     "@gmc-cli/api": "workspace:*",
     "@gmc-cli/auth": "workspace:*",
     "@gmc-cli/config": "workspace:*",
