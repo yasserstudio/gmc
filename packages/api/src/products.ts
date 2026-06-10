@@ -1,4 +1,4 @@
-// Typed Products sub-API service (Merchant API `products/v1beta`). The API splits
+// Typed Products sub-API service (Merchant API `products/v1`). The API splits
 // products in two: the read-only *processed* `products` resource (get/list, with
 // status + item-level issues) and the writable `productInputs` resource
 // (insert/delete only). This service wraps a MerchantClient scoped to one account
@@ -6,7 +6,7 @@
 
 import type { MerchantClient } from "./client.js";
 
-const PRODUCTS_API = "products/v1beta";
+const PRODUCTS_API = "products/v1";
 
 /** A monetary amount (google.shopping.type.Price). */
 export interface Price {

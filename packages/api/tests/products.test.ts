@@ -31,7 +31,7 @@ describe("ProductsService", () => {
 
     expect(product.offerId).toBe("SKU1");
     expect(url).toBe(
-      "https://merchantapi.googleapis.com/products/v1beta/accounts/123/products/online~en~US~SKU1",
+      "https://merchantapi.googleapis.com/products/v1/accounts/123/products/online~en~US~SKU1",
     );
   });
 
@@ -45,7 +45,7 @@ describe("ProductsService", () => {
     await service(fetchImpl).getProduct("accounts/123/products/online~en~US~SKU1");
 
     expect(url).toBe(
-      "https://merchantapi.googleapis.com/products/v1beta/accounts/123/products/online~en~US~SKU1",
+      "https://merchantapi.googleapis.com/products/v1/accounts/123/products/online~en~US~SKU1",
     );
   });
 
@@ -64,7 +64,7 @@ describe("ProductsService", () => {
     const products = await service(fetchImpl).listProducts({ pageSize: 50 });
 
     expect(products.map((p) => p.name)).toEqual(["p1", "p2", "p3"]);
-    expect(urls[0]).toContain("/products/v1beta/accounts/123/products?");
+    expect(urls[0]).toContain("/products/v1/accounts/123/products?");
     expect(urls[0]).toContain("pageSize=50");
     expect(urls[1]).toContain("pageToken=p2tok");
   });
@@ -84,7 +84,7 @@ describe("ProductsService", () => {
     expect(init?.method).toBe("POST");
     expect(JSON.parse(init?.body as string)).toEqual({ offerId: "SKU1" });
     const u = new URL(url);
-    expect(u.pathname).toBe("/products/v1beta/accounts/123/productInputs:insert");
+    expect(u.pathname).toBe("/products/v1/accounts/123/productInputs:insert");
     expect(u.searchParams.get("dataSource")).toBe("accounts/123/dataSources/55");
   });
 
@@ -106,7 +106,7 @@ describe("ProductsService", () => {
     expect(res).toBeUndefined();
     expect(method).toBe("DELETE");
     const u = new URL(url);
-    expect(u.pathname).toBe("/products/v1beta/accounts/123/productInputs/online~en~US~SKU1");
+    expect(u.pathname).toBe("/products/v1/accounts/123/productInputs/online~en~US~SKU1");
     expect(u.searchParams.get("dataSource")).toBe("accounts/123/dataSources/55");
   });
 

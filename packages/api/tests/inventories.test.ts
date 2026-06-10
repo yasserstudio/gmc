@@ -37,7 +37,7 @@ function capturing(body: unknown, status = 200): { service: InventoriesService; 
   return { service, calls };
 }
 
-const BASE = "https://merchantapi.googleapis.com/inventories/v1beta/accounts/123/products";
+const BASE = "https://merchantapi.googleapis.com/inventories/v1/accounts/123/products";
 
 describe("InventoriesService — local", () => {
   it("lists local inventories at the product sub-resource path", async () => {

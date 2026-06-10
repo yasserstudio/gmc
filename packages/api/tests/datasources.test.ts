@@ -30,7 +30,7 @@ describe("DataSourcesService", () => {
     const ds = await service(fetchImpl).getDataSource("55");
 
     expect(ds.displayName).toBe("API feed");
-    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1beta/accounts/123/dataSources/55");
+    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55");
   });
 
   it("listDataSources follows nextPageToken and flattens every page", async () => {
@@ -52,7 +52,7 @@ describe("DataSourcesService", () => {
       "accounts/123/dataSources/2",
       "accounts/123/dataSources/3",
     ]);
-    expect(urls[0]).toBe("https://merchantapi.googleapis.com/datasources/v1beta/accounts/123/dataSources");
+    expect(urls[0]).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources");
     expect(urls[1]).toContain("pageToken=p2");
   });
 
@@ -71,7 +71,7 @@ describe("DataSourcesService", () => {
     expect(result.dataSourceId).toBe("55");
     expect(init?.method).toBe("POST");
     expect(JSON.parse(init?.body as string)).toEqual(body);
-    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1beta/accounts/123/dataSources");
+    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources");
   });
 
   it("deleteDataSource DELETEs the data source (204 → undefined)", async () => {
@@ -87,7 +87,7 @@ describe("DataSourcesService", () => {
 
     expect(res).toBeUndefined();
     expect(method).toBe("DELETE");
-    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1beta/accounts/123/dataSources/55");
+    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55");
   });
 
   it("dataSourceSegment normalizes ids and resource names", () => {

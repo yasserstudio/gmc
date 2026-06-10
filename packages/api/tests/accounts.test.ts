@@ -22,7 +22,7 @@ function service(fetchImpl: typeof fetch): AccountsService {
 }
 
 describe("AccountsService", () => {
-  it("getAccount GETs accounts/v1beta/accounts/{id} and parses the resource", async () => {
+  it("getAccount GETs accounts/v1/accounts/{id} and parses the resource", async () => {
     let url = "";
     let method = "";
     const fetchImpl = (async (u: string, init: RequestInit) => {
@@ -34,7 +34,7 @@ describe("AccountsService", () => {
     const account = await service(fetchImpl).getAccount("123");
 
     expect(account.accountName).toBe("My Store");
-    expect(url).toBe("https://merchantapi.googleapis.com/accounts/v1beta/accounts/123");
+    expect(url).toBe("https://merchantapi.googleapis.com/accounts/v1/accounts/123");
     expect(method).toBe("GET");
   });
 
@@ -54,7 +54,7 @@ describe("AccountsService", () => {
 
     expect(accounts.map((a) => a.name)).toEqual(["accounts/1", "accounts/2", "accounts/3"]);
     expect(call).toBe(2);
-    expect(urls[0]).toBe("https://merchantapi.googleapis.com/accounts/v1beta/accounts");
+    expect(urls[0]).toBe("https://merchantapi.googleapis.com/accounts/v1/accounts");
     expect(urls[1]).toContain("pageToken=p2");
   });
 

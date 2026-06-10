@@ -43,6 +43,9 @@ export type {
 export { InventoriesService } from "./inventories.js";
 export type { LocalInventory, RegionalInventory, TimePeriod } from "./inventories.js";
 
+export { PromotionsService, promotionSegment } from "./promotions.js";
+export type { Promotion, PromotionAttributes } from "./promotions.js";
+
 export { toMicros } from "./money.js";
 
 export { MerchantApiError } from "./errors.js";

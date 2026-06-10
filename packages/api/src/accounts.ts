@@ -1,4 +1,4 @@
-// Typed Accounts sub-API service (Merchant API `accounts/v1beta`). A thin wrapper
+// Typed Accounts sub-API service (Merchant API `accounts/v1`). A thin wrapper
 // over MerchantClient: get a single account, list accessible accounts, and
 // compose the `info` profile (account + business info + homepage). All calls run
 // on the "accounts" rate-limit bucket. v0.7 adds ProductsService alongside this.
@@ -6,7 +6,7 @@
 import type { MerchantClient } from "./client.js";
 import { MerchantApiError } from "./errors.js";
 
-const ACCOUNTS_API = "accounts/v1beta";
+const ACCOUNTS_API = "accounts/v1";
 
 // The interfaces below model only the fields the CLI reads; the Merchant API
 // returns more. `client.get` returns the full parsed JSON (these types are a
