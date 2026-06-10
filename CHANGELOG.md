@@ -7,6 +7,22 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.18 — install paths: Homebrew tap + standalone binaries
+
+Phase 9, part 2 — distribution.
+
+- **Homebrew** — a tap formula (`HomebrewFormula/gmc.rb`); `brew install yasserstudio/gmc/gmc` installs
+  the published `@gmc-cli/cli` npm package and links the `gmc` binary (Homebrew provides Node).
+- **Standalone binaries** — a `release: published` workflow builds self-contained binaries (no Node
+  required) for macOS/Linux (arm64 + x64) via Bun `--compile` and attaches them to each GitHub release.
+  Deliberately not on tag push, so routine 0.9.x tags don't fire it.
+- **Installation guide** — a new page documenting all four paths (npm · npx · Homebrew · binary), added
+  to the guide sidebar.
+- The Homebrew tarball `sha256` and the binary build both go live with the **first npm publish at v1.0**;
+  the formula carries a placeholder sha until then.
+
+_`@gmc-cli/cli` → 0.9.18 (patch); other packages unchanged._
+
 ## v0.9.17 — docs polish (SEO + 1.0 reference)
 
 Phase 9, part 1 — launch prep.
