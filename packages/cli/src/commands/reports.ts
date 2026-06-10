@@ -48,7 +48,10 @@ function resolveWindow(opts: PerfOpts): { since: string; until: string } {
     // span — an unbounded value underflows the start date to a negative year.
     const n = Number(opts.days);
     if (!/^\d+$/.test(opts.days) || !Number.isInteger(n) || n <= 0 || n > MAX_DAYS) {
-      throw new UsageError(`Invalid --days "${opts.days}".`, `Use a positive integer up to ${MAX_DAYS}.`);
+      throw new UsageError(
+        `Invalid --days "${opts.days}".`,
+        `Use a positive integer up to ${MAX_DAYS}.`,
+      );
     }
     days = n;
   }
@@ -126,7 +129,10 @@ const TRAFFIC_SOURCES = new Set(["ADS", "ORGANIC", "ALL"]);
 
 function requireCountry(c?: string): string {
   if (!c || !/^[A-Za-z]{2}$/.test(c)) {
-    throw new UsageError(`Invalid or missing --country "${c ?? ""}".`, "Pass a 2-letter country code, e.g. US.");
+    throw new UsageError(
+      `Invalid or missing --country "${c ?? ""}".`,
+      "Pass a 2-letter country code, e.g. US.",
+    );
   }
   return c.toUpperCase();
 }
@@ -244,7 +250,10 @@ function parseThreshold(flag: string, raw: string | undefined): number | undefin
   if (raw === undefined) return undefined;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) {
-    throw new UsageError(`Invalid ${flag} "${raw}".`, "Use a non-negative number (a fraction like 0.02 for --metric ctr).");
+    throw new UsageError(
+      `Invalid ${flag} "${raw}".`,
+      "Use a non-negative number (a fraction like 0.02 for --metric ctr).",
+    );
   }
   return n;
 }
@@ -298,7 +307,10 @@ export function registerReportsCommands(program: Command): void {
         const pageSize = parsePageSize(opts.pageSize);
         const { since, until } = resolveWindow(opts);
         const service = new ReportsService(await clientFor(ctx, account));
-        const rows = await service.search(performanceQuery(since, until), pageSize ? { pageSize } : {});
+        const rows = await service.search(
+          performanceQuery(since, until),
+          pageSize ? { pageSize } : {},
+        );
         if (ctx.json) emitJson({ results: rows, since, until });
         else renderPerformance(rows, since, until);
       } catch (err) {
@@ -316,25 +328,27 @@ export function registerReportsCommands(program: Command): void {
     .option("--since <date>", "Start date (ISO); overrides --days")
     .option("--until <date>", "End date (ISO; default today)")
     .option("--page-size <n>", "Max rows per API page")
-    .action(async (opts: PerfOpts & { country?: string; category?: string; trafficSource?: string }) => {
-      const json = wantsJson(program);
-      try {
-        const ctx = contextFrom(program);
-        const account = resolveAccount(undefined, ctx);
-        const pageSize = parsePageSize(opts.pageSize);
-        const country = requireCountry(opts.country);
-        const category = requireCategory(opts.category);
-        const trafficSource = normTrafficSource(opts.trafficSource);
-        const { since, until } = resolveWindow(opts);
-        const service = new ReportsService(await clientFor(ctx, account));
-        const query = competitiveVisibilityQuery(country, category, trafficSource, since, until);
-        const rows = await service.search(query, pageSize ? { pageSize } : {});
-        if (ctx.json) emitJson({ results: rows, country, category, trafficSource, since, until });
-        else renderCompetitiveVisibility(rows);
-      } catch (err) {
-        reportError(err, { json }, "gmc reports competitive-visibility");
-      }
-    });
+    .action(
+      async (opts: PerfOpts & { country?: string; category?: string; trafficSource?: string }) => {
+        const json = wantsJson(program);
+        try {
+          const ctx = contextFrom(program);
+          const account = resolveAccount(undefined, ctx);
+          const pageSize = parsePageSize(opts.pageSize);
+          const country = requireCountry(opts.country);
+          const category = requireCategory(opts.category);
+          const trafficSource = normTrafficSource(opts.trafficSource);
+          const { since, until } = resolveWindow(opts);
+          const service = new ReportsService(await clientFor(ctx, account));
+          const query = competitiveVisibilityQuery(country, category, trafficSource, since, until);
+          const rows = await service.search(query, pageSize ? { pageSize } : {});
+          if (ctx.json) emitJson({ results: rows, country, category, trafficSource, since, until });
+          else renderCompetitiveVisibility(rows);
+        } catch (err) {
+          reportError(err, { json }, "gmc reports competitive-visibility");
+        }
+      },
+    );
 
   reports
     .command("price-competitiveness")
@@ -349,7 +363,10 @@ export function registerReportsCommands(program: Command): void {
         const pageSize = parsePageSize(opts.pageSize);
         const country = opts.country ? requireCountry(opts.country) : undefined;
         const service = new ReportsService(await clientFor(ctx, account));
-        const rows = await service.search(priceCompetitivenessQuery(country), pageSize ? { pageSize } : {});
+        const rows = await service.search(
+          priceCompetitivenessQuery(country),
+          pageSize ? { pageSize } : {},
+        );
         if (ctx.json) emitJson({ results: rows, ...(country ? { country } : {}) });
         else renderPriceCompetitiveness(rows);
       } catch (err) {
@@ -406,7 +423,9 @@ export function registerReportsCommands(program: Command): void {
             until,
           });
         } else {
-          process.stdout.write(`${metric} = ${formatMetric(metric, value)} (${since} → ${until})\n`);
+          process.stdout.write(
+            `${metric} = ${formatMetric(metric, value)} (${since} → ${until})\n`,
+          );
           if (ok) {
             process.stdout.write("Passed.\n");
           } else if (belowMin) {

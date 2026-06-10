@@ -151,7 +151,8 @@ export const policyRules: Rule[] = [
       return [
         {
           attribute: "link",
-          message: "Landing page uses http, not https — Merchant Center expects a secure (https) link.",
+          message:
+            "Landing page uses http, not https — Merchant Center expects a secure (https) link.",
           suggestion: "Serve the product landing page over https.",
           // SPEC, not EDITORIAL_DOC: this is a link-attribute concern, not a title/editorial one.
           documentation: SPEC,

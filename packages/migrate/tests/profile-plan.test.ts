@@ -16,10 +16,12 @@ describe("planProfileMigration", () => {
 
   it("is a no-op when the profile already targets the same account", () => {
     const existing: ConfigView = { profiles: { store: { accountId: "1" } } };
-    expect(planProfileMigration({ merchantId: "1", profileName: "store", existing })).toMatchObject({
-      action: "noop",
-      conflict: false,
-    });
+    expect(planProfileMigration({ merchantId: "1", profileName: "store", existing })).toMatchObject(
+      {
+        action: "noop",
+        conflict: false,
+      },
+    );
   });
 
   it("flags a conflict when the profile targets a different account", () => {
@@ -47,7 +49,10 @@ describe("planProfileMigration", () => {
   });
 
   it("does not re-set default when this profile is already default", () => {
-    const existing: ConfigView = { defaultProfile: "store", profiles: { store: { accountId: "1" } } };
+    const existing: ConfigView = {
+      defaultProfile: "store",
+      profiles: { store: { accountId: "1" } },
+    };
     const plan = planProfileMigration({
       merchantId: "1",
       profileName: "store",

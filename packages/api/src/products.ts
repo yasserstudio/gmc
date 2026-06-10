@@ -179,10 +179,15 @@ export class ProductsService {
    * name (create one with the datasources service / `gmc datasources create`).
    */
   insertProductInput(input: ProductInput, dataSource: string): Promise<ProductInput> {
-    return this.client.request<ProductInput>("products", "POST", `${this.base}/productInputs:insert`, {
-      body: input,
-      query: { dataSource: dataSourceName(this.client.accountResource, dataSource) },
-    });
+    return this.client.request<ProductInput>(
+      "products",
+      "POST",
+      `${this.base}/productInputs:insert`,
+      {
+        body: input,
+        query: { dataSource: dataSourceName(this.client.accountResource, dataSource) },
+      },
+    );
   }
 
   /**

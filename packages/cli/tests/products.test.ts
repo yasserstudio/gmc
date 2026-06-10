@@ -124,7 +124,10 @@ describe("gmc products", () => {
       name: "accounts/123/productInputs/online~en~US~SKU1",
       offerId: "SKU1",
     });
-    const file = tmpFile("gmc-prod-insert.json", JSON.stringify({ offerId: "SKU1", attributes: { title: "Shoe" } }));
+    const file = tmpFile(
+      "gmc-prod-insert.json",
+      JSON.stringify({ offerId: "SKU1", attributes: { title: "Shoe" } }),
+    );
 
     try {
       await run(["products", "insert", "--data-source", "55", "--file", file, "--json"]);
@@ -132,7 +135,10 @@ describe("gmc products", () => {
       rmSync(file, { force: true });
     }
 
-    expect(insertProductInput).toHaveBeenCalledWith({ offerId: "SKU1", attributes: { title: "Shoe" } }, "55");
+    expect(insertProductInput).toHaveBeenCalledWith(
+      { offerId: "SKU1", attributes: { title: "Shoe" } },
+      "55",
+    );
     expect(process.exitCode).toBe(0);
   });
 

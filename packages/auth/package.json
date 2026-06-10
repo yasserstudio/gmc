@@ -1,6 +1,7 @@
 {
   "name": "@gmc-cli/auth",
-  "private": true,  "version": "0.7.1",
+  "private": true,
+  "version": "0.7.1",
   "description": "Google Merchant API authentication for Node.js. Service account, OAuth 2.0, and Application Default Credentials with per-sub-API scopes.",
   "type": "module",
   "main": "./dist/index.js",

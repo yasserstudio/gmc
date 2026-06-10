@@ -10,15 +10,15 @@ gmc preflight --remote              # pull the live catalog and scan it (needs a
 gmc preflight --json                # full machine-readable report
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--dir <path>` | Directory of product files to scan (default `feeds`) |
-| `--file <path>` | Scan a single product file instead of a directory |
-| `--remote` | Pull the live catalog and scan it (needs auth/account) |
-| `--config <path>` | Path to a `.gmcpreflightrc` (overrides discovery) |
-| `--strict` | Treat warnings as failures (non-zero exit) |
-| `--rule <id...>` | Only run the named rule(s) |
-| `--page-size <n>` | Max products per API page (with `--remote`) |
+| Option            | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `--dir <path>`    | Directory of product files to scan (default `feeds`)   |
+| `--file <path>`   | Scan a single product file instead of a directory      |
+| `--remote`        | Pull the live catalog and scan it (needs auth/account) |
+| `--config <path>` | Path to a `.gmcpreflightrc` (overrides discovery)      |
+| `--strict`        | Treat warnings as failures (non-zero exit)             |
+| `--rule <id...>`  | Only run the named rule(s)                             |
+| `--page-size <n>` | Max products per API page (with `--remote`)            |
 
 Products are read as push-ready [ProductInput](/reference/products#gmc-products-insert) JSON — the exact files `feeds pull` produces — so preflight scans precisely what `push` would upload. An unparseable file isn't skipped: it's reported as an error finding, because catching bad files is the point.
 
@@ -26,31 +26,31 @@ Products are read as push-ready [ProductInput](/reference/products#gmc-products-
 
 Each rule has a stable dotted id and a default severity. Rules come in families: **`required.*`** (a missing attribute the Merchant API rejects) and **`format.*`** (an attribute that's present but malformed). A `format.*` rule fires only when its attribute is present — an absent value is the matching `required.*` rule's finding, so a missing title is reported once, not twice.
 
-| Rule | Default | Catches |
-|------|---------|---------|
-| `required.offer-id` | error | Missing offer id (the unique product identifier) |
-| `required.title` | error | Missing or blank `title` |
-| `required.description` | error | Missing or blank `description` |
-| `required.link` | error | Missing landing-page `link` |
-| `required.image-link` | error | Missing `image_link` |
-| `required.availability` | error | Missing `availability` |
-| `required.price` | error | Missing `price` / missing amount |
-| `required.condition` | warning | Missing `condition` (recommended; required for used/refurbished) |
-| `required.identifier-exists` | warning | None of `gtin` / `mpn` / `brand` present |
-| `format.link-url` | error | `link` is not a valid http(s) URL |
-| `format.image-link-url` | error | `image_link` is not a valid http(s) URL |
-| `format.price-amount` | error | `amountMicros` is not a non-negative integer count of micros |
-| `format.price-currency` | error | A priced product's `currencyCode` is missing or not a 3-letter code |
-| `format.availability-enum` | error | `availability` not in `in_stock` / `out_of_stock` / `preorder` / `backorder` |
-| `format.condition-enum` | error | `condition` not in `new` / `refurbished` / `used` |
-| `format.gtin-checksum` | warning | `gtin` is the wrong length or fails its check digit |
-| `format.title-length` | warning | `title` exceeds 150 characters |
-| `format.description-length` | warning | `description` exceeds 5000 characters |
-| `policy.promotional-title` | error | Promotional text in `title` (e.g. "free shipping", "20% off", "best price") |
-| `policy.title-caps` | warning | `title` is excessively capitalized (SHOUTING) |
-| `policy.title-symbols` | warning | Gimmicky symbols or emoji in `title` |
-| `policy.phone-in-title` | warning | A phone number in `title` |
-| `policy.link-https` | warning | Landing-page `link` uses `http`, not `https` |
+| Rule                         | Default | Catches                                                                      |
+| ---------------------------- | ------- | ---------------------------------------------------------------------------- |
+| `required.offer-id`          | error   | Missing offer id (the unique product identifier)                             |
+| `required.title`             | error   | Missing or blank `title`                                                     |
+| `required.description`       | error   | Missing or blank `description`                                               |
+| `required.link`              | error   | Missing landing-page `link`                                                  |
+| `required.image-link`        | error   | Missing `image_link`                                                         |
+| `required.availability`      | error   | Missing `availability`                                                       |
+| `required.price`             | error   | Missing `price` / missing amount                                             |
+| `required.condition`         | warning | Missing `condition` (recommended; required for used/refurbished)             |
+| `required.identifier-exists` | warning | None of `gtin` / `mpn` / `brand` present                                     |
+| `format.link-url`            | error   | `link` is not a valid http(s) URL                                            |
+| `format.image-link-url`      | error   | `image_link` is not a valid http(s) URL                                      |
+| `format.price-amount`        | error   | `amountMicros` is not a non-negative integer count of micros                 |
+| `format.price-currency`      | error   | A priced product's `currencyCode` is missing or not a 3-letter code          |
+| `format.availability-enum`   | error   | `availability` not in `in_stock` / `out_of_stock` / `preorder` / `backorder` |
+| `format.condition-enum`      | error   | `condition` not in `new` / `refurbished` / `used`                            |
+| `format.gtin-checksum`       | warning | `gtin` is the wrong length or fails its check digit                          |
+| `format.title-length`        | warning | `title` exceeds 150 characters                                               |
+| `format.description-length`  | warning | `description` exceeds 5000 characters                                        |
+| `policy.promotional-title`   | error   | Promotional text in `title` (e.g. "free shipping", "20% off", "best price")  |
+| `policy.title-caps`          | warning | `title` is excessively capitalized (SHOUTING)                                |
+| `policy.title-symbols`       | warning | Gimmicky symbols or emoji in `title`                                         |
+| `policy.phone-in-title`      | warning | A phone number in `title`                                                    |
+| `policy.link-https`          | warning | Landing-page `link` uses `http`, not `https`                                 |
 
 The `policy.*` family predicts editorial **disapproval** triggers — these are heuristic, so all default to `warning` except `policy.promotional-title` (a well-known hard disapproval, an `error`). Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc); `warning` findings don't fail the run unless you pass `--strict`.
 
@@ -78,9 +78,25 @@ Failed.
 `--json` emits the full report — `ok`, `exitCode`, `scanned`, `strict`, `counts`, and every `finding` — on a single line:
 
 ```json
-{ "ok": false, "exitCode": 6, "scanned": 2, "strict": false,
+{
+  "ok": false,
+  "exitCode": 6,
+  "scanned": 2,
+  "strict": false,
   "counts": { "error": 2, "warning": 0, "info": 0 },
-  "findings": [ { "ruleId": "required.title", "severity": "error", "productKey": "en~US~SKU2", "offerId": "SKU2", "attribute": "title", "message": "…", "suggestion": "…", "documentation": "…" } ] }
+  "findings": [
+    {
+      "ruleId": "required.title",
+      "severity": "error",
+      "productKey": "en~US~SKU2",
+      "offerId": "SKU2",
+      "attribute": "title",
+      "message": "…",
+      "suggestion": "…",
+      "documentation": "…"
+    }
+  ]
+}
 ```
 
 ## Configuring rules — `.gmcpreflightrc`

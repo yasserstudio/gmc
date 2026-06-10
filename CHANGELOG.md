@@ -43,7 +43,7 @@ findings actioned.
   `migrate feed-labels` grouping drop the old channel segment — so `feeds diff` no longer
   mis-pairs products and `datasources create` no longer sends a removed field. **Flag change:**
   `gmc datasources create --channel <online|local>` → `--legacy-local` (boolean). `migrate
-  products` maps a Content API `channel: "local"` to `legacyLocal: true`, flags unknown channels
+products` maps a Content API `channel: "local"` to `legacyLocal: true`, flags unknown channels
   as dropped, and drops `online` (the v1 default).
 - **Packaging — self-contained npm package.** The `@gmc-cli/cli` build now bundles the
   `@gmc-cli/*` workspace packages (a global / `npx` install resolves no internal packages at
@@ -96,7 +96,7 @@ Phase 8, part 3 — **Phase 8 complete**.
 - **GitLab CI guide** — an offline `preflight` gate job (no credentials) and an authenticated job that
   uses `GMC_SERVICE_ACCOUNT` for env-var auth, via a GitLab **File-type CI/CD variable** holding the
   service-account key (read by path, so the key stays off the command line and out of logs).
-- No code change — `GMC_SERVICE_ACCOUNT` (a key **file path** *or* **raw JSON**) already ships; this
+- No code change — `GMC_SERVICE_ACCOUNT` (a key **file path** _or_ **raw JSON**) already ships; this
   documents the CI recipe for it.
 
 _`@gmc-cli/cli` → 0.9.16 (patch); other packages unchanged._
@@ -177,7 +177,7 @@ Phase 6, part 2 — closes Phase 6. Two alignment-critical changes.
   `inventories/v1`, `promotions/v1`) and `gmc doctor`'s probe hits `accounts/v1`. Paths are otherwise
   unchanged — just the version segment, so live calls reach a supported endpoint.
 - **`gmc promotions`** — manage Merchant Center promotions (discounts/offers). `gmc promotions
-  list|get|insert`; `insert` reads the `Promotion` JSON from `--file`/stdin and requires
+list|get|insert`; `insert` reads the `Promotion` JSON from `--file`/stdin and requires
   `--data-source`. The promotions API takes `{ promotion, dataSource }` as the request body (verified
   against the v1 reference). No delete — promotions expire.
 
@@ -251,7 +251,7 @@ assistant (the Content API retires **Aug 18, 2026**).
 - **`gmc migrate scopes`** — audits Content API → Merchant API auth readiness, then
   optionally migrates a legacy config into a `gmc` profile. Dry-run by default; `--write`
   applies it, `--set-default` makes the profile default.
-- **the scope, in one line** — the Merchant API uses the *same* OAuth scope as the
+- **the scope, in one line** — the Merchant API uses the _same_ OAuth scope as the
   Content API, so existing tokens keep working with no re-consent. The real blockers
   (GCP project registration + Merchant API enablement) are checked with the same live
   probe behind `gmc doctor`; the audit degrades gracefully when run mid-migration.
@@ -268,7 +268,7 @@ _`@gmc-cli/cli` → 0.9.6; `@gmc-cli/migrate` → 0.1.1 (new); `@gmc-cli/auth`, 
 ## v0.9.5 — policy / disapproval-trigger checks
 
 Phase 4, part 3 — **Phase 4 complete**. `gmc preflight` now predicts editorial
-*disapprovals*, not just schema errors, so it catches a real rejection offline before upload.
+_disapprovals_, not just schema errors, so it catches a real rejection offline before upload.
 
 - **policy** — a new `policy.*` rule family of heuristics: `promotional-title` (an
   **error** — promotional text like "free shipping" / "20% off" / "best price" in the

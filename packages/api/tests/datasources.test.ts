@@ -16,7 +16,9 @@ function jsonResponse(status: number, body?: unknown): Response {
 }
 
 function service(fetchImpl: typeof fetch): DataSourcesService {
-  return new DataSourcesService(new MerchantClient({ auth, accountId: "123", fetchImpl, clock: instantClock }));
+  return new DataSourcesService(
+    new MerchantClient({ auth, accountId: "123", fetchImpl, clock: instantClock }),
+  );
 }
 
 describe("DataSourcesService", () => {
@@ -30,12 +32,20 @@ describe("DataSourcesService", () => {
     const ds = await service(fetchImpl).getDataSource("55");
 
     expect(ds.displayName).toBe("API feed");
-    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55");
+    expect(url).toBe(
+      "https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55",
+    );
   });
 
   it("listDataSources follows nextPageToken and flattens every page", async () => {
     const pages = [
-      { dataSources: [{ name: "accounts/123/dataSources/1" }, { name: "accounts/123/dataSources/2" }], nextPageToken: "p2" },
+      {
+        dataSources: [
+          { name: "accounts/123/dataSources/1" },
+          { name: "accounts/123/dataSources/2" },
+        ],
+        nextPageToken: "p2",
+      },
       { dataSources: [{ name: "accounts/123/dataSources/3" }] },
     ];
     const urls: string[] = [];
@@ -52,7 +62,9 @@ describe("DataSourcesService", () => {
       "accounts/123/dataSources/2",
       "accounts/123/dataSources/3",
     ]);
-    expect(urls[0]).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources");
+    expect(urls[0]).toBe(
+      "https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources",
+    );
     expect(urls[1]).toContain("pageToken=p2");
   });
 
@@ -62,10 +74,17 @@ describe("DataSourcesService", () => {
     const fetchImpl = (async (u: string, i: RequestInit) => {
       url = u;
       init = i;
-      return jsonResponse(200, { name: "accounts/123/dataSources/55", dataSourceId: "55", displayName: "API feed" });
+      return jsonResponse(200, {
+        name: "accounts/123/dataSources/55",
+        dataSourceId: "55",
+        displayName: "API feed",
+      });
     }) as unknown as typeof fetch;
 
-    const body = { displayName: "API feed", primaryProductDataSource: { contentLanguage: "en", feedLabel: "US" } };
+    const body = {
+      displayName: "API feed",
+      primaryProductDataSource: { contentLanguage: "en", feedLabel: "US" },
+    };
     const result = await service(fetchImpl).createDataSource(body);
 
     expect(result.dataSourceId).toBe("55");
@@ -87,7 +106,9 @@ describe("DataSourcesService", () => {
 
     expect(res).toBeUndefined();
     expect(method).toBe("DELETE");
-    expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55");
+    expect(url).toBe(
+      "https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55",
+    );
   });
 
   it("dataSourceSegment normalizes ids and resource names", () => {

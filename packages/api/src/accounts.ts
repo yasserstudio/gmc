@@ -112,9 +112,13 @@ export class AccountsService {
    */
   async listAccounts(): Promise<Account[]> {
     const accounts: Account[] = [];
-    for await (const account of this.client.paginate<Account>("accounts", `${ACCOUNTS_API}/accounts`, {
-      select: (page) => (page as AccountsListPage).accounts ?? [],
-    })) {
+    for await (const account of this.client.paginate<Account>(
+      "accounts",
+      `${ACCOUNTS_API}/accounts`,
+      {
+        select: (page) => (page as AccountsListPage).accounts ?? [],
+      },
+    )) {
       accounts.push(account);
     }
     return accounts;

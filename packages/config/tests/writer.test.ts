@@ -43,9 +43,9 @@ describe("saveConfig", () => {
   });
 
   it("validates before writing — a bad account id never lands on disk", async () => {
-    await expect(saveConfig({ profiles: { p: { accountId: "nope" } } }, path)).rejects.toBeInstanceOf(
-      ConfigError,
-    );
+    await expect(
+      saveConfig({ profiles: { p: { accountId: "nope" } } }, path),
+    ).rejects.toBeInstanceOf(ConfigError);
     await expect(readFile(path, "utf-8")).rejects.toThrow();
   });
 });

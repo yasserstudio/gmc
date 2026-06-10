@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  createContext,
-  ExitCode,
-  isStructuredError,
-  reportError,
-  emitJson,
-} from "../src/index.js";
+import { createContext, ExitCode, isStructuredError, reportError, emitJson } from "../src/index.js";
 
 describe("createContext", () => {
   it("applies defaults (human output, color on, default profile)", () => {

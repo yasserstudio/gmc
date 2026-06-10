@@ -95,7 +95,10 @@ describe("gmc feeds pull", () => {
     expect("skipped" in out).toBe(false);
     expect(readdirSync(dir).sort()).toEqual(["en~US~SKU1.json", "en~US~SKU2.json"]);
 
-    const f1 = JSON.parse(readFileSync(join(dir, "en~US~SKU1.json"), "utf8")) as Record<string, unknown>;
+    const f1 = JSON.parse(readFileSync(join(dir, "en~US~SKU1.json"), "utf8")) as Record<
+      string,
+      unknown
+    >;
     expect(f1).toEqual({ offerId: "SKU1", attributes: { title: "A" } });
     expect("productStatus" in f1).toBe(false);
     expect("name" in f1).toBe(false);
@@ -229,17 +232,30 @@ describe("gmc feeds push", () => {
   });
 
   it("inserts one product input per JSON file, under the given data source", async () => {
-    writeFileSync(join(dir, "a.json"), JSON.stringify({ offerId: "SKU1", attributes: { title: "A" } }));
-    writeFileSync(join(dir, "b.json"), JSON.stringify({ offerId: "SKU2", attributes: { title: "B" } }));
+    writeFileSync(
+      join(dir, "a.json"),
+      JSON.stringify({ offerId: "SKU1", attributes: { title: "A" } }),
+    );
+    writeFileSync(
+      join(dir, "b.json"),
+      JSON.stringify({ offerId: "SKU2", attributes: { title: "B" } }),
+    );
 
     await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
 
-    const out = JSON.parse(writes.join("")) as { pushed: number; dataSource: string; failed?: number };
+    const out = JSON.parse(writes.join("")) as {
+      pushed: number;
+      dataSource: string;
+      failed?: number;
+    };
     expect(out.pushed).toBe(2);
     expect(out.dataSource).toBe("55");
     expect("failed" in out).toBe(false);
     expect(insertProductInput).toHaveBeenCalledTimes(2);
-    expect(insertProductInput).toHaveBeenCalledWith({ offerId: "SKU1", attributes: { title: "A" } }, "55");
+    expect(insertProductInput).toHaveBeenCalledWith(
+      { offerId: "SKU1", attributes: { title: "A" } },
+      "55",
+    );
     expect(process.exitCode).toBe(0);
   });
 
@@ -304,7 +320,9 @@ describe("gmc feeds push", () => {
   it("aborts after the first failed insert (exit 5), not pushing the rest", async () => {
     writeFileSync(join(dir, "a.json"), JSON.stringify({ offerId: "SKU1" }));
     writeFileSync(join(dir, "b.json"), JSON.stringify({ offerId: "SKU2" }));
-    insertProductInput.mockRejectedValue(new MerchantApiError("Forbidden (403).", 403, "DENIED", false));
+    insertProductInput.mockRejectedValue(
+      new MerchantApiError("Forbidden (403).", 403, "DENIED", false),
+    );
 
     await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
 
@@ -390,7 +408,11 @@ describe("gmc feeds diff", () => {
   });
 
   it("categorizes added / updated / unchanged / orphaned against the catalog", async () => {
-    listProducts.mockResolvedValue([product("SKU1", "A"), product("SKU2", "B"), product("SKU4", "D")]);
+    listProducts.mockResolvedValue([
+      product("SKU1", "A"),
+      product("SKU2", "B"),
+      product("SKU4", "D"),
+    ]);
     writeFileSync(join(dir, "unchanged.json"), JSON.stringify(file("SKU1", "A"))); // matches SKU1
     writeFileSync(join(dir, "updated.json"), JSON.stringify(file("SKU2", "B-EDIT"))); // differs from SKU2
     writeFileSync(join(dir, "added.json"), JSON.stringify(file("SKU3", "C"))); // not in catalog
@@ -440,7 +462,12 @@ describe("gmc feeds diff", () => {
     // Same content, deliberately different key order — stable compare treats as equal.
     writeFileSync(
       join(dir, "a.json"),
-      JSON.stringify({ attributes: { title: "A" }, feedLabel: "US", contentLanguage: "en", offerId: "SKU1" }),
+      JSON.stringify({
+        attributes: { title: "A" },
+        feedLabel: "US",
+        contentLanguage: "en",
+        offerId: "SKU1",
+      }),
     );
     writeFileSync(join(dir, "b.json"), JSON.stringify(file("SKU2", "B")));
 

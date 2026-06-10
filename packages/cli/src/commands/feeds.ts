@@ -2,12 +2,7 @@ import type { Command } from "commander";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { emitJson, reportError, ExitCode } from "@gmc-cli/core";
-import {
-  ProductsService,
-  toProductInput,
-  productKey,
-  type ProductInput,
-} from "@gmc-cli/api";
+import { ProductsService, toProductInput, productKey, type ProductInput } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
 import {
   clientFor,

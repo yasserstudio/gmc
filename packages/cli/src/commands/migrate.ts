@@ -155,7 +155,11 @@ function renderPlan(plan: ProfilePlan, written: boolean, configPath: string): vo
   }
 
   if (plan.action !== "noop") {
-    const verb = written ? (plan.action === "create" ? "Created" : "Updated") : `Would ${plan.action}`;
+    const verb = written
+      ? plan.action === "create"
+        ? "Created"
+        : "Updated"
+      : `Would ${plan.action}`;
     process.stdout.write(`  ${verb} profile "${profileName}" → account ${plan.accountId}.\n`);
     if (plan.conflict) process.stdout.write(`    (was account ${plan.previousAccountId})\n`);
   }

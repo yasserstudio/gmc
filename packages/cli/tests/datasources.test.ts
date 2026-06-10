@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeFileSync, rmSync } from "node:fs";
+import { writeFileSync, rmSync, mkdtempSync } from "node:fs";
 import { Readable } from "node:stream";
 
 const getDataSource = vi.fn();
@@ -100,13 +100,21 @@ describe("gmc datasources", () => {
   });
 
   it("create from flags builds a primary product data source", async () => {
-    createDataSource.mockResolvedValue({ name: "accounts/123/dataSources/55", dataSourceId: "55", displayName: "API feed" });
+    createDataSource.mockResolvedValue({
+      name: "accounts/123/dataSources/55",
+      dataSourceId: "55",
+      displayName: "API feed",
+    });
 
     await run([
-      "datasources", "create",
-      "--name", "API feed",
-      "--content-language", "en",
-      "--feed-label", "US",
+      "datasources",
+      "create",
+      "--name",
+      "API feed",
+      "--content-language",
+      "en",
+      "--feed-label",
+      "US",
       "--json",
     ]);
 
@@ -121,11 +129,16 @@ describe("gmc datasources", () => {
     createDataSource.mockResolvedValue({ dataSourceId: "55" });
 
     await run([
-      "datasources", "create",
-      "--name", "Nightly",
-      "--content-language", "en",
-      "--feed-label", "US",
-      "--fetch-url", "https://shop.com/feed.xml",
+      "datasources",
+      "create",
+      "--name",
+      "Nightly",
+      "--content-language",
+      "en",
+      "--feed-label",
+      "US",
+      "--fetch-url",
+      "https://shop.com/feed.xml",
     ]);
 
     expect(createDataSource).toHaveBeenCalledWith(
@@ -147,16 +160,25 @@ describe("gmc datasources", () => {
     createDataSource.mockResolvedValue({ dataSourceId: "55" });
 
     await run([
-      "datasources", "create",
-      "--name", "Nightly",
-      "--content-language", "en",
-      "--feed-label", "US",
+      "datasources",
+      "create",
+      "--name",
+      "Nightly",
+      "--content-language",
+      "en",
+      "--feed-label",
+      "US",
       "--legacy-local",
-      "--fetch-url", "https://shop.com/x",
-      "--fetch-schedule", "weekly",
-      "--fetch-time", "02:30",
-      "--fetch-timezone", "America/New_York",
-      "--fetch-filename", "catalog.xml",
+      "--fetch-url",
+      "https://shop.com/x",
+      "--fetch-schedule",
+      "weekly",
+      "--fetch-time",
+      "02:30",
+      "--fetch-timezone",
+      "America/New_York",
+      "--fetch-filename",
+      "catalog.xml",
     ]);
 
     const body = createDataSource.mock.calls[0]?.[0] as {
@@ -175,9 +197,18 @@ describe("gmc datasources", () => {
 
   it("create with an invalid --fetch-time exits 2", async () => {
     await run([
-      "datasources", "create",
-      "--name", "N", "--content-language", "en", "--feed-label", "US",
-      "--fetch-url", "https://shop.com/x", "--fetch-time", "25:00",
+      "datasources",
+      "create",
+      "--name",
+      "N",
+      "--content-language",
+      "en",
+      "--feed-label",
+      "US",
+      "--fetch-url",
+      "https://shop.com/x",
+      "--fetch-time",
+      "25:00",
     ]);
     expect(createDataSource).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
@@ -185,9 +216,16 @@ describe("gmc datasources", () => {
 
   it("create with --fetch-* flags but no --fetch-url exits 2", async () => {
     await run([
-      "datasources", "create",
-      "--name", "N", "--content-language", "en", "--feed-label", "US",
-      "--fetch-schedule", "daily",
+      "datasources",
+      "create",
+      "--name",
+      "N",
+      "--content-language",
+      "en",
+      "--feed-label",
+      "US",
+      "--fetch-schedule",
+      "daily",
     ]);
     expect(createDataSource).not.toHaveBeenCalled();
     expect(errs.join("")).toContain("--fetch-* flags require --fetch-url");
@@ -196,25 +234,40 @@ describe("gmc datasources", () => {
 
   it("create with empty --countries exits 2", async () => {
     await run([
-      "datasources", "create",
-      "--name", "N", "--content-language", "en", "--feed-label", "US",
-      "--countries", " , ",
+      "datasources",
+      "create",
+      "--name",
+      "N",
+      "--content-language",
+      "en",
+      "--feed-label",
+      "US",
+      "--countries",
+      " , ",
     ]);
     expect(createDataSource).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
   });
 
   it("create with both flags and --file exits 2", async () => {
-    const file = join(tmpdir(), "gmc-ds-conflict.json");
+    const tmp = mkdtempSync(join(tmpdir(), "gmc-ds-"));
+    const file = join(tmp, "conflict.json");
     writeFileSync(file, JSON.stringify({ displayName: "x", supplementalProductDataSource: {} }));
     try {
       await run([
-        "datasources", "create",
-        "--name", "N", "--content-language", "en", "--feed-label", "US",
-        "--file", file,
+        "datasources",
+        "create",
+        "--name",
+        "N",
+        "--content-language",
+        "en",
+        "--feed-label",
+        "US",
+        "--file",
+        file,
       ]);
     } finally {
-      rmSync(file, { force: true });
+      rmSync(tmp, { recursive: true, force: true });
     }
     expect(createDataSource).not.toHaveBeenCalled();
     expect(errs.join("")).toContain("either create flags or --file");
@@ -223,7 +276,9 @@ describe("gmc datasources", () => {
 
   it("create reads a DataSource from stdin when no flags/file are given", async () => {
     createDataSource.mockResolvedValue({ dataSourceId: "55" });
-    const stdin = Readable.from([Buffer.from(JSON.stringify({ displayName: "Piped", supplementalProductDataSource: {} }))]);
+    const stdin = Readable.from([
+      Buffer.from(JSON.stringify({ displayName: "Piped", supplementalProductDataSource: {} })),
+    ]);
     const original = Object.getOwnPropertyDescriptor(process, "stdin");
     Object.defineProperty(process, "stdin", { value: stdin, configurable: true });
     try {
@@ -231,22 +286,32 @@ describe("gmc datasources", () => {
     } finally {
       if (original) Object.defineProperty(process, "stdin", original);
     }
-    expect(createDataSource).toHaveBeenCalledWith({ displayName: "Piped", supplementalProductDataSource: {} });
+    expect(createDataSource).toHaveBeenCalledWith({
+      displayName: "Piped",
+      supplementalProductDataSource: {},
+    });
     expect(process.exitCode).toBe(0);
   });
 
   it("create from --file posts the parsed DataSource", async () => {
     createDataSource.mockResolvedValue({ dataSourceId: "55" });
-    const file = join(tmpdir(), "gmc-ds-create.json");
-    writeFileSync(file, JSON.stringify({ displayName: "From file", supplementalProductDataSource: {} }));
+    const tmp = mkdtempSync(join(tmpdir(), "gmc-ds-"));
+    const file = join(tmp, "create.json");
+    writeFileSync(
+      file,
+      JSON.stringify({ displayName: "From file", supplementalProductDataSource: {} }),
+    );
 
     try {
       await run(["datasources", "create", "--file", file]);
     } finally {
-      rmSync(file, { force: true });
+      rmSync(tmp, { recursive: true, force: true });
     }
 
-    expect(createDataSource).toHaveBeenCalledWith({ displayName: "From file", supplementalProductDataSource: {} });
+    expect(createDataSource).toHaveBeenCalledWith({
+      displayName: "From file",
+      supplementalProductDataSource: {},
+    });
     expect(process.exitCode).toBe(0);
   });
 
@@ -296,7 +361,9 @@ describe("gmc datasources", () => {
   });
 
   it("exits 5 when the Merchant API rejects the request", async () => {
-    getDataSource.mockRejectedValue(new MerchantApiError("Not found (404).", 404, "NOT_FOUND", false));
+    getDataSource.mockRejectedValue(
+      new MerchantApiError("Not found (404).", 404, "NOT_FOUND", false),
+    );
 
     await run(["datasources", "get", "55", "--json"]);
 

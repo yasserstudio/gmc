@@ -14,11 +14,11 @@ gmc promotions list --json
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `gmc promotions list [--page-size <n>]` | List promotions for the account |
-| `gmc promotions get <promotionId>` | Fetch one promotion (id or resource name from `list`) |
-| `gmc promotions insert --data-source <id> [--file <path>]` | Insert (create or replace) a promotion from JSON |
+| Command                                                    | Description                                           |
+| ---------------------------------------------------------- | ----------------------------------------------------- |
+| `gmc promotions list [--page-size <n>]`                    | List promotions for the account                       |
+| `gmc promotions get <promotionId>`                         | Fetch one promotion (id or resource name from `list`) |
+| `gmc promotions insert --data-source <id> [--file <path>]` | Insert (create or replace) a promotion from JSON      |
 
 `insert` reads the `Promotion` JSON from `--file` or stdin and requires `--data-source` (a promotion
 data source — create one with [`gmc datasources create`](/reference/datasources)). A promotion needs
@@ -39,7 +39,10 @@ few minutes.
     "couponValueType": "PERCENT_OFF",
     "percentOff": "20",
     "genericRedemptionCode": "SAVE20",
-    "promotionEffectiveTimePeriod": { "startTime": "2026-07-01T00:00:00Z", "endTime": "2026-07-31T23:59:59Z" }
+    "promotionEffectiveTimePeriod": {
+      "startTime": "2026-07-01T00:00:00Z",
+      "endTime": "2026-07-31T23:59:59Z"
+    }
   }
 }
 ```

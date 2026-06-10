@@ -4,12 +4,7 @@
 // probe) and credential resolution happen in the CLI; this engine only interprets.
 
 import { MERCHANT_API_SCOPE, SUB_APIS, scopesFor, type SubApi } from "@gmc-cli/auth";
-import type {
-  CheckStatus,
-  MigrationCheck,
-  ScopeAuditReport,
-  SubApiScopeMapping,
-} from "./types.js";
+import type { CheckStatus, MigrationCheck, ScopeAuditReport, SubApiScopeMapping } from "./types.js";
 
 /** What the CLI feeds the audit after its (best-effort) credential + probe work. */
 export interface ScopeAuditInput {

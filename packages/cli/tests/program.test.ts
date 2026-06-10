@@ -64,6 +64,8 @@ describe("createProgram", () => {
   it("exposes the global flags (--json, --profile, --account, --no-color)", () => {
     const program = createProgram();
     const flags = program.options.map((o) => o.long);
-    expect(flags).toEqual(expect.arrayContaining(["--json", "--profile", "--account", "--no-color"]));
+    expect(flags).toEqual(
+      expect.arrayContaining(["--json", "--profile", "--account", "--no-color"]),
+    );
   });
 });

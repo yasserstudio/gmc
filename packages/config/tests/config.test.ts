@@ -23,7 +23,10 @@ afterEach(() => {
   }
 });
 
-async function withConfig(contents: string, fn: (path: string) => void | Promise<void>): Promise<void> {
+async function withConfig(
+  contents: string,
+  fn: (path: string) => void | Promise<void>,
+): Promise<void> {
   const dir = await mkdtemp(join(tmpdir(), "gmc-cfg-"));
   try {
     const path = join(dir, "config.json");
@@ -126,7 +129,9 @@ describe("resolveProfile", () => {
   it("does not false-hit on an inherited key like 'toString'", () => {
     // No "toString" profile exists; the Object.hasOwn guard must return undefined
     // rather than Object.prototype.toString.
-    expect(resolveProfile({ profiles: { prod: { accountId: "1" } } }, { profile: "toString" })).toEqual({
+    expect(
+      resolveProfile({ profiles: { prod: { accountId: "1" } } }, { profile: "toString" }),
+    ).toEqual({
       name: "toString",
     });
   });

@@ -45,7 +45,13 @@ export interface DoctorOptions {
 
 function failFromError(id: string, title: string, err: unknown): DoctorCheck {
   if (err instanceof AuthError) {
-    return { id, title, status: "fail", detail: err.message, ...(err.suggestion ? { suggestion: err.suggestion } : {}) };
+    return {
+      id,
+      title,
+      status: "fail",
+      detail: err.message,
+      ...(err.suggestion ? { suggestion: err.suggestion } : {}),
+    };
   }
   return { id, title, status: "fail", detail: err instanceof Error ? err.message : String(err) };
 }

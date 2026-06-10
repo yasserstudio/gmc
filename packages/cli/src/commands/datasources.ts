@@ -62,16 +62,16 @@ function fileNameFromUrl(url: string): string {
 function hasCreateFlags(opts: CreateFlags): boolean {
   return Boolean(
     opts.name ||
-      opts.type ||
-      opts.contentLanguage ||
-      opts.feedLabel ||
-      opts.legacyLocal ||
-      opts.countries ||
-      opts.fetchUrl ||
-      opts.fetchSchedule ||
-      opts.fetchTime ||
-      opts.fetchTimezone ||
-      opts.fetchFilename,
+    opts.type ||
+    opts.contentLanguage ||
+    opts.feedLabel ||
+    opts.legacyLocal ||
+    opts.countries ||
+    opts.fetchUrl ||
+    opts.fetchSchedule ||
+    opts.fetchTime ||
+    opts.fetchTimezone ||
+    opts.fetchFilename,
   );
 }
 
@@ -85,7 +85,10 @@ function buildDataSourceFromFlags(opts: CreateFlags): DataSource {
     );
   }
   if (!opts.name) {
-    throw new UsageError("--name is required.", 'Give the data source a display name, e.g. --name "API feed".');
+    throw new UsageError(
+      "--name is required.",
+      'Give the data source a display name, e.g. --name "API feed".',
+    );
   }
   if (!opts.contentLanguage || !opts.feedLabel) {
     throw new UsageError(
@@ -94,7 +97,10 @@ function buildDataSourceFromFlags(opts: CreateFlags): DataSource {
     );
   }
   // The --fetch-* flags only configure a scheduled file fetch — they need a URL.
-  if (!opts.fetchUrl && (opts.fetchSchedule || opts.fetchTime || opts.fetchTimezone || opts.fetchFilename)) {
+  if (
+    !opts.fetchUrl &&
+    (opts.fetchSchedule || opts.fetchTime || opts.fetchTimezone || opts.fetchFilename)
+  ) {
     throw new UsageError(
       "--fetch-* flags require --fetch-url.",
       "Add --fetch-url for a scheduled fetch, or drop the --fetch-* flags for an API feed.",
@@ -102,9 +108,15 @@ function buildDataSourceFromFlags(opts: CreateFlags): DataSource {
   }
   let countries: string[] | undefined;
   if (opts.countries !== undefined) {
-    countries = opts.countries.split(",").map((c) => c.trim()).filter(Boolean);
+    countries = opts.countries
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
     if (countries.length === 0) {
-      throw new UsageError("--countries has no valid entries.", "Provide at least one country code, e.g. --countries US,CA.");
+      throw new UsageError(
+        "--countries has no valid entries.",
+        "Provide at least one country code, e.g. --countries US,CA.",
+      );
     }
   }
 
@@ -122,7 +134,10 @@ function buildDataSourceFromFlags(opts: CreateFlags): DataSource {
     }
     const frequency = FREQUENCY[(opts.fetchSchedule ?? "daily").toLowerCase()];
     if (!frequency) {
-      throw new UsageError(`Invalid --fetch-schedule "${opts.fetchSchedule}".`, "Use daily, weekly, or monthly.");
+      throw new UsageError(
+        `Invalid --fetch-schedule "${opts.fetchSchedule}".`,
+        "Use daily, weekly, or monthly.",
+      );
     }
     body.fileInput = {
       // fileName is required by the API for a fetch-configured file input.
@@ -167,7 +182,9 @@ function renderDataSources(list: DataSource[]): void {
   const nameWidth = Math.max(...rows.map((r) => r.name.length));
   process.stdout.write(`${list.length} data source(s):\n`);
   for (const r of rows) {
-    process.stdout.write(`  ${r.id.padEnd(idWidth)}  ${r.name.padEnd(nameWidth)}  ${r.type} · ${r.input}\n`);
+    process.stdout.write(
+      `  ${r.id.padEnd(idWidth)}  ${r.name.padEnd(nameWidth)}  ${r.type} · ${r.input}\n`,
+    );
   }
 }
 
@@ -177,11 +194,13 @@ function renderDataSource(ds: DataSource): void {
   line("Type", dataSourceType(ds));
   if (ds.input) line("Input", ds.input);
   const p = ds.primaryProductDataSource;
-  if (p?.feedLabel || p?.contentLanguage) line("Feed", [p?.feedLabel, p?.contentLanguage].filter(Boolean).join(" / "));
+  if (p?.feedLabel || p?.contentLanguage)
+    line("Feed", [p?.feedLabel, p?.contentLanguage].filter(Boolean).join(" / "));
   if (p?.legacyLocal) line("Legacy local", "yes");
   if (p?.countries?.length) line("Countries", p.countries.join(", "));
   const fetch = ds.fileInput?.fetchSettings;
-  if (fetch?.fetchUri) line("Fetch", `${fetch.fetchUri}${fetch.frequency ? ` (${fetch.frequency})` : ""}`);
+  if (fetch?.fetchUri)
+    line("Fetch", `${fetch.fetchUri}${fetch.frequency ? ` (${fetch.frequency})` : ""}`);
 }
 
 /** Register the `gmc datasources` command group (list / get / create / delete). */

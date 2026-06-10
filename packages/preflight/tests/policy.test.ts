@@ -13,7 +13,9 @@ const title = (t: string): ProductInput => ({ attributes: { title: t } });
 describe("policy.promotional-title", () => {
   it("is an error and flags promotional phrases, not legit names", () => {
     expect(rule("policy.promotional-title").defaultSeverity).toBe("error");
-    expect(check("policy.promotional-title", title("Nike Air Max — FREE SHIPPING"))).toHaveLength(1);
+    expect(check("policy.promotional-title", title("Nike Air Max — FREE SHIPPING"))).toHaveLength(
+      1,
+    );
     expect(check("policy.promotional-title", title("Mattress 20% off today"))).toHaveLength(1);
     expect(check("policy.promotional-title", title("Save 30% on Socks"))).toHaveLength(1);
     expect(check("policy.promotional-title", title("Running Shoes Best Price"))).toHaveLength(1);

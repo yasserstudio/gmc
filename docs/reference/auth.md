@@ -11,8 +11,8 @@ gmc auth login
 gmc auth login --no-browser   # print the authorization URL instead of opening a browser
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option         | Description                                                                  |
+| -------------- | ---------------------------------------------------------------------------- |
 | `--no-browser` | Print the authorization URL instead of opening a browser (headless / remote) |
 
 ## `gmc auth logout`

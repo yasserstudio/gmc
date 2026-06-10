@@ -69,7 +69,11 @@ describe("gmc reports", () => {
 
   it("runs an arbitrary MCQL query and prints rows + count", async () => {
     search.mockResolvedValue([{ productPerformanceView: { clicks: "5" } }]);
-    await run(["reports", "query", "SELECT product_performance_view.clicks FROM product_performance_view"]);
+    await run([
+      "reports",
+      "query",
+      "SELECT product_performance_view.clicks FROM product_performance_view",
+    ]);
     expect(search).toHaveBeenCalledWith(
       "SELECT product_performance_view.clicks FROM product_performance_view",
       {},
@@ -89,7 +93,9 @@ describe("gmc reports", () => {
     await run(["reports", "performance", "--since", "2026-05-01", "--until", "2026-05-31"]);
     const q = search.mock.calls[0][0] as string;
     expect(q).toContain("FROM product_performance_view");
-    expect(q).toContain("SELECT date, clicks, impressions, click_through_rate, conversions, conversion_value");
+    expect(q).toContain(
+      "SELECT date, clicks, impressions, click_through_rate, conversions, conversion_value",
+    );
     expect(q).toContain("WHERE date BETWEEN '2026-05-01' AND '2026-05-31'");
     // MCQL uses bare column names — the GAQL `view.column` form must NOT appear.
     expect(q).not.toContain("product_performance_view.clicks");
@@ -98,8 +104,22 @@ describe("gmc reports", () => {
 
   it("renders a performance table sorted by date", async () => {
     search.mockResolvedValue([
-      { productPerformanceView: { date: { year: 2026, month: 5, day: 2 }, clicks: "10", impressions: "100", clickThroughRate: 0.1 } },
-      { productPerformanceView: { date: { year: 2026, month: 5, day: 1 }, clicks: "3", impressions: "50", clickThroughRate: 0.06 } },
+      {
+        productPerformanceView: {
+          date: { year: 2026, month: 5, day: 2 },
+          clicks: "10",
+          impressions: "100",
+          clickThroughRate: 0.1,
+        },
+      },
+      {
+        productPerformanceView: {
+          date: { year: 2026, month: 5, day: 1 },
+          clicks: "3",
+          impressions: "50",
+          clickThroughRate: 0.06,
+        },
+      },
     ]);
     await run(["reports", "performance", "--since", "2026-05-01", "--until", "2026-05-02"]);
     const text = out();
@@ -148,8 +168,16 @@ describe("gmc reports", () => {
   it("builds a competitive_visibility query with required filters", async () => {
     search.mockResolvedValue([]);
     await run([
-      "reports", "competitive-visibility",
-      "--country", "us", "--category", "536", "--since", "2026-05-01", "--until", "2026-05-31",
+      "reports",
+      "competitive-visibility",
+      "--country",
+      "us",
+      "--category",
+      "536",
+      "--since",
+      "2026-05-01",
+      "--until",
+      "2026-05-31",
     ]);
     const q = search.mock.calls[0][0] as string;
     expect(q).toContain("FROM competitive_visibility_competitor_view");
@@ -161,8 +189,21 @@ describe("gmc reports", () => {
 
   it("renders competitor rows and marks your domain", async () => {
     search.mockResolvedValue([
-      { competitiveVisibilityCompetitorView: { domain: "you.example", isYourDomain: true, rank: "1", relativeVisibility: 0.42 } },
-      { competitiveVisibilityCompetitorView: { domain: "rival.example", rank: "2", relativeVisibility: 0.31 } },
+      {
+        competitiveVisibilityCompetitorView: {
+          domain: "you.example",
+          isYourDomain: true,
+          rank: "1",
+          relativeVisibility: 0.42,
+        },
+      },
+      {
+        competitiveVisibilityCompetitorView: {
+          domain: "rival.example",
+          rank: "2",
+          relativeVisibility: 0.31,
+        },
+      },
     ]);
     await run(["reports", "competitive-visibility", "--country", "US", "--category", "536"]);
     expect(out()).toContain("you.example (you)");
@@ -179,7 +220,16 @@ describe("gmc reports", () => {
   });
 
   it("rejects an invalid --traffic-source", async () => {
-    await run(["reports", "competitive-visibility", "--country", "US", "--category", "536", "--traffic-source", "SEO"]);
+    await run([
+      "reports",
+      "competitive-visibility",
+      "--country",
+      "US",
+      "--category",
+      "536",
+      "--traffic-source",
+      "SEO",
+    ]);
     expect(search).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
   });
@@ -196,7 +246,13 @@ describe("gmc reports", () => {
 
   it("renders price vs benchmark", async () => {
     search.mockResolvedValue([
-      { priceCompetitivenessProductView: { title: "Shoe", price: { amountMicros: "49990000", currencyCode: "USD" }, benchmarkPrice: { amountMicros: "59990000", currencyCode: "USD" } } },
+      {
+        priceCompetitivenessProductView: {
+          title: "Shoe",
+          price: { amountMicros: "49990000", currencyCode: "USD" },
+          benchmarkPrice: { amountMicros: "59990000", currencyCode: "USD" },
+        },
+      },
     ]);
     await run(["reports", "price-competitiveness"]);
     expect(out()).toContain("Shoe");
@@ -279,7 +335,19 @@ describe("gmc reports", () => {
 
   it("check emits a JSON verdict", async () => {
     search.mockResolvedValue(PERF_ROWS);
-    await run(["-j", "reports", "check", "--metric", "conversions", "--min", "5", "--since", "2026-05-01", "--until", "2026-05-31"]);
+    await run([
+      "-j",
+      "reports",
+      "check",
+      "--metric",
+      "conversions",
+      "--min",
+      "5",
+      "--since",
+      "2026-05-01",
+      "--until",
+      "2026-05-31",
+    ]);
     expect(JSON.parse(out())).toEqual({
       metric: "conversions",
       value: 5,

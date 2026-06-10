@@ -16,11 +16,11 @@ gmc doctor --json
 
 ## Exit codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | All checks passed (warnings allowed) |
-| `1` | A non-auth problem was found |
-| `3` | Authentication failed |
+| Code | Meaning                              |
+| ---- | ------------------------------------ |
+| `0`  | All checks passed (warnings allowed) |
+| `1`  | A non-auth problem was found         |
+| `3`  | Authentication failed                |
 
 ## JSON output
 

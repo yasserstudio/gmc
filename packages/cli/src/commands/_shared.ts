@@ -54,7 +54,10 @@ export function parsePageSize(raw: string | undefined): number | undefined {
   // as "1e+21" (which the API rejects with an opaque 400). Cap at the API maximum.
   const n = Number(raw);
   if (!/^\d+$/.test(raw) || !Number.isInteger(n) || n <= 0 || n > MAX_PAGE_SIZE) {
-    throw new UsageError(`Invalid --page-size "${raw}".`, `Use a positive integer up to ${MAX_PAGE_SIZE}.`);
+    throw new UsageError(
+      `Invalid --page-size "${raw}".`,
+      `Use a positive integer up to ${MAX_PAGE_SIZE}.`,
+    );
   }
   return n;
 }
@@ -64,7 +67,10 @@ export function parsePageSize(raw: string | undefined): number | undefined {
  * push), or throw a UsageError. `action` names the operation in the message.
  * Accepts a bare id or a full resource name.
  */
-export function requireDataSource(dataSource: string | undefined, action = "write products"): string {
+export function requireDataSource(
+  dataSource: string | undefined,
+  action = "write products",
+): string {
   if (!dataSource) {
     throw new UsageError(
       `--data-source is required to ${action}.`,
@@ -90,7 +96,10 @@ export function resolveAccount(positional: string | undefined, ctx: CommandConte
   }
   // Merchant Center account ids are numeric (same rule @gmc-cli/config enforces).
   if (!/^\d+$/.test(account)) {
-    throw new UsageError(`Invalid account id "${account}".`, "Account ids are numeric, e.g. 123456789.");
+    throw new UsageError(
+      `Invalid account id "${account}".`,
+      "Account ids are numeric, e.g. 123456789.",
+    );
   }
   return account;
 }
@@ -131,10 +140,16 @@ export async function readJsonObject(
     try {
       raw = await readFile(file, "utf8");
     } catch {
-      throw new UsageError(`Could not read ${label} file "${file}".`, "Check the path is correct and readable.");
+      throw new UsageError(
+        `Could not read ${label} file "${file}".`,
+        "Check the path is correct and readable.",
+      );
     }
   } else if (process.stdin.isTTY) {
-    throw new UsageError(`No ${label} provided.`, `Pass JSON via --file <path>, or pipe it to stdin.`);
+    throw new UsageError(
+      `No ${label} provided.`,
+      `Pass JSON via --file <path>, or pipe it to stdin.`,
+    );
   } else {
     raw = await readStdin();
   }
@@ -143,7 +158,10 @@ export async function readJsonObject(
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new UsageError(`The ${label} is not valid JSON.`, "Provide a JSON object via --file or stdin.");
+    throw new UsageError(
+      `The ${label} is not valid JSON.`,
+      "Provide a JSON object via --file or stdin.",
+    );
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new UsageError(`The ${label} must be a JSON object.`, "Provide a single JSON object.");

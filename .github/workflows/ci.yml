@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+# NOTE: a `dependency-review` job (license-denial + PR dep-diff) is intentionally
+# omitted — it requires the repo's Dependency Graph to be enabled (Settings → Code
+# security → Dependency graph). Supply-chain/vuln scanning is already covered by the
+# `pnpm audit --prod` step below + the Socket app. To add it back, enable Dependency
+# Graph, then restore the actions/dependency-review-action job (see RELEASING.md).
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22, 24]
+    name: check (node ${{ matrix.node-version }})
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # Single-run gates on the primary Node; test + build run on every matrix version.
+      - name: Audit production dependencies
+        if: matrix.node-version == 22
+        run: pnpm audit --prod --audit-level=high
+
+      - name: Lint
+        if: matrix.node-version == 22
+        run: pnpm lint
+
+      - name: Typecheck
+        if: matrix.node-version == 22
+        run: pnpm typecheck
+
+      - name: Format check
+        if: matrix.node-version == 22
+        run: pnpm format:check
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

@@ -16,7 +16,9 @@ function jsonResponse(status: number, body?: unknown): Response {
 }
 
 function service(fetchImpl: typeof fetch): ProductsService {
-  return new ProductsService(new MerchantClient({ auth, accountId: "123", fetchImpl, clock: instantClock }));
+  return new ProductsService(
+    new MerchantClient({ auth, accountId: "123", fetchImpl, clock: instantClock }),
+  );
 }
 
 describe("ProductsService", () => {
@@ -24,7 +26,10 @@ describe("ProductsService", () => {
     let url = "";
     const fetchImpl = (async (u: string) => {
       url = u;
-      return jsonResponse(200, { name: "accounts/123/products/online~en~US~SKU1", offerId: "SKU1" });
+      return jsonResponse(200, {
+        name: "accounts/123/products/online~en~US~SKU1",
+        offerId: "SKU1",
+      });
     }) as unknown as typeof fetch;
 
     const product = await service(fetchImpl).getProduct("online~en~US~SKU1");
@@ -75,7 +80,10 @@ describe("ProductsService", () => {
     const fetchImpl = (async (u: string, i: RequestInit) => {
       url = u;
       init = i;
-      return jsonResponse(200, { name: "accounts/123/productInputs/online~en~US~SKU1", offerId: "SKU1" });
+      return jsonResponse(200, {
+        name: "accounts/123/productInputs/online~en~US~SKU1",
+        offerId: "SKU1",
+      });
     }) as unknown as typeof fetch;
 
     const result = await service(fetchImpl).insertProductInput({ offerId: "SKU1" }, "55");
@@ -113,7 +121,9 @@ describe("ProductsService", () => {
   it("productSegment reduces ids and resource names to the composite segment", () => {
     expect(productSegment("online~en~US~SKU1")).toBe("online~en~US~SKU1");
     expect(productSegment("accounts/123/products/online~en~US~SKU1")).toBe("online~en~US~SKU1");
-    expect(productSegment("accounts/123/productInputs/online~en~US~SKU1")).toBe("online~en~US~SKU1");
+    expect(productSegment("accounts/123/productInputs/online~en~US~SKU1")).toBe(
+      "online~en~US~SKU1",
+    );
   });
 });
 
@@ -146,15 +156,17 @@ describe("toProductInput", () => {
   });
 
   it("omits absent fields", () => {
-    expect(toProductInput({ name: "accounts/123/products/x", offerId: "SKU2" })).toEqual({ offerId: "SKU2" });
+    expect(toProductInput({ name: "accounts/123/products/x", offerId: "SKU2" })).toEqual({
+      offerId: "SKU2",
+    });
   });
 });
 
 describe("productKey", () => {
   it("joins the three identity segments with ~", () => {
-    expect(
-      productKey({ contentLanguage: "en", feedLabel: "US", offerId: "sku" }),
-    ).toBe("en~US~sku");
+    expect(productKey({ contentLanguage: "en", feedLabel: "US", offerId: "sku" })).toBe(
+      "en~US~sku",
+    );
   });
 
   it("prefixes legacy-local products with local~", () => {

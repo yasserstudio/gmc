@@ -123,7 +123,8 @@ export function checkFeedLabels(
         severity: "error",
         feedLabel: "",
         message: `${g.count} product(s) have no feedLabel — they can't be grouped into a feed or served.`,
-        suggestion: "Set feedLabel on every product (gmc migrate products derives it from targetCountry).",
+        suggestion:
+          "Set feedLabel on every product (gmc migrate products derives it from targetCountry).",
       });
       continue;
     }
@@ -137,7 +138,8 @@ export function checkFeedLabels(
           severity: "error",
           feedLabel: g.feedLabel,
           message: `No primary data source has feedLabel "${g.feedLabel}"${lang} — ${g.count} product(s) would land in a feed no campaign targets.`,
-          suggestion: "Create a matching data source (gmc datasources create) or correct the feed label.",
+          suggestion:
+            "Create a matching data source (gmc datasources create) or correct the feed label.",
         });
       }
     }
@@ -186,7 +188,10 @@ export function checkFeedLabels(
 
   const rank: Record<FeedLabelSeverity, number> = { error: 0, warning: 1, info: 2 };
   findings.sort(
-    (a, b) => rank[a.severity] - rank[b.severity] || cmp(a.ruleId, b.ruleId) || cmp(a.feedLabel, b.feedLabel),
+    (a, b) =>
+      rank[a.severity] - rank[b.severity] ||
+      cmp(a.ruleId, b.ruleId) ||
+      cmp(a.feedLabel, b.feedLabel),
   );
 
   const counts: FeedLabelCounts = { error: 0, warning: 0, info: 0 };

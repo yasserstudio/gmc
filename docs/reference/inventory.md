@@ -22,14 +22,14 @@ gmc inventory regional delete en~US~SKU1 --region US-CA
 `insert` builds the entry from convenience flags — or a `--file` JSON base with flags layered on top
 for full control:
 
-| Flag | Applies to | Notes |
-|------|-----------|-------|
-| `--store-code <code>` | local | The local inventory's id (required unless in `--file`) |
-| `--region <id>` | regional | The regional inventory's id; must already exist for the account |
-| `--availability <value>` | both | e.g. `in_stock` / `out_of_stock` |
-| `--quantity <n>` | local | Non-negative integer stock at the store |
-| `--price <amount>` + `--currency <code>` | both | Decimal price → `{amountMicros, currencyCode}` |
-| `--file <path>` | both | A `LocalInventory` / `RegionalInventory` JSON base; flags override its fields |
+| Flag                                     | Applies to | Notes                                                                         |
+| ---------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| `--store-code <code>`                    | local      | The local inventory's id (required unless in `--file`)                        |
+| `--region <id>`                          | regional   | The regional inventory's id; must already exist for the account               |
+| `--availability <value>`                 | both       | e.g. `in_stock` / `out_of_stock`                                              |
+| `--quantity <n>`                         | local      | Non-negative integer stock at the store                                       |
+| `--price <amount>` + `--currency <code>` | both       | Decimal price → `{amountMicros, currencyCode}`                                |
+| `--file <path>`                          | both       | A `LocalInventory` / `RegionalInventory` JSON base; flags override its fields |
 
 ```sh
 # full control via JSON, with a flag override
@@ -41,7 +41,7 @@ Insert is an **upsert** keyed by `storeCode` / `region` — re-inserting replace
 
 ::: tip Regions
 A regional inventory's `--region` must reference a region already defined for the account (region
-*definition* lives under the Accounts sub-API; CLI support for it is a separate follow-up). Define
+_definition_ lives under the Accounts sub-API; CLI support for it is a separate follow-up). Define
 regions in Merchant Center, then reference their ids here.
 :::
 
