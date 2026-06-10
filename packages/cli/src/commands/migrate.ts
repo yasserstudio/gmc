@@ -314,7 +314,6 @@ function primarySource(ds: DataSource): FeedLabelSource | null {
   const p = ds.primaryProductDataSource;
   if (!p) return null;
   const s: FeedLabelSource = {};
-  if (p.channel !== undefined) s.channel = p.channel;
   if (p.feedLabel !== undefined) s.feedLabel = p.feedLabel;
   if (p.contentLanguage !== undefined) s.contentLanguage = p.contentLanguage;
   return s;

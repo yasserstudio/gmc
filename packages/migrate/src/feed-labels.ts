@@ -1,15 +1,15 @@
 // The feed-label half of `gmc migrate` (v0.9.8) — the "silent campaign-killer"
 // check. Google Ads Shopping campaigns target products by their feed identity
-// `(channel, feedLabel, contentLanguage)` — the same tuple a primary data source
-// is keyed by. After migration, a product whose feed identity matches no data
-// source lands in a feed no campaign targets and silently stops serving. This
-// pure engine groups products by that tuple, validates the labels, and (when the
-// caller supplies the account's data sources) flags groups that match none. The
-// CLI does all I/O (loading the feed, listing data sources, rendering, exit code).
+// `(feedLabel, contentLanguage)` — the same tuple a primary data source is keyed
+// by (Merchant API v1 dropped `channel` from this identity). After migration, a
+// product whose feed identity matches no data source lands in a feed no campaign
+// targets and silently stops serving. This pure engine groups products by that
+// tuple, validates the labels, and (when the caller supplies the account's data
+// sources) flags groups that match none. The CLI does all I/O (loading the feed,
+// listing data sources, rendering, exit code).
 
 /** A product reduced to its feed identity. */
 export interface FeedLabelProduct {
-  channel?: string;
   feedLabel?: string;
   contentLanguage?: string;
   offerId?: string;
@@ -17,16 +17,14 @@ export interface FeedLabelProduct {
 
 /** A primary data source's feed identity, for the cross-check. */
 export interface FeedLabelSource {
-  channel?: string;
   feedLabel?: string;
   contentLanguage?: string;
 }
 
 export type FeedLabelSeverity = "error" | "warning" | "info";
 
-/** One `(channel, feedLabel, contentLanguage)` grouping in the scanned feed. */
+/** One `(feedLabel, contentLanguage)` grouping in the scanned feed. */
 export interface FeedLabelGroup {
-  channel: string;
   feedLabel: string;
   contentLanguage: string;
   count: number;
@@ -71,8 +69,8 @@ export interface CheckFeedLabelsOptions {
 }
 
 // NUL-joined so a feedLabel containing the separator can't collide with another tuple.
-function tupleKey(channel: string, feedLabel: string, contentLanguage: string): string {
-  return `${channel}\u0000${feedLabel}\u0000${contentLanguage}`;
+function tupleKey(feedLabel: string, contentLanguage: string): string {
+  return `${feedLabel}\u0000${contentLanguage}`;
 }
 
 function cmp(a: string, b: string): number {
@@ -96,28 +94,23 @@ export function checkFeedLabels(
   for (const s of opts.dataSources ?? []) {
     const feedLabel = s.feedLabel ?? "";
     if (!feedLabel) continue;
-    const channel = s.channel ?? "";
     const contentLanguage = s.contentLanguage ?? "";
-    sourceKeys.add(tupleKey(channel, feedLabel, contentLanguage));
-    sources.push({ channel, feedLabel, contentLanguage });
+    sourceKeys.add(tupleKey(feedLabel, contentLanguage));
+    sources.push({ feedLabel, contentLanguage });
   }
 
   // Group products by feed identity.
   const groupMap = new Map<string, FeedLabelGroup>();
   for (const p of products) {
-    const channel = p.channel ?? "";
     const feedLabel = p.feedLabel ?? "";
     const contentLanguage = p.contentLanguage ?? "";
-    const key = tupleKey(channel, feedLabel, contentLanguage);
+    const key = tupleKey(feedLabel, contentLanguage);
     const g = groupMap.get(key);
     if (g) g.count += 1;
-    else groupMap.set(key, { channel, feedLabel, contentLanguage, count: 1 });
+    else groupMap.set(key, { feedLabel, contentLanguage, count: 1 });
   }
   const groups = [...groupMap.values()].sort(
-    (a, b) =>
-      cmp(a.feedLabel, b.feedLabel) ||
-      cmp(a.contentLanguage, b.contentLanguage) ||
-      cmp(a.channel, b.channel),
+    (a, b) => cmp(a.feedLabel, b.feedLabel) || cmp(a.contentLanguage, b.contentLanguage),
   );
 
   const findings: FeedLabelFinding[] = [];
@@ -136,7 +129,7 @@ export function checkFeedLabels(
     }
     // Cross-check against the account's data sources.
     if (crossChecked) {
-      g.matched = sourceKeys.has(tupleKey(g.channel, g.feedLabel, g.contentLanguage));
+      g.matched = sourceKeys.has(tupleKey(g.feedLabel, g.contentLanguage));
       if (!g.matched) {
         const lang = g.contentLanguage ? ` (contentLanguage ${g.contentLanguage})` : "";
         findings.push({
@@ -174,13 +167,12 @@ export function checkFeedLabels(
   // Orphaned sources: a data source feed with no products to fill it (informational).
   if (crossChecked) {
     const productKeys = new Set(
-      groups.filter((g) => g.feedLabel).map((g) => tupleKey(g.channel, g.feedLabel, g.contentLanguage)),
+      groups.filter((g) => g.feedLabel).map((g) => tupleKey(g.feedLabel, g.contentLanguage)),
     );
     for (const s of sources) {
-      const channel = s.channel ?? "";
       const contentLanguage = s.contentLanguage ?? "";
       const feedLabel = s.feedLabel ?? "";
-      if (!productKeys.has(tupleKey(channel, feedLabel, contentLanguage))) {
+      if (!productKeys.has(tupleKey(feedLabel, contentLanguage))) {
         const lang = contentLanguage ? ` (${contentLanguage})` : "";
         findings.push({
           ruleId: "feed-label.orphaned-source",

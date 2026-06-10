@@ -48,7 +48,7 @@ cat datasource.json | gmc datasources create
 | `--type <type>` | Source type — `primary` (default); use `--file` for other types |
 | `--content-language <lang>` | Content language, e.g. `en` (required) |
 | `--feed-label <label>` | Feed label, e.g. `US` (required) |
-| `--channel <channel>` | `online` (default) or `local` |
+| `--legacy-local` | Boolean flag — present means a legacy-local feed for in-store-only products; absent (default) means a normal online feed |
 | `--countries <list>` | Comma-separated target countries, e.g. `US,CA` |
 | `--fetch-url <uri>` | Make it a scheduled file fetch from this URL |
 | `--fetch-schedule <freq>` | `daily` (default), `weekly`, or `monthly` |
@@ -76,6 +76,6 @@ gmc datasources delete 55 --json   # { "deleted": "55" }
 
 `2` for usage (no account, missing/invalid flags, conflicting `--file`+flags, bad JSON) · `3` auth · `5` Merchant API.
 
-::: tip Coming next
-`update` and `fetch` (trigger an immediate pull), and feed sync (`feeds pull` / `push` / `diff`), arrive later in Phase 3.
+::: tip Not yet implemented
+`datasources update` and `datasources fetch` (trigger an immediate pull) are not yet implemented.
 :::

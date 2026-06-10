@@ -14,7 +14,7 @@ interface CreateFlags {
   type?: string;
   contentLanguage?: string;
   feedLabel?: string;
-  channel?: string;
+  legacyLocal?: boolean;
   countries?: string;
   fetchUrl?: string;
   fetchSchedule?: string;
@@ -65,7 +65,7 @@ function hasCreateFlags(opts: CreateFlags): boolean {
       opts.type ||
       opts.contentLanguage ||
       opts.feedLabel ||
-      opts.channel ||
+      opts.legacyLocal ||
       opts.countries ||
       opts.fetchUrl ||
       opts.fetchSchedule ||
@@ -100,11 +100,6 @@ function buildDataSourceFromFlags(opts: CreateFlags): DataSource {
       "Add --fetch-url for a scheduled fetch, or drop the --fetch-* flags for an API feed.",
     );
   }
-  const channel = opts.channel?.toUpperCase();
-  if (channel && channel !== "ONLINE" && channel !== "LOCAL") {
-    throw new UsageError(`Invalid --channel "${opts.channel}".`, "Use online or local.");
-  }
-
   let countries: string[] | undefined;
   if (opts.countries !== undefined) {
     countries = opts.countries.split(",").map((c) => c.trim()).filter(Boolean);
@@ -116,7 +111,7 @@ function buildDataSourceFromFlags(opts: CreateFlags): DataSource {
   const primary: PrimaryProductDataSource = {
     contentLanguage: opts.contentLanguage,
     feedLabel: opts.feedLabel,
-    ...(channel ? { channel } : {}),
+    ...(opts.legacyLocal ? { legacyLocal: true } : {}),
     ...(countries ? { countries } : {}),
   };
   const body: DataSource = { displayName: opts.name, primaryProductDataSource: primary };
@@ -183,7 +178,7 @@ function renderDataSource(ds: DataSource): void {
   if (ds.input) line("Input", ds.input);
   const p = ds.primaryProductDataSource;
   if (p?.feedLabel || p?.contentLanguage) line("Feed", [p?.feedLabel, p?.contentLanguage].filter(Boolean).join(" / "));
-  if (p?.channel) line("Channel", p.channel);
+  if (p?.legacyLocal) line("Legacy local", "yes");
   if (p?.countries?.length) line("Countries", p.countries.join(", "));
   const fetch = ds.fileInput?.fetchSettings;
   if (fetch?.fetchUri) line("Fetch", `${fetch.fetchUri}${fetch.frequency ? ` (${fetch.frequency})` : ""}`);
@@ -237,7 +232,7 @@ export function registerDataSourcesCommands(program: Command): void {
     .option("--type <type>", "Source type (primary; use --file for other types)")
     .option("--content-language <lang>", "Content language, e.g. en")
     .option("--feed-label <label>", "Feed label, e.g. US")
-    .option("--channel <channel>", "online | local (default online)")
+    .option("--legacy-local", "Mark as a legacy-local feed (products sold only in physical stores)")
     .option("--countries <list>", "Comma-separated target countries, e.g. US,CA")
     .option("--fetch-url <uri>", "Make it a scheduled file fetch from this URL")
     .option("--fetch-schedule <freq>", "daily | weekly | monthly (default daily)")

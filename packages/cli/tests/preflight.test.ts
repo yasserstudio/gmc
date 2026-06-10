@@ -35,7 +35,6 @@ function run(args: string[]): Promise<unknown> {
 // A fully-compliant product: zero findings (no errors, no warnings) across the rule set.
 const GOOD = JSON.stringify({
   offerId: "SKU1",
-  channel: "ONLINE",
   contentLanguage: "en",
   feedLabel: "US",
   attributes: {
@@ -53,7 +52,6 @@ const GOOD = JSON.stringify({
 // rule + config tests (so turning required.title off leaves a clean product).
 const MISSING_TITLE = JSON.stringify({
   offerId: "SKU2",
-  channel: "ONLINE",
   contentLanguage: "en",
   feedLabel: "US",
   attributes: {
@@ -121,7 +119,7 @@ describe("gmc preflight", () => {
     writeFileSync(join(dir, "bad.json"), MISSING_TITLE);
     await run(["preflight", "--dir", dir]);
     expect(out()).toContain("Missing title");
-    expect(out()).toContain("ONLINE~en~US~SKU2");
+    expect(out()).toContain("en~US~SKU2");
     expect(process.exitCode).toBe(6);
   });
 
@@ -153,9 +151,8 @@ describe("gmc preflight", () => {
   it("scans the live catalog with --remote", async () => {
     listProducts.mockResolvedValue([
       {
-        name: "accounts/123/products/online~en~US~SKU9",
+        name: "accounts/123/products/en~US~SKU9",
         offerId: "SKU9",
-        channel: "ONLINE",
         contentLanguage: "en",
         feedLabel: "US",
         attributes: { price: { amountMicros: "1000", currencyCode: "USD" } }, // no title

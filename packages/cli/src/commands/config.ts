@@ -11,11 +11,16 @@ export function registerConfigCommands(program: Command): void {
     .command("path")
     .description("Print the config directory and file paths")
     .action(() => {
-      const paths = { configDir: getConfigDir(), configFile: getUserConfigPath() };
-      if (wantsJson(program)) {
-        emitJson(paths);
-      } else {
-        process.stdout.write(`config dir:  ${paths.configDir}\nconfig file: ${paths.configFile}\n`);
+      const json = wantsJson(program);
+      try {
+        const paths = { configDir: getConfigDir(), configFile: getUserConfigPath() };
+        if (json) {
+          emitJson(paths);
+        } else {
+          process.stdout.write(`config dir:  ${paths.configDir}\nconfig file: ${paths.configFile}\n`);
+        }
+      } catch (err) {
+        reportError(err, { json }, "gmc config path");
       }
     });
 

@@ -36,7 +36,7 @@ export interface Finding extends RuleViolation {
   ruleId: string;
   /** Effective severity (config override, else the rule's default). */
   severity: Severity;
-  /** Composite product identity `{channel}~{contentLanguage}~{feedLabel}~{offerId}`. */
+  /** Composite product identity `{contentLanguage}~{feedLabel}~{offerId}` (`local~`-prefixed for legacy-local). */
   productKey: string;
   /** The product's offer id, or null when it has none. */
   offerId: string | null;

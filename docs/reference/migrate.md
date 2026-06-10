@@ -100,7 +100,7 @@ The Merchant API keeps only *identity* fields at the top level and nests everyth
 | `price: {value:"49.99", currency:"USD"}` | `attributes.price: {amountMicros:"49990000", currencyCode:"USD"}` | value × 1,000,000 (BigInt, half-up at 6 dp); also `salePrice`, nested `shipping[].price`, … |
 | `availability: "in stock"` | `attributes.availability: "in_stock"` | enum spaces → underscores |
 | `targetCountry: "US"` | `feedLabel: "US"` | the key remap (an explicit `feedLabel` wins; `--feed-label` overrides) |
-| `id: "online:en:US:SKU1"` | `offerId`/`channel`/`contentLanguage`/`feedLabel` | parsed to backfill missing identity, then dropped |
+| `id: "online:en:US:SKU1"` | `offerId`/`contentLanguage`/`feedLabel` | parsed to backfill missing identity, then dropped |
 | `title`, `description`, `link`, `customLabel0`, `shipping`, … | `attributes.*` | moved as-is (names match) |
 | `customAttributes: [{name,value}]` | `customAttributes` | carried through |
 | `id` / `kind` / `source` / `selfLink` | — | output-only → dropped |
@@ -109,7 +109,7 @@ Each run prints a **migration report** — products converted, identity remaps, 
 
 ## `gmc migrate feed-labels`
 
-Verifies that your migrated feed labels resolve to feeds your campaigns target. Google Ads Shopping campaigns serve products by their feed identity `(channel, feedLabel, contentLanguage)` — the same tuple a primary data source is keyed by. After migration, a product whose feed identity matches **no** data source lands in a feed no campaign targets and **silently stops serving**. This check catches that before you push.
+Verifies that your migrated feed labels resolve to feeds your campaigns target. Google Ads Shopping campaigns serve products by their feed identity `(feedLabel, contentLanguage)` — the same tuple a primary data source is keyed by. After migration, a product whose feed identity matches **no** data source lands in a feed no campaign targets and **silently stops serving**. This check catches that before you push.
 
 ```sh
 gmc migrate feed-labels --dir feeds          # analyze the migrated feed (offline)
@@ -156,6 +156,4 @@ Failed.
 - **`migrate products`** writes every product it can convert, but exits `1` if **any** product couldn't be converted (not an object, no derivable `offerId`, unparseable file) — so CI gates an incomplete migration. Dropped-field and price warnings are informational (exit `0`). `2` usage for an unreadable `--from`/`--file`.
 - **`migrate feed-labels`** is a CI gate like `preflight`: exits `1` on error findings (missing or unmatched feed labels) or an unparseable file; warnings (case variants) gate only with `--strict`. `2`/`3` usage/auth for `--remote`.
 
-## Phase 5 complete
-
-`scopes` + `products` + `feed-labels` cover the full Content API → Merchant API move: auth, product data, and the feed-label safety net. Next up is breadth — inventories, promotions, and reports.
+`scopes` + `products` + `feed-labels` cover the full Content API → Merchant API move: auth, product data, and the feed-label safety net.

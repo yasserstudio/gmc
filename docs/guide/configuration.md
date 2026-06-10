@@ -69,5 +69,6 @@ Commands set a classed exit code so CI can branch on the failure type:
 | `3` | Authentication failure |
 | `4` | Configuration failure |
 | `5` | Merchant API failure |
+| `6` | Preflight found gating compliance violations |
 
 In `--json` mode, failures print a `{ "ok": false, "error": { … } }` envelope to stdout; success payloads print bare.

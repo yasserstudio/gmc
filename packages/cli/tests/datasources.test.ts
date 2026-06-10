@@ -143,7 +143,7 @@ describe("gmc datasources", () => {
     expect(process.exitCode).toBe(0);
   });
 
-  it("create maps channel, fetch time, timezone and filename", async () => {
+  it("create maps legacy-local, fetch time, timezone and filename", async () => {
     createDataSource.mockResolvedValue({ dataSourceId: "55" });
 
     await run([
@@ -151,7 +151,7 @@ describe("gmc datasources", () => {
       "--name", "Nightly",
       "--content-language", "en",
       "--feed-label", "US",
-      "--channel", "online",
+      "--legacy-local",
       "--fetch-url", "https://shop.com/x",
       "--fetch-schedule", "weekly",
       "--fetch-time", "02:30",
@@ -160,10 +160,10 @@ describe("gmc datasources", () => {
     ]);
 
     const body = createDataSource.mock.calls[0]?.[0] as {
-      primaryProductDataSource: { channel?: string };
+      primaryProductDataSource: { legacyLocal?: boolean };
       fileInput: { fileName: string; fetchSettings: Record<string, unknown> };
     };
-    expect(body.primaryProductDataSource.channel).toBe("ONLINE");
+    expect(body.primaryProductDataSource.legacyLocal).toBe(true);
     expect(body.fileInput.fileName).toBe("catalog.xml");
     expect(body.fileInput.fetchSettings).toMatchObject({
       frequency: "FREQUENCY_WEEKLY",

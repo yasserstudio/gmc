@@ -8,25 +8,12 @@
 
 ## Install
 
-::: warning Pre-release
-The `@gmc-cli/*` packages are not yet published to npm (that lands later in the `0.x` series). For now, run from source.
-:::
-
-Once published, gmc will install as a global command:
-
 ```sh
-npm i -g @gmc-cli/cli
+npm install -g @gmc-cli/cli
 gmc --version
 ```
 
-To run from source today:
-
-```sh
-git clone https://github.com/yasserstudio/gmc.git
-cd gmc
-pnpm install && pnpm build
-node packages/cli/dist/bin.js --help   # or `pnpm --filter @gmc-cli/cli exec gmc --help`
-```
+See the [Installation](/guide/installation) guide for other methods (local build from source, pnpm, etc.).
 
 ## Authenticate
 

@@ -44,6 +44,7 @@ gmc reports competitive-visibility --country US --category 536 --traffic-source 
 | `--category <id>` | Numeric Google product category id, e.g. `536` (required) |
 | `--traffic-source <src>` | `ADS`, `ORGANIC`, or `ALL` (default `ADS`) |
 | `--days` / `--since` / `--until` | Date window (default last 30 days) |
+| `--page-size <n>` | Max rows per API page |
 
 Output is a table of competitor domains with rank, relative visibility, page overlap, and
 higher-position rate (your own domain is marked); `--json` for the raw rows.
@@ -81,9 +82,10 @@ gmc reports check --metric conversions --min 50 --since 2026-05-01 --until 2026-
 | `--min <n>` | Fail if the metric is below this |
 | `--max <n>` | Fail if the metric is above this |
 | `--days` / `--since` / `--until` | Date window (default last 30 days) |
+| `--page-size <n>` | Max rows per API page |
 
 At least one of `--min`/`--max` is required. Exit `0` within bounds, **`1` on breach** (CI gate),
-`2` usage. `--json` emits `{ metric, value, min, max, ok, since, until }`.
+`2` usage. `--json` emits `{ metric, value, min, max, ok, since, until }` — `min` and `max` are omitted when not passed.
 
 ## `gmc reports query <mcql>`
 
@@ -94,7 +96,11 @@ for `{ "results": [...] }`. This is the escape hatch for views and columns the p
 gmc reports query "SELECT clicks, conversions, conversion_value FROM product_performance_view WHERE date BETWEEN '2026-05-01' AND '2026-05-31'" --json
 ```
 
+| Option | Description |
+|--------|-------------|
+| `--page-size <n>` | Max rows per API page |
+
 ## Exit codes
 
-`0` success · `2` usage (malformed `--since`/`--until`, non-positive `--days`, bad `--page-size`) ·
+`0` success · `1` metric breach (`reports check` CI gate) · `2` usage (malformed `--since`/`--until`, non-positive `--days`, bad `--page-size`) ·
 `3` auth · `5` Merchant API.

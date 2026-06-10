@@ -13,11 +13,12 @@ const DATASOURCES_API = "datasources/v1";
 // API returns and accepts more. `client.get`/`post` round-trip the full JSON —
 // these types are a compile-time view, not a runtime filter.
 
-/** A primary product data source config (`channel`/`feedLabel`/`contentLanguage`). */
+/** A primary product data source config (`feedLabel`/`contentLanguage`/`legacyLocal`). */
 export interface PrimaryProductDataSource {
-  channel?: string;
   feedLabel?: string;
   contentLanguage?: string;
+  /** True for a legacy-local feed (Merchant API v1 replaced the `channel` field with this boolean). */
+  legacyLocal?: boolean;
   countries?: string[];
 }
 

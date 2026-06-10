@@ -79,12 +79,12 @@ describe("gmc feeds pull", () => {
   it("writes one push-ready file per product", async () => {
     listProducts.mockResolvedValue([
       {
-        name: "accounts/123/products/online~en~US~SKU1",
+        name: "accounts/123/products/en~US~SKU1",
         offerId: "SKU1",
         attributes: { title: "A" },
         productStatus: { itemLevelIssues: [] },
       },
-      { name: "accounts/123/products/online~en~US~SKU2", offerId: "SKU2", attributes: { title: "B" } },
+      { name: "accounts/123/products/en~US~SKU2", offerId: "SKU2", attributes: { title: "B" } },
     ]);
 
     await run(["feeds", "pull", "--dir", dir, "--json"]);
@@ -93,9 +93,9 @@ describe("gmc feeds pull", () => {
     expect(out.pulled).toBe(2);
     expect(out.dir).toBe(dir);
     expect("skipped" in out).toBe(false);
-    expect(readdirSync(dir).sort()).toEqual(["online~en~US~SKU1.json", "online~en~US~SKU2.json"]);
+    expect(readdirSync(dir).sort()).toEqual(["en~US~SKU1.json", "en~US~SKU2.json"]);
 
-    const f1 = JSON.parse(readFileSync(join(dir, "online~en~US~SKU1.json"), "utf8")) as Record<string, unknown>;
+    const f1 = JSON.parse(readFileSync(join(dir, "en~US~SKU1.json"), "utf8")) as Record<string, unknown>;
     expect(f1).toEqual({ offerId: "SKU1", attributes: { title: "A" } });
     expect("productStatus" in f1).toBe(false);
     expect("name" in f1).toBe(false);
@@ -109,12 +109,22 @@ describe("gmc feeds pull", () => {
     expect(process.exitCode).toBe(0);
   });
 
+  it("rejects a non-plain-integer or oversized --page-size (never reaches the query)", async () => {
+    for (const bad of ["1e21", "0", "2000", "-5"]) {
+      process.exitCode = 0;
+      listProducts.mockClear();
+      await run(["feeds", "pull", "--dir", dir, "--page-size", bad]);
+      expect(listProducts, `--page-size ${bad}`).not.toHaveBeenCalled();
+      expect(process.exitCode, `--page-size ${bad}`).toBe(2);
+    }
+  });
+
   it("sanitizes path-unsafe characters in the filename", async () => {
     listProducts.mockResolvedValue([
-      { name: "accounts/123/products/online~en~US~A:B", offerId: "A:B", attributes: {} },
+      { name: "accounts/123/products/en~US~A:B", offerId: "A:B", attributes: {} },
     ]);
     await run(["feeds", "pull", "--dir", dir]);
-    expect(readdirSync(dir)).toEqual(["online~en~US~A_B.json"]);
+    expect(readdirSync(dir)).toEqual(["en~US~A_B.json"]);
     expect(process.exitCode).toBe(0);
   });
 
@@ -130,15 +140,15 @@ describe("gmc feeds pull", () => {
 
   it("skips a colliding filename instead of overwriting", async () => {
     listProducts.mockResolvedValue([
-      { name: "accounts/123/products/online~en~US~A:B", attributes: { title: "first" } },
-      { name: "accounts/123/products/online~en~US~A_B", attributes: { title: "second" } },
+      { name: "accounts/123/products/en~US~A:B", attributes: { title: "first" } },
+      { name: "accounts/123/products/en~US~A_B", attributes: { title: "second" } },
     ]);
     await run(["feeds", "pull", "--dir", dir, "--json"]);
     const out = JSON.parse(writes.join("")) as { pulled: number; skipped?: number };
     expect(out.pulled).toBe(1);
     expect(out.skipped).toBe(1);
-    expect(readdirSync(dir)).toEqual(["online~en~US~A_B.json"]);
-    const written = JSON.parse(readFileSync(join(dir, "online~en~US~A_B.json"), "utf8")) as {
+    expect(readdirSync(dir)).toEqual(["en~US~A_B.json"]);
+    const written = JSON.parse(readFileSync(join(dir, "en~US~A_B.json"), "utf8")) as {
       attributes: { title: string };
     };
     expect(written.attributes.title).toBe("first");
@@ -304,6 +314,21 @@ describe("gmc feeds push", () => {
     expect(insertProductInput).toHaveBeenCalledTimes(1);
     expect(process.exitCode).toBe(5);
   });
+
+  it("reports the partial pushed count in the JSON failure envelope", async () => {
+    writeFileSync(join(dir, "a.json"), JSON.stringify({ offerId: "SKU1" }));
+    writeFileSync(join(dir, "b.json"), JSON.stringify({ offerId: "SKU2" }));
+    insertProductInput
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new MerchantApiError("Forbidden (403).", 403, "DENIED", false));
+
+    await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { ok: boolean; pushed: number };
+    expect(out.ok).toBe(false);
+    expect(out.pushed).toBe(1); // one landed before the abort — a CI consumer can see it
+    expect(process.exitCode).toBe(5);
+  });
 });
 
 describe("gmc feeds diff", () => {
@@ -316,9 +341,8 @@ describe("gmc feeds diff", () => {
   // A processed product as `products.list` returns it; `toProductInput` strips it
   // to the writable shape a pulled file holds.
   const product = (offerId: string, title: string) => ({
-    name: `accounts/123/products/online~en~US~${offerId}`,
+    name: `accounts/123/products/en~US~${offerId}`,
     offerId,
-    channel: "ONLINE",
     contentLanguage: "en",
     feedLabel: "US",
     attributes: { title },
@@ -328,7 +352,6 @@ describe("gmc feeds diff", () => {
     offerId,
     contentLanguage: "en",
     feedLabel: "US",
-    channel: "ONLINE",
     attributes: { title },
   });
 
@@ -381,10 +404,10 @@ describe("gmc feeds diff", () => {
       unchanged: number;
       orphaned: string[];
     };
-    expect(out.added).toEqual(["ONLINE~en~US~SKU3"]);
-    expect(out.updated).toEqual(["ONLINE~en~US~SKU2"]);
+    expect(out.added).toEqual(["en~US~SKU3"]);
+    expect(out.updated).toEqual(["en~US~SKU2"]);
     expect(out.unchanged).toBe(1);
-    expect(out.orphaned).toEqual(["ONLINE~en~US~SKU4"]);
+    expect(out.orphaned).toEqual(["en~US~SKU4"]);
     expect(process.exitCode).toBe(0);
   });
 
@@ -405,7 +428,7 @@ describe("gmc feeds diff", () => {
       dataSource: string;
     };
     // SKU2 belongs to source 200, so against source 100 it reads as "added", not matched.
-    expect(out.added).toEqual(["ONLINE~en~US~SKU2"]);
+    expect(out.added).toEqual(["en~US~SKU2"]);
     expect(out.unchanged).toBe(1);
     expect(out.orphaned).toEqual([]);
     expect(out.dataSource).toBe("100");
@@ -417,7 +440,7 @@ describe("gmc feeds diff", () => {
     // Same content, deliberately different key order — stable compare treats as equal.
     writeFileSync(
       join(dir, "a.json"),
-      JSON.stringify({ attributes: { title: "A" }, channel: "ONLINE", feedLabel: "US", contentLanguage: "en", offerId: "SKU1" }),
+      JSON.stringify({ attributes: { title: "A" }, feedLabel: "US", contentLanguage: "en", offerId: "SKU1" }),
     );
     writeFileSync(join(dir, "b.json"), JSON.stringify(file("SKU2", "B")));
 
@@ -452,7 +475,7 @@ describe("gmc feeds diff", () => {
     await run(["feeds", "diff", "--dir", dir, "--json"]);
 
     const out = JSON.parse(writes.join("")) as { added: string[]; failed?: number };
-    expect(out.added).toEqual(["ONLINE~en~US~SKU1"]);
+    expect(out.added).toEqual(["en~US~SKU1"]);
     expect(out.failed).toBe(1);
     expect(process.exitCode).toBe(1);
   });

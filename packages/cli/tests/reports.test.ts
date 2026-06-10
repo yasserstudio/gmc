@@ -128,6 +128,23 @@ describe("gmc reports", () => {
     expect(process.exitCode).toBe(2);
   });
 
+  it("rejects an out-of-range or non-plain-integer --days (no underflow/Invalid Date)", async () => {
+    for (const bad of ["1e9", "999999999", "1.5", "3651"]) {
+      process.exitCode = 0;
+      search.mockClear();
+      await run(["reports", "performance", "--days", bad]);
+      expect(search, `--days ${bad}`).not.toHaveBeenCalled();
+      expect(process.exitCode, `--days ${bad}`).toBe(2);
+    }
+  });
+
+  it("accepts --days at the upper bound (3650)", async () => {
+    search.mockResolvedValue([]);
+    await run(["reports", "performance", "--days", "3650"]);
+    expect(search).toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
+  });
+
   it("builds a competitive_visibility query with required filters", async () => {
     search.mockResolvedValue([]);
     await run([

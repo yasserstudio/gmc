@@ -60,12 +60,12 @@ The `policy.*` family predicts editorial **disapproval** triggers — these are 
 
 ## Findings
 
-A finding names the product (by its composite id `{channel}~{contentLanguage}~{feedLabel}~{offerId}`), the offending attribute, what's wrong, and how to fix it. Human output groups findings by product:
+A finding names the product (by its composite id `{contentLanguage}~{feedLabel}~{offerId}`, or `local~{contentLanguage}~{feedLabel}~{offerId}` for legacy-local products), the offending attribute, what's wrong, and how to fix it. Human output groups findings by product:
 
 ```
 gmc preflight — scanned 2 product(s)
 
-ONLINE~en~US~SKU2
+en~US~SKU2
   ✗ title — Missing title — every product must have a `title`.
       → Set attributes.title to the product's name as shown to shoppers.
   ✗ price — Missing price — every product must have a `price` with an amount.
@@ -80,7 +80,7 @@ Failed.
 ```json
 { "ok": false, "exitCode": 6, "scanned": 2, "strict": false,
   "counts": { "error": 2, "warning": 0, "info": 0 },
-  "findings": [ { "ruleId": "required.title", "severity": "error", "productKey": "ONLINE~en~US~SKU2", "offerId": "SKU2", "attribute": "title", "message": "…", "suggestion": "…", "documentation": "…" } ] }
+  "findings": [ { "ruleId": "required.title", "severity": "error", "productKey": "en~US~SKU2", "offerId": "SKU2", "attribute": "title", "message": "…", "suggestion": "…", "documentation": "…" } ] }
 ```
 
 ## Configuring rules — `.gmcpreflightrc`
