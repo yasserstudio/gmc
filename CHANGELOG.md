@@ -7,6 +7,27 @@ public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command)
 supporting packages version independently. From v0.8 on, each release is driven by
 [Changesets](.changeset) and tagged.
 
+## v0.9.8 — migrate: feed-labels
+
+Phase 5, part 3 — **Phase 5 complete**. The feed-label transfer check: the silent
+campaign-killer caught before it strikes.
+
+- **`gmc migrate feed-labels`** — Google Ads Shopping campaigns serve products by their
+  feed identity `(channel, feedLabel, contentLanguage)` — the tuple a primary data source is
+  keyed by. After migration, a product whose feed identity matches no data source lands in a
+  feed no campaign targets and silently stops serving. This check catches it before push.
+- **offline** — groups the feed by identity, flags products with no `feedLabel`, and warns on
+  case variants (`US` vs `us`, which Merchant Center treats as different feeds).
+- **live cross-check** — with an account configured, lists the account's primary data sources
+  and flags any group that matches none; `--remote` checks the live catalog. Degrades to
+  offline analysis when no account is available.
+- **CI gate** — like [`preflight`](/reference/preflight), exits non-zero on error findings;
+  `--strict` folds warnings in. Prints a feed-label distribution table or `--json`.
+- **Phase 5 complete** — `scopes` + `products` + `feed-labels` cover the full Content API →
+  Merchant API move: auth, product data, and the feed-label safety net.
+
+_`@gmc-cli/cli` → 0.9.8, `@gmc-cli/migrate` → 0.1.3 (both patch); other packages unchanged._
+
 ## v0.9.7 — migrate: products
 
 Phase 5, part 2 — the heart of the migration: converting product **data**.
