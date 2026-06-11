@@ -10,6 +10,7 @@ import { registerPreflightCommand } from "./commands/preflight.js";
 import { registerMigrateCommands } from "./commands/migrate.js";
 import { registerInventoryCommands } from "./commands/inventory.js";
 import { registerPromotionsCommands } from "./commands/promotions.js";
+import { registerRegionsCommands } from "./commands/regions.js";
 import { registerReportsCommands } from "./commands/reports.js";
 
 /**
@@ -49,6 +50,7 @@ export function createProgram(): Command {
   registerMigrateCommands(program);
   registerInventoryCommands(program);
   registerPromotionsCommands(program);
+  registerRegionsCommands(program);
   registerReportsCommands(program);
 
   return program;
