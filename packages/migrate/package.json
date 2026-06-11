@@ -1,7 +1,7 @@
 {
   "name": "@gmc-cli/migrate",
   "private": true,
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Content API for Shopping → Merchant API migration engine for the Google Merchant Center CLI — scope mapping, legacy-config import, and product remapping.",
   "type": "module",
   "main": "./dist/index.js",
