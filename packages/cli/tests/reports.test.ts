@@ -142,6 +142,16 @@ describe("gmc reports", () => {
     expect(process.exitCode).toBe(2);
   });
 
+  it("rejects a shape-valid but impossible calendar date", async () => {
+    for (const bad of ["2026-13-45", "2026-02-30", "2026-00-10"]) {
+      process.exitCode = 0;
+      search.mockClear();
+      await run(["reports", "performance", "--until", bad]);
+      expect(search, `--until ${bad}`).not.toHaveBeenCalled();
+      expect(process.exitCode, `--until ${bad}`).toBe(2);
+    }
+  });
+
   it("rejects a non-positive --days", async () => {
     await run(["reports", "performance", "--days", "0"]);
     expect(search).not.toHaveBeenCalled();

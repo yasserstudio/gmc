@@ -18,6 +18,17 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * True only for a real ISO calendar date — rejects shape-valid-but-impossible
+ * values like `2026-13-45` (which `DATE_RE` alone would pass and a raw `Date`
+ * would silently roll over).
+ */
+function isCalendarDate(s: string): boolean {
+  if (!DATE_RE.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && isoDate(d) === s;
+}
+
 /** Format a reports API date object as `YYYY-MM-DD`. */
 function fmtReportDate(d?: ReportDate): string {
   if (!d?.year) return "—";
@@ -36,8 +47,8 @@ function resolveWindow(opts: PerfOpts): { since: string; until: string } {
     ["--since", opts.since],
     ["--until", opts.until],
   ] as const) {
-    if (val !== undefined && !DATE_RE.test(val)) {
-      throw new UsageError(`Invalid ${flag} "${val}".`, "Use an ISO date, e.g. 2026-05-01.");
+    if (val !== undefined && !isCalendarDate(val)) {
+      throw new UsageError(`Invalid ${flag} "${val}".`, "Use a real ISO date, e.g. 2026-05-01.");
     }
   }
   const until = opts.until ?? isoDate(new Date());
