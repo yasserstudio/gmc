@@ -4,13 +4,28 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Group only minor/patch bumps — a major (which may need a code or config
+    # change) gets its own PR instead of blocking the whole group.
     groups:
       dev-dependencies:
         dependency-type: "development"
+        update-types: ["minor", "patch"]
       production-dependencies:
         dependency-type: "production"
+        update-types: ["minor", "patch"]
     allow:
       - dependency-type: "direct"
+    ignore:
+      # Held majors (revisit deliberately, not via auto-PR):
+      # - TypeScript 6.x turns the tsup dts build's baseUrl into a hard error
+      #   (TS5101); stay on 5.9 until the toolchain settles around 6.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # - commander 15 is ESM-only and requires Node >= 22.12; gmc supports
+      #   Node >= 20, so taking it would drop Node 20/21 support. Commander 14
+      #   is supported until May 2027.
+      - dependency-name: "commander"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
