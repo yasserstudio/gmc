@@ -46,6 +46,15 @@ export type { LocalInventory, RegionalInventory, TimePeriod } from "./inventorie
 export { PromotionsService, promotionSegment } from "./promotions.js";
 export type { Promotion, PromotionAttributes } from "./promotions.js";
 
+export { RegionsService, regionSegment } from "./regions.js";
+export type {
+  Region,
+  RegionInput,
+  PostalCodeArea,
+  PostalCodeRange,
+  GeoTargetArea,
+} from "./regions.js";
+
 export { ReportsService } from "./reports.js";
 export type {
   ReportRow,

@@ -54,6 +54,14 @@ describe("createProgram", () => {
     expect(subs).toEqual(expect.arrayContaining(["list", "get", "create", "delete"]));
   });
 
+  it("registers the regions command group with list, get, create, update and delete", () => {
+    const program = createProgram();
+    const regions = program.commands.find((c) => c.name() === "regions");
+    expect(regions).toBeDefined();
+    const subs = (regions?.commands ?? []).map((c) => c.name());
+    expect(subs).toEqual(expect.arrayContaining(["list", "get", "create", "update", "delete"]));
+  });
+
   it("registers the feeds command group with pull", () => {
     const program = createProgram();
     const feeds = program.commands.find((c) => c.name() === "feeds");

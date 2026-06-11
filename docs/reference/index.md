@@ -16,6 +16,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`)                                                |
 | [`gmc inventory`](/reference/inventory)     | Local + regional inventory overrides (`local` / `regional` · `list` / `insert` / `delete`)                        |
 | [`gmc promotions`](/reference/promotions)   | Manage promotions (`list` / `get` / `insert`)                                                                     |
+| [`gmc regions`](/reference/regions)         | Define geographic regions for regional inventory + shipping (`list` / `get` / `create` / `update` / `delete`)     |
 | [`gmc reports`](/reference/reports)         | Reports — `performance` / `competitive-visibility` / `price-competitiveness` / `check` (CI gate) / `query` (MCQL) |
 | [`gmc feeds`](/reference/feeds)             | Feeds as code (`pull` / `push` / `diff`)                                                                          |
 | [`gmc preflight`](/reference/preflight)     | Offline feed-compliance scanner — catch disapprovals before upload                                                |
