@@ -40,7 +40,31 @@ describe("probeMerchantApi", () => {
     });
     expect(r.status).toBe("fail");
     expect(r.httpStatus).toBe(401);
+    expect(r.message).toMatch(/401|Unauthorized/);
   });
+
+  const unregisteredBody = {
+    error: {
+      code: 401,
+      message:
+        "GCP project with id sahla-market and number 807481587962 is not registered with the merchant account. Please follow these steps https://developers.google.com/merchant/api/guides/quickstart.",
+    },
+  };
+
+  it.each([401, 403])(
+    "detects the unregistered-project trap (%i) and gives the registration fix, not 're-authenticate'",
+    async (status) => {
+      const r = await probeMerchantApi("tok", {
+        fetchImpl: fetchReturning(status, unregisteredBody),
+      });
+      expect(r.status).toBe("fail");
+      expect(r.message).toMatch(/not registered as an API client/i);
+      // Surfaces the specific project so the user knows which one to register.
+      expect(r.message).toContain("807481587962");
+      expect(r.suggestion).toMatch(/Register the Cloud project/i);
+      expect(r.suggestion).not.toMatch(/Re-authenticate/i);
+    },
+  );
 
   it("detects SERVICE_DISABLED and surfaces the activation URL and project", async () => {
     const body = {

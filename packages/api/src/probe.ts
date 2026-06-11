@@ -97,6 +97,7 @@ export async function probeMerchantApi(
 
   const detail = findErrorInfo(body);
   const reason = detail?.reason;
+  const apiMessage = body?.error?.message ?? "";
   const failResult = (message: string, suggestion: string): ProbeResult => ({
     status: "fail",
     httpStatus: res.status,
@@ -105,9 +106,23 @@ export async function probeMerchantApi(
     suggestion,
   });
 
+  // The "Cloud project not registered as an API client" trap — the Merchant API
+  // returns it as a 401/403 with a distinctive message. This is the silent setup
+  // failure `doctor` exists to catch, so detect it by message *before* the generic
+  // status handlers: the credential and token are fine, so "re-authenticate" is the
+  // wrong fix; the project must be registered with the Merchant account.
+  // Tight literal phrase (the exact API wording) — no `.*`, so no backtracking risk
+  // and no false positives on unrelated "registration" errors.
+  if (/not registered with the merchant account/i.test(apiMessage)) {
+    return failResult(
+      `Your Google Cloud project is not registered as an API client for this Merchant Center account${apiMessageSuffix(body)}.`,
+      "Register the Cloud project under Merchant Center → Settings → Connected accounts / Developers — see the Merchant API quickstart: https://developers.google.com/merchant/api/guides/quickstart.",
+    );
+  }
+
   if (res.status === 401) {
     return failResult(
-      "The Merchant API rejected the access token (401 Unauthorized).",
+      `The Merchant API rejected the access token (401 Unauthorized)${apiMessageSuffix(body)}.`,
       "Re-authenticate (`gmc auth login`, or refresh your service-account key) and try again.",
     );
   }
@@ -125,7 +140,7 @@ export async function probeMerchantApi(
 
   if (res.status === 403) {
     return failResult(
-      "Permission denied by the Merchant API (403).",
+      `Permission denied by the Merchant API (403)${apiMessageSuffix(body)}.`,
       "The credential isn't authorized for this Merchant Center account, or the Cloud project isn't registered as an API client. Add the principal under Merchant Center → Settings → Account access / Developers.",
     );
   }
