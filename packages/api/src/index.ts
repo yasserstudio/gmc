@@ -66,6 +66,13 @@ export type { LocalInventory, RegionalInventory, TimePeriod } from "./inventorie
 export { PromotionsService, promotionSegment } from "./promotions.js";
 export type { Promotion, PromotionAttributes } from "./promotions.js";
 
+export { NotificationsService, notificationSegment } from "./notifications.js";
+export type {
+  NotificationSubscription,
+  NotificationSubscriptionInput,
+  RegisteredEvent,
+} from "./notifications.js";
+
 export { RegionsService, regionSegment } from "./regions.js";
 export type {
   Region,

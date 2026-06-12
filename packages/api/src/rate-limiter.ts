@@ -34,6 +34,7 @@ export const DEFAULT_RATE_LIMITS: RateLimitConfig = {
   accounts: { capacity: 30, refillPerSecond: 5 },
   datasources: { capacity: 30, refillPerSecond: 5 },
   promotions: { capacity: 30, refillPerSecond: 5 },
+  notifications: { capacity: 30, refillPerSecond: 5 },
   quota: { capacity: 30, refillPerSecond: 5 },
 };
 

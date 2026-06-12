@@ -11,6 +11,7 @@ import { registerMigrateCommands } from "./commands/migrate.js";
 import { registerInventoryCommands } from "./commands/inventory.js";
 import { registerPromotionsCommands } from "./commands/promotions.js";
 import { registerRegionsCommands } from "./commands/regions.js";
+import { registerNotificationsCommands } from "./commands/notifications.js";
 import { registerReportsCommands } from "./commands/reports.js";
 
 /**
@@ -51,6 +52,7 @@ export function createProgram(): Command {
   registerInventoryCommands(program);
   registerPromotionsCommands(program);
   registerRegionsCommands(program);
+  registerNotificationsCommands(program);
   registerReportsCommands(program);
 
   return program;

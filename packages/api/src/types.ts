@@ -9,6 +9,7 @@ export type SubApi =
   | "accounts"
   | "datasources"
   | "promotions"
+  | "notifications"
   | "quota";
 
 /** All sub-API keys, in a stable order. */
@@ -19,5 +20,6 @@ export const SUB_APIS: readonly SubApi[] = [
   "accounts",
   "datasources",
   "promotions",
+  "notifications",
   "quota",
 ];
