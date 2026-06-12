@@ -2,7 +2,8 @@
 
 `gmc` ships a composite GitHub Action so you can run any `gmc` command in CI — most usefully an
 **offline feed-compliance preflight gate** that fails the build when a feed would be disapproved,
-before it ever reaches Merchant Center.
+before it ever reaches Merchant Center. It's listed on the
+[GitHub Marketplace](https://github.com/marketplace/actions/gmc-google-merchant-center-cli).
 
 ```yaml
 # .github/workflows/feed-check.yml
