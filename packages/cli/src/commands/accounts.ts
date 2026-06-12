@@ -4,6 +4,7 @@ import {
   AccountsService,
   userSegment,
   accountResourceName,
+  returnPolicySegment,
   type Account,
   type AccountUpdate,
   type AccountInfo,
@@ -13,6 +14,13 @@ import {
   type UserInput,
   type AccessRight,
   type CreateAccountRequest,
+  type BusinessIdentity,
+  type BusinessIdentityInput,
+  type IdentityAttribute,
+  type AutofeedSettings,
+  type AutofeedSettingsInput,
+  type ShippingSettings,
+  type OnlineReturnPolicy,
   type PostalAddress,
   type CustomerService,
 } from "@gmc-cli/api";
@@ -115,6 +123,11 @@ const BUSINESS_INFO_FIELDS = [
   "koreanBusinessRegistrationNumber",
 ] as const satisfies readonly (keyof BusinessInfoInput)[];
 
+/** The writable AutofeedSettings field — `eligible` is output-only. */
+const AUTOFEED_FIELDS = [
+  "enableProducts",
+] as const satisfies readonly (keyof AutofeedSettingsInput)[];
+
 /**
  * Keep only the writable keys of a parsed `--file` body, dropping output-only fields
  * the API rejects in a PATCH `updateMask`. Mirrors `pickWritable` in `regions.ts`, so a
@@ -197,6 +210,122 @@ function renderUser(user: User): void {
   line("Email", userEmailOf(user));
   if (user.state) line("State", user.state);
   line("Access rights", user.accessRights?.join(", ") ?? "—");
+}
+
+/** Parse a `--<attr> yes|no` flag into an IdentityAttribute, or throw. */
+function parseIdentityDeclaration(raw: string, flag: string): IdentityAttribute {
+  if (raw === "yes") return { identityDeclaration: "SELF_IDENTIFIES_AS" };
+  if (raw === "no") return { identityDeclaration: "DOES_NOT_SELF_IDENTIFY_AS" };
+  throw new UsageError(`Invalid ${flag} "${raw}".`, "Pass yes or no.");
+}
+
+interface IdentityWriteOpts {
+  promotionsConsent?: string;
+  blackOwned?: string;
+  womenOwned?: string;
+  veteranOwned?: string;
+  latinoOwned?: string;
+  smallBusiness?: string;
+  file?: string;
+  updateMask?: string;
+}
+
+/** The IdentityAttribute flags and the BusinessIdentity field each builds. */
+const IDENTITY_ATTRS = [
+  ["blackOwned", "--black-owned"],
+  ["womenOwned", "--women-owned"],
+  ["veteranOwned", "--veteran-owned"],
+  ["latinoOwned", "--latino-owned"],
+  ["smallBusiness", "--small-business"],
+] as const;
+
+const BUSINESS_IDENTITY_FIELDS = [
+  "promotionsConsent",
+  "blackOwned",
+  "womenOwned",
+  "veteranOwned",
+  "latinoOwned",
+  "smallBusiness",
+] as const satisfies readonly (keyof BusinessIdentityInput)[];
+
+/** Build a BusinessIdentityInput from `--file` overlaid with the convenience flags, or throw. */
+async function buildBusinessIdentityInput(opts: IdentityWriteOpts): Promise<BusinessIdentityInput> {
+  const input: BusinessIdentityInput = opts.file
+    ? pick<BusinessIdentityInput>(
+        await readJsonObject(opts.file, "business identity"),
+        BUSINESS_IDENTITY_FIELDS,
+      )
+    : {};
+  if (opts.promotionsConsent !== undefined) {
+    const v = opts.promotionsConsent.toLowerCase();
+    if (v !== "given" && v !== "denied") {
+      throw new UsageError(
+        `Invalid --promotions-consent "${opts.promotionsConsent}".`,
+        "Pass given or denied.",
+      );
+    }
+    input.promotionsConsent =
+      v === "given" ? "PROMOTIONS_CONSENT_GIVEN" : "PROMOTIONS_CONSENT_DENIED";
+  }
+  for (const [field, flag] of IDENTITY_ATTRS) {
+    const raw = opts[field];
+    if (raw !== undefined) input[field] = parseIdentityDeclaration(raw, flag);
+  }
+  if (Object.keys(input).length === 0) {
+    throw new UsageError(
+      "Nothing to update.",
+      "Pass --promotions-consent, an identity flag (e.g. --small-business yes), or --file.",
+    );
+  }
+  return input;
+}
+
+/** Short label for an IdentityAttribute, e.g. `yes` / `no` / `—`. */
+function identityLabel(attr: IdentityAttribute | undefined): string {
+  if (attr?.identityDeclaration === "SELF_IDENTIFIES_AS") return "yes";
+  if (attr?.identityDeclaration === "DOES_NOT_SELF_IDENTIFY_AS") return "no";
+  return "—";
+}
+
+function renderBusinessIdentity(bi: BusinessIdentity): void {
+  if (bi.promotionsConsent) line("Promotions", bi.promotionsConsent);
+  line("Black-owned", identityLabel(bi.blackOwned));
+  line("Women-owned", identityLabel(bi.womenOwned));
+  line("Veteran-owned", identityLabel(bi.veteranOwned));
+  line("Latino-owned", identityLabel(bi.latinoOwned));
+  line("Small business", identityLabel(bi.smallBusiness));
+}
+
+function renderAutofeed(af: AutofeedSettings): void {
+  line("Enable products", af.enableProducts ? "yes" : "no");
+  if (af.eligible !== undefined) line("Eligible", af.eligible ? "yes" : "no");
+}
+
+/** The bare return-policy id, preferring the resource `name` / `returnPolicyId`. */
+function returnPolicyIdOf(p: OnlineReturnPolicy): string {
+  if (p.name) return returnPolicySegment(p.name);
+  return p.returnPolicyId ?? "—";
+}
+
+function renderReturnPolicies(policies: OnlineReturnPolicy[]): void {
+  if (policies.length === 0) {
+    process.stdout.write("No return policies for this account.\n");
+    return;
+  }
+  const width = Math.max(...policies.map((p) => returnPolicyIdOf(p).length));
+  process.stdout.write(`${policies.length} return policy(ies):\n`);
+  for (const p of policies) {
+    const countries = p.countries?.join(", ") ?? "—";
+    const label = p.label ? `${p.label} · ` : "";
+    process.stdout.write(`  ${returnPolicyIdOf(p).padEnd(width)}  ${label}${countries}\n`);
+  }
+}
+
+function renderReturnPolicy(p: OnlineReturnPolicy): void {
+  line("Policy ID", returnPolicyIdOf(p));
+  if (p.label) line("Label", p.label);
+  line("Countries", p.countries?.join(", ") ?? "—");
+  if (p.returnPolicyUri) line("URI", p.returnPolicyUri);
 }
 
 interface AccountWriteOpts {
@@ -648,6 +777,245 @@ export function registerAccountsCommands(program: Command): void {
         else process.stdout.write(`Deleted account ${account}.\n`);
       } catch (err) {
         reportError(err, { json }, "gmc accounts delete");
+      }
+    });
+
+  const identity = accounts
+    .command("business-identity")
+    .description("Manage the account's diversity/identity attributes");
+
+  identity
+    .command("get")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Show the business identity attributes")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getBusinessIdentity(account);
+        if (ctx.json) emitJson(result);
+        else renderBusinessIdentity(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts business-identity get");
+      }
+    });
+
+  identity
+    .command("update")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--promotions-consent <given|denied>", "Whether identity may be used in promotions")
+    .option("--black-owned <yes|no>", "Self-identify as black-owned")
+    .option("--women-owned <yes|no>", "Self-identify as women-owned")
+    .option("--veteran-owned <yes|no>", "Self-identify as veteran-owned")
+    .option("--latino-owned <yes|no>", "Self-identify as latino-owned")
+    .option("--small-business <yes|no>", "Self-identify as a small business")
+    .option("--file <path>", "Read the BusinessIdentity JSON body from this file")
+    .option("--update-mask <fields>", "Explicit field mask (defaults to the fields you pass)")
+    .description("Patch the business identity (only the fields you pass change)")
+    .action(async (accountId: string | undefined, opts: IdentityWriteOpts) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const input = await buildBusinessIdentityInput(opts);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.updateBusinessIdentity(account, input, {
+          ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+        });
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Updated business identity for account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts business-identity update");
+      }
+    });
+
+  const autofeed = accounts
+    .command("autofeed")
+    .description("Manage the account's autofeed settings");
+
+  autofeed
+    .command("get")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Show the autofeed settings")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getAutofeedSettings(account);
+        if (ctx.json) emitJson(result);
+        else renderAutofeed(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts autofeed get");
+      }
+    });
+
+  autofeed
+    .command("update")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--enable-products <bool>", "Enable autofeed product crawling (true/false)")
+    .option("--file <path>", "Read the AutofeedSettings JSON body from this file")
+    .option("--update-mask <fields>", "Explicit field mask (defaults to the fields you pass)")
+    .description("Patch the autofeed settings")
+    .action(
+      async (
+        accountId: string | undefined,
+        opts: { enableProducts?: string; file?: string; updateMask?: string },
+      ) => {
+        const json = wantsJson(program);
+        try {
+          const ctx = contextFrom(program);
+          const account = resolveAccount(accountId, ctx);
+          const input: AutofeedSettingsInput = opts.file
+            ? pick<AutofeedSettingsInput>(
+                await readJsonObject(opts.file, "autofeed settings"),
+                AUTOFEED_FIELDS,
+              )
+            : {};
+          if (opts.enableProducts !== undefined) {
+            input.enableProducts = parseBool(opts.enableProducts, "--enable-products");
+          }
+          if (Object.keys(input).length === 0) {
+            throw new UsageError("Nothing to update.", "Pass --enable-products or --file.");
+          }
+          const service = new AccountsService(await clientFor(ctx));
+          const result = await service.updateAutofeedSettings(account, input, {
+            ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+          });
+          if (ctx.json) emitJson(result);
+          else process.stdout.write(`Updated autofeed settings for account ${account}.\n`);
+        } catch (err) {
+          reportError(err, { json }, "gmc accounts autofeed update");
+        }
+      },
+    );
+
+  const shipping = accounts
+    .command("shipping")
+    .description("Read or replace the account's shipping settings");
+
+  shipping
+    .command("get")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Fetch the shipping settings (save with --json, edit, then `set`)")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getShippingSettings(account);
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`${result.services?.length ?? 0} shipping service(s).\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts shipping get");
+      }
+    });
+
+  shipping
+    .command("set")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option(
+      "--file <path>",
+      "ShippingSettings JSON body (must carry the etag from `get`); else stdin",
+    )
+    .description("Replace the shipping settings (the body's etag must match the last get)")
+    .action(async (accountId: string | undefined, opts: { file?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const body = (await readJsonObject(opts.file, "shipping settings")) as ShippingSettings;
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.insertShippingSettings(account, body);
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Replaced shipping settings for account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts shipping set");
+      }
+    });
+
+  const returnPolicies = accounts
+    .command("return-policies")
+    .description("Manage the account's online return policies");
+
+  returnPolicies
+    .command("list")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("List the account's return policies")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const list = await service.listReturnPolicies(account);
+        if (ctx.json) emitJson({ returnPolicies: list });
+        else renderReturnPolicies(list);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts return-policies list");
+      }
+    });
+
+  returnPolicies
+    .command("get")
+    .argument("<returnPolicy>", "Return policy id or resource name")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Fetch a single return policy")
+    .action(async (returnPolicy: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getReturnPolicy(account, returnPolicy);
+        if (ctx.json) emitJson(result);
+        else renderReturnPolicy(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts return-policies get");
+      }
+    });
+
+  returnPolicies
+    .command("create")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--file <path>", "OnlineReturnPolicy JSON body; else stdin")
+    .description("Create a return policy (its id is auto-generated)")
+    .action(async (accountId: string | undefined, opts: { file?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const body = (await readJsonObject(opts.file, "return policy")) as OnlineReturnPolicy;
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.createReturnPolicy(account, body);
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Created return policy ${returnPolicyIdOf(result)}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts return-policies create");
+      }
+    });
+
+  returnPolicies
+    .command("delete")
+    .argument("<returnPolicy>", "Return policy id or resource name")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Delete a return policy")
+    .action(async (returnPolicy: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        await service.deleteReturnPolicy(account, returnPolicy);
+        const id = returnPolicySegment(returnPolicy);
+        if (ctx.json) emitJson({ deleted: id });
+        else process.stdout.write(`Deleted return policy ${id}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts return-policies delete");
       }
     });
 }

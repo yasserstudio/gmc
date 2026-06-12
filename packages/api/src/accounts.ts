@@ -2,9 +2,10 @@
 // over MerchantClient: read a single account, list accessible accounts, and
 // compose the `info` profile (account + business info + homepage); plus profile
 // writes — patch the account / business info / homepage, claim / unclaim the
-// homepage, full CRUD on account users / access rights, and account lifecycle
-// (create-and-configure / delete) (mirroring `regions`' patch shape). All calls run
-// on the "accounts" rate-limit bucket. v0.7 adds ProductsService alongside this.
+// homepage, full CRUD on account users / access rights, account lifecycle
+// (create-and-configure / delete), and the businessIdentity / autofeedSettings /
+// shippingSettings / onlineReturnPolicies sub-resources (mirroring `regions`' patch
+// shape). All calls run on the "accounts" rate-limit bucket. v0.7 adds ProductsService.
 
 import type { MerchantClient } from "./client.js";
 import { MerchantApiError } from "./errors.js";
@@ -167,6 +168,92 @@ export function userSegment(idOrName: string): string {
   return idOrName.replace(/^.*\/users\//, "");
 }
 
+/** A self-identification declaration for a business-identity attribute. */
+export interface IdentityAttribute {
+  /** `SELF_IDENTIFIES_AS` / `DOES_NOT_SELF_IDENTIFY_AS` (or unspecified). */
+  identityDeclaration?: string;
+}
+
+/**
+ * An account's business identity (`accounts/{account}/businessIdentity`) — the
+ * diversity/identity attributes used in promotions. `name` is output-only.
+ */
+export interface BusinessIdentity {
+  name?: string;
+  /** `PROMOTIONS_CONSENT_GIVEN` / `PROMOTIONS_CONSENT_DENIED`. */
+  promotionsConsent?: string;
+  blackOwned?: IdentityAttribute;
+  womenOwned?: IdentityAttribute;
+  veteranOwned?: IdentityAttribute;
+  latinoOwned?: IdentityAttribute;
+  smallBusiness?: IdentityAttribute;
+}
+
+/** The writable subset of a BusinessIdentity accepted on patch. */
+export type BusinessIdentityInput = Pick<
+  BusinessIdentity,
+  | "promotionsConsent"
+  | "blackOwned"
+  | "womenOwned"
+  | "veteranOwned"
+  | "latinoOwned"
+  | "smallBusiness"
+>;
+
+/**
+ * An account's autofeed settings (`accounts/{account}/autofeedSettings`). `enableProducts`
+ * is writable; `eligible` is output-only.
+ */
+export interface AutofeedSettings {
+  name?: string;
+  enableProducts?: boolean;
+  eligible?: boolean;
+}
+
+/** The writable subset of AutofeedSettings accepted on patch. */
+export type AutofeedSettingsInput = Pick<AutofeedSettings, "enableProducts">;
+
+/**
+ * An account's shipping settings (`accounts/{account}/shippingSettings`) — a singleton
+ * replaced wholesale by `insert`. The body is deeply nested (`services` / `warehouses`),
+ * so it's typed loosely and round-trips via `--file`. `etag` guards against a concurrent
+ * change between `get` and `insert` and must be sent back unchanged.
+ */
+export interface ShippingSettings {
+  name?: string;
+  etag?: string;
+  services?: unknown[];
+  warehouses?: unknown[];
+}
+
+/**
+ * An online return policy (`accounts/{account}/onlineReturnPolicies/{returnPolicy}`).
+ * `returnPolicyId` / `name` are output-only (the id is auto-generated on create); the
+ * rest of the (rich) body rounds-trips via `--file`, so it's typed loosely.
+ */
+export interface OnlineReturnPolicy {
+  name?: string;
+  returnPolicyId?: string;
+  label?: string;
+  countries?: string[];
+  returnPolicyUri?: string;
+  policy?: object;
+}
+
+/** One page of `accounts.onlineReturnPolicies.list`. */
+interface ReturnPoliciesListPage {
+  onlineReturnPolicies?: OnlineReturnPolicy[];
+  nextPageToken?: string;
+}
+
+/**
+ * Reduce a return-policy id or full resource name to its bare id, mirroring
+ * {@link regionSegment} / {@link userSegment}.
+ */
+export function returnPolicySegment(idOrName: string): string {
+  return idOrName.replace(/^.*\/onlineReturnPolicies\//, "");
+}
+
 /**
  * Normalize a bare numeric id or an `accounts/{id}` resource name to the
  * `accounts/{id}` path segment, percent-encoding the id.
@@ -189,7 +276,7 @@ export class AccountsService {
 
   /** Fetch a single account resource. */
   getAccount(account: string): Promise<Account> {
-    return this.client.get<Account>("accounts", `${ACCOUNTS_API}/${accountResourceName(account)}`);
+    return this.client.get<Account>("accounts", this.base(account));
   }
 
   /**
@@ -213,18 +300,12 @@ export class AccountsService {
 
   /** Fetch an account's business info (address, phone, customer service). */
   getBusinessInfo(account: string): Promise<BusinessInfo> {
-    return this.client.get<BusinessInfo>(
-      "accounts",
-      `${ACCOUNTS_API}/${accountResourceName(account)}/businessInfo`,
-    );
+    return this.client.get<BusinessInfo>("accounts", `${this.base(account)}/businessInfo`);
   }
 
   /** Fetch an account's homepage (uri + claim status). */
   getHomepage(account: string): Promise<Homepage> {
-    return this.client.get<Homepage>(
-      "accounts",
-      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage`,
-    );
+    return this.client.get<Homepage>("accounts", `${this.base(account)}/homepage`);
   }
 
   /**
@@ -252,12 +333,10 @@ export class AccountsService {
     opts: { updateMask?: string } = {},
   ): Promise<Account> {
     const updateMask = opts.updateMask ?? Object.keys(input).join(",");
-    return this.client.request<Account>(
-      "accounts",
-      "PATCH",
-      `${ACCOUNTS_API}/${accountResourceName(account)}`,
-      { query: { updateMask }, body: input },
-    );
+    return this.client.request<Account>("accounts", "PATCH", this.base(account), {
+      query: { updateMask },
+      body: input,
+    });
   }
 
   /** Patch an account's business info (address, customer service, Korean BRN). */
@@ -270,7 +349,7 @@ export class AccountsService {
     return this.client.request<BusinessInfo>(
       "accounts",
       "PATCH",
-      `${ACCOUNTS_API}/${accountResourceName(account)}/businessInfo`,
+      `${this.base(account)}/businessInfo`,
       { query: { updateMask }, body: input },
     );
   }
@@ -282,12 +361,10 @@ export class AccountsService {
     opts: { updateMask?: string } = {},
   ): Promise<Homepage> {
     const updateMask = opts.updateMask ?? Object.keys(input).join(",");
-    return this.client.request<Homepage>(
-      "accounts",
-      "PATCH",
-      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage`,
-      { query: { updateMask }, body: input },
-    );
+    return this.client.request<Homepage>("accounts", "PATCH", `${this.base(account)}/homepage`, {
+      query: { updateMask },
+      body: input,
+    });
   }
 
   /**
@@ -298,7 +375,7 @@ export class AccountsService {
     return this.client.request<Homepage>(
       "accounts",
       "POST",
-      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage:claim`,
+      `${this.base(account)}/homepage:claim`,
       { body: opts.overwrite === undefined ? {} : { overwrite: opts.overwrite } },
     );
   }
@@ -308,13 +385,13 @@ export class AccountsService {
     return this.client.request<Homepage>(
       "accounts",
       "POST",
-      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage:unclaim`,
+      `${this.base(account)}/homepage:unclaim`,
     );
   }
 
   /** The `accounts/{account}/users` path the user sub-resource hangs off. */
   private usersBase(account: string): string {
-    return `${ACCOUNTS_API}/${accountResourceName(account)}/users`;
+    return `${this.base(account)}/users`;
   }
 
   /** List every user with access to the account, following pagination. */
@@ -398,8 +475,109 @@ export class AccountsService {
     await this.client.request<undefined>(
       "accounts",
       "DELETE",
-      `${ACCOUNTS_API}/${accountResourceName(account)}`,
+      this.base(account),
       opts.force ? { query: { force: "true" } } : {},
+    );
+  }
+
+  /** The `accounts/{account}` base most account sub-resources hang off. */
+  private base(account: string): string {
+    return `${ACCOUNTS_API}/${accountResourceName(account)}`;
+  }
+
+  /** Fetch an account's business identity. */
+  getBusinessIdentity(account: string): Promise<BusinessIdentity> {
+    return this.client.get<BusinessIdentity>("accounts", `${this.base(account)}/businessIdentity`);
+  }
+
+  /** Patch an account's business identity (derived `updateMask`, like `updateBusinessInfo`). */
+  updateBusinessIdentity(
+    account: string,
+    input: BusinessIdentityInput,
+    opts: { updateMask?: string } = {},
+  ): Promise<BusinessIdentity> {
+    const updateMask = opts.updateMask ?? Object.keys(input).join(",");
+    return this.client.request<BusinessIdentity>(
+      "accounts",
+      "PATCH",
+      `${this.base(account)}/businessIdentity`,
+      { query: { updateMask }, body: input },
+    );
+  }
+
+  /** Fetch an account's autofeed settings. */
+  getAutofeedSettings(account: string): Promise<AutofeedSettings> {
+    return this.client.get<AutofeedSettings>("accounts", `${this.base(account)}/autofeedSettings`);
+  }
+
+  /** Patch an account's autofeed settings (derived `updateMask`). */
+  updateAutofeedSettings(
+    account: string,
+    input: AutofeedSettingsInput,
+    opts: { updateMask?: string } = {},
+  ): Promise<AutofeedSettings> {
+    const updateMask = opts.updateMask ?? Object.keys(input).join(",");
+    return this.client.request<AutofeedSettings>(
+      "accounts",
+      "PATCH",
+      `${this.base(account)}/autofeedSettings`,
+      { query: { updateMask }, body: input },
+    );
+  }
+
+  /** Fetch an account's shipping settings (the singleton). */
+  getShippingSettings(account: string): Promise<ShippingSettings> {
+    return this.client.get<ShippingSettings>("accounts", `${this.base(account)}/shippingSettings`);
+  }
+
+  /**
+   * Replace an account's shipping settings (`shippingSettings:insert`). The body's `etag`
+   * must match the last `get`, or the API rejects the change as stale.
+   */
+  insertShippingSettings(account: string, body: ShippingSettings): Promise<ShippingSettings> {
+    return this.client.request<ShippingSettings>(
+      "accounts",
+      "POST",
+      `${this.base(account)}/shippingSettings:insert`,
+      { body },
+    );
+  }
+
+  /** List the account's online return policies, following pagination. */
+  async listReturnPolicies(account: string): Promise<OnlineReturnPolicy[]> {
+    const policies: OnlineReturnPolicy[] = [];
+    for await (const p of this.client.paginate<OnlineReturnPolicy>(
+      "accounts",
+      `${this.base(account)}/onlineReturnPolicies`,
+      { select: (page) => (page as ReturnPoliciesListPage).onlineReturnPolicies ?? [] },
+    )) {
+      policies.push(p);
+    }
+    return policies;
+  }
+
+  /** Fetch a single online return policy by id (or full resource name). */
+  getReturnPolicy(account: string, returnPolicy: string): Promise<OnlineReturnPolicy> {
+    return this.client.get<OnlineReturnPolicy>(
+      "accounts",
+      `${this.base(account)}/onlineReturnPolicies/${encodeURIComponent(returnPolicySegment(returnPolicy))}`,
+    );
+  }
+
+  /** Create an online return policy. The id is auto-generated, so none is supplied. */
+  createReturnPolicy(account: string, body: OnlineReturnPolicy): Promise<OnlineReturnPolicy> {
+    return this.client.post<OnlineReturnPolicy>(
+      "accounts",
+      `${this.base(account)}/onlineReturnPolicies`,
+      body,
+    );
+  }
+
+  /** Delete an online return policy by id. */
+  async deleteReturnPolicy(account: string, returnPolicy: string): Promise<void> {
+    await this.client.delete<undefined>(
+      "accounts",
+      `${this.base(account)}/onlineReturnPolicies/${encodeURIComponent(returnPolicySegment(returnPolicy))}`,
     );
   }
 }

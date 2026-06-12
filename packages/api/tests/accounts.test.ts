@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { MerchantClient } from "../src/client.js";
-import { AccountsService, accountResourceName, userSegment } from "../src/accounts.js";
+import {
+  AccountsService,
+  accountResourceName,
+  userSegment,
+  returnPolicySegment,
+} from "../src/accounts.js";
 import type { Clock } from "../src/rate-limiter.js";
 
 const auth = {
@@ -240,6 +245,90 @@ describe("AccountsService", () => {
     const { service, calls } = capturing(undefined, 204);
     await service.deleteAccount("123", { force: true });
     expect(calls[0]?.url).toBe(`${ACCT}?force=true`);
+  });
+
+  it("getBusinessIdentity GETs the businessIdentity sub-resource", async () => {
+    const { service, calls } = capturing({ name: "accounts/123/businessIdentity" });
+    await service.getBusinessIdentity("123");
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.url).toBe(`${ACCT}/businessIdentity`);
+  });
+
+  it("updateBusinessIdentity PATCHes with a derived updateMask", async () => {
+    const { service, calls } = capturing({ name: "accounts/123/businessIdentity" });
+    await service.updateBusinessIdentity("123", {
+      smallBusiness: { identityDeclaration: "SELF_IDENTIFIES_AS" },
+    });
+    expect(calls[0]?.method).toBe("PATCH");
+    expect(calls[0]?.url).toBe(`${ACCT}/businessIdentity?updateMask=smallBusiness`);
+    expect(calls[0]?.body).toEqual({
+      smallBusiness: { identityDeclaration: "SELF_IDENTIFIES_AS" },
+    });
+  });
+
+  it("getAutofeedSettings GETs and updateAutofeedSettings PATCHes with updateMask", async () => {
+    const get = capturing({ enableProducts: true, eligible: true });
+    await get.service.getAutofeedSettings("123");
+    expect(get.calls[0]?.url).toBe(`${ACCT}/autofeedSettings`);
+
+    const upd = capturing({ enableProducts: false });
+    await upd.service.updateAutofeedSettings("123", { enableProducts: false });
+    expect(upd.calls[0]?.method).toBe("PATCH");
+    expect(upd.calls[0]?.url).toBe(`${ACCT}/autofeedSettings?updateMask=enableProducts`);
+    expect(upd.calls[0]?.body).toEqual({ enableProducts: false });
+  });
+
+  it("getShippingSettings GETs; insertShippingSettings POSTs :insert with the body (incl. etag)", async () => {
+    const get = capturing({ name: "accounts/123/shippingSettings", etag: "abc", services: [] });
+    await get.service.getShippingSettings("123");
+    expect(get.calls[0]?.url).toBe(`${ACCT}/shippingSettings`);
+
+    const ins = capturing({ etag: "def" });
+    const body = { etag: "abc", services: [{ serviceName: "s" }] };
+    await ins.service.insertShippingSettings("123", body);
+    expect(ins.calls[0]?.method).toBe("POST");
+    expect(ins.calls[0]?.url).toBe(`${ACCT}/shippingSettings:insert`);
+    expect(ins.calls[0]?.body).toEqual(body);
+  });
+
+  it("listReturnPolicies follows pagination, flattening onlineReturnPolicies", async () => {
+    const pages = [
+      { onlineReturnPolicies: [{ returnPolicyId: "a" }], nextPageToken: "p2" },
+      { onlineReturnPolicies: [{ returnPolicyId: "b" }] },
+    ];
+    let call = 0;
+    const urls: string[] = [];
+    const fetchImpl = (async (u: string) => {
+      urls.push(u);
+      return jsonResponse(200, pages[call++]);
+    }) as unknown as typeof fetch;
+    const list = await service(fetchImpl).listReturnPolicies("123");
+    expect(list.map((p) => p.returnPolicyId)).toEqual(["a", "b"]);
+    expect(urls[0]).toBe(`${ACCT}/onlineReturnPolicies`);
+    expect(urls[1]).toContain("pageToken=p2");
+  });
+
+  it("getReturnPolicy/createReturnPolicy/deleteReturnPolicy hit the right paths", async () => {
+    const g = capturing({ returnPolicyId: "rp1" });
+    await g.service.getReturnPolicy("123", "accounts/123/onlineReturnPolicies/rp1");
+    expect(g.calls[0]?.method).toBe("GET");
+    expect(g.calls[0]?.url).toBe(`${ACCT}/onlineReturnPolicies/rp1`);
+
+    const c = capturing({ returnPolicyId: "rp2" });
+    await c.service.createReturnPolicy("123", { label: "default", countries: ["US"] });
+    expect(c.calls[0]?.method).toBe("POST");
+    expect(c.calls[0]?.url).toBe(`${ACCT}/onlineReturnPolicies`); // no id query
+    expect(c.calls[0]?.body).toEqual({ label: "default", countries: ["US"] });
+
+    const d = capturing(undefined, 204);
+    await d.service.deleteReturnPolicy("123", "rp1");
+    expect(d.calls[0]?.method).toBe("DELETE");
+    expect(d.calls[0]?.url).toBe(`${ACCT}/onlineReturnPolicies/rp1`);
+  });
+
+  it("returnPolicySegment reduces a full resource name to the bare id", () => {
+    expect(returnPolicySegment("accounts/123/onlineReturnPolicies/rp1")).toBe("rp1");
+    expect(returnPolicySegment("rp1")).toBe("rp1");
   });
 
   it("userSegment reduces a full resource name to the bare email", () => {
