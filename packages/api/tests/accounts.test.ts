@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { MerchantClient } from "../src/client.js";
-import { AccountsService, accountResourceName } from "../src/accounts.js";
+import { AccountsService, accountResourceName, userSegment } from "../src/accounts.js";
 import type { Clock } from "../src/rate-limiter.js";
 
 const auth = {
@@ -163,6 +163,61 @@ describe("AccountsService", () => {
     expect(calls[0]?.method).toBe("POST");
     expect(calls[0]?.url).toBe(`${ACCT}/homepage:unclaim`);
     expect(calls[0]?.body).toBeUndefined();
+  });
+
+  it("listUsers follows nextPageToken and flattens every page", async () => {
+    const pages = [
+      { users: [{ name: "accounts/123/users/a@x.com" }], nextPageToken: "p2" },
+      { users: [{ name: "accounts/123/users/b@x.com" }] },
+    ];
+    let call = 0;
+    const urls: string[] = [];
+    const fetchImpl = (async (u: string) => {
+      urls.push(u);
+      return jsonResponse(200, pages[call++]);
+    }) as unknown as typeof fetch;
+
+    const list = await service(fetchImpl).listUsers("123");
+
+    expect(list.map((u) => userSegment(u.name ?? ""))).toEqual(["a@x.com", "b@x.com"]);
+    expect(urls[0]).toBe(`${ACCT}/users`);
+    expect(urls[1]).toContain("pageToken=p2");
+  });
+
+  it("getUser GETs the user, percent-encoding the email", async () => {
+    const { service, calls } = capturing({ name: "accounts/123/users/a@x.com" });
+    await service.getUser("123", "a@x.com");
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.url).toBe(`${ACCT}/users/a%40x.com`);
+  });
+
+  it("createUser POSTs with the email as a userId query param (not in path/body)", async () => {
+    const { service, calls } = capturing({ name: "accounts/123/users/a@x.com" });
+    await service.createUser("123", "a@x.com", { accessRights: ["ADMIN"] });
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(`${ACCT}/users?userId=a%40x.com`);
+    expect(calls[0]?.body).toEqual({ accessRights: ["ADMIN"] });
+  });
+
+  it("updateUser PATCHes with updateMask defaulting to the input keys", async () => {
+    const { service, calls } = capturing({ name: "accounts/123/users/a@x.com" });
+    await service.updateUser("123", "a@x.com", { accessRights: ["STANDARD"] });
+    expect(calls[0]?.method).toBe("PATCH");
+    expect(calls[0]?.url).toBe(`${ACCT}/users/a%40x.com?updateMask=accessRights`);
+    expect(calls[0]?.body).toEqual({ accessRights: ["STANDARD"] });
+  });
+
+  it("deleteUser DELETEs the user by email", async () => {
+    const { service, calls } = capturing(undefined, 204);
+    await service.deleteUser("123", "accounts/123/users/a@x.com");
+    expect(calls[0]?.method).toBe("DELETE");
+    expect(calls[0]?.url).toBe(`${ACCT}/users/a%40x.com`);
+  });
+
+  it("userSegment reduces a full resource name to the bare email", () => {
+    expect(userSegment("accounts/123/users/a@x.com")).toBe("a@x.com");
+    expect(userSegment("a@x.com")).toBe("a@x.com");
+    expect(userSegment("me")).toBe("me");
   });
 
   it("accountResourceName normalizes ids and percent-encodes the id segment", () => {

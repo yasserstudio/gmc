@@ -1,6 +1,6 @@
 # gmc accounts
 
-Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`.
+Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`.
 
 ## `gmc accounts list`
 
@@ -102,7 +102,33 @@ gmc accounts homepage unclaim 123456789
 `set` sets the URI (`updateHomepage`). `claim` claims it for this account — pass `--overwrite` to
 take a claim another account currently holds. `--json` emits the resulting `Homepage`.
 
+## `gmc accounts users` — `list` / `get` / `add` / `update` / `remove`
+
+Manage **who can access the account** and their access rights. The user's email is the id (`me`
+resolves to the calling user).
+
+```sh
+gmc accounts users list 123456789
+gmc accounts users get jane@example.com 123456789
+gmc accounts users add jane@example.com --access-rights STANDARD,ADMIN 123456789
+gmc accounts users update jane@example.com --access-rights ADMIN 123456789
+gmc accounts users remove jane@example.com 123456789
+```
+
+| Command                                                   | Description                                                           |
+| --------------------------------------------------------- | --------------------------------------------------------------------- |
+| `users list [accountId]`                                  | List users — email · access rights · `[state]` (`PENDING`/`VERIFIED`) |
+| `users get <email> [accountId]`                           | Fetch one user (`me` allowed)                                         |
+| `users add <email> --access-rights <list> [accountId]`    | Add a user                                                            |
+| `users update <email> --access-rights <list> [accountId]` | Replace a user's access rights                                        |
+| `users remove <email> [accountId]`                        | Remove a user                                                         |
+
+`--access-rights` is a comma-separated list (case-insensitive, deduped) of: **`STANDARD`**,
+`READ_ONLY`, **`ADMIN`**, `PERFORMANCE_REPORTING`, `API_DEVELOPER`. It's required on `add` and
+`update` (it's the only writable field; `update` replaces the whole set). `--json` emits the raw
+`User` (`{ users }` for list, `{ "removed": "<email>" }` for remove).
+
 ## Exit codes
 
-`2` usage (no/non-numeric account id, nothing-to-update, a non-boolean `--adult-content`, an
-unreadable/invalid `--file`) · `3` auth · `5` Merchant API.
+`2` usage (no/non-numeric account id, nothing-to-update, a non-boolean `--adult-content`, a missing
+or invalid `--access-rights`, an unreadable/invalid `--file`) · `3` auth · `5` Merchant API.

@@ -13,6 +13,11 @@ const updateBusinessInfo = vi.fn();
 const updateHomepage = vi.fn();
 const claimHomepage = vi.fn();
 const unclaimHomepage = vi.fn();
+const listUsers = vi.fn();
+const getUser = vi.fn();
+const createUser = vi.fn();
+const updateUser = vi.fn();
+const deleteUser = vi.fn();
 
 // resolveAuth is mocked so the real core.createMerchantClient builds a (dummy)
 // client without touching credentials; the Accounts service itself is stubbed.
@@ -43,6 +48,11 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       updateHomepage = updateHomepage;
       claimHomepage = claimHomepage;
       unclaimHomepage = unclaimHomepage;
+      listUsers = listUsers;
+      getUser = getUser;
+      createUser = createUser;
+      updateUser = updateUser;
+      deleteUser = deleteUser;
     },
   };
 });
@@ -333,5 +343,84 @@ describe("gmc accounts", () => {
     const out = writes.join("");
     expect(out).toContain("https://x.com");
     expect(out).toContain("yes");
+  });
+
+  it("users list renders email, rights, and state", async () => {
+    listUsers.mockResolvedValue([
+      { name: "accounts/123/users/a@x.com", state: "VERIFIED", accessRights: ["ADMIN"] },
+      { name: "accounts/123/users/b@x.com", state: "PENDING", accessRights: ["STANDARD"] },
+    ]);
+
+    await run(["accounts", "users", "list", "123"]);
+
+    expect(listUsers).toHaveBeenCalledWith("123");
+    const out = writes.join("");
+    expect(out).toContain("2 user(s):");
+    expect(out).toContain("a@x.com");
+    expect(out).toContain("ADMIN");
+    expect(out).toContain("[PENDING]");
+  });
+
+  it("users list --json emits a { users } envelope", async () => {
+    listUsers.mockResolvedValue([{ name: "accounts/123/users/a@x.com" }]);
+
+    await run(["-j", "accounts", "users", "list", "123"]);
+
+    expect(JSON.parse(writes.join(""))).toEqual({
+      users: [{ name: "accounts/123/users/a@x.com" }],
+    });
+  });
+
+  it("users get fetches one user", async () => {
+    getUser.mockResolvedValue({ name: "accounts/123/users/a@x.com", accessRights: ["ADMIN"] });
+
+    await run(["accounts", "users", "get", "a@x.com", "123"]);
+
+    expect(getUser).toHaveBeenCalledWith("123", "a@x.com");
+    expect(writes.join("")).toContain("a@x.com");
+  });
+
+  it("users add parses --access-rights and confirms", async () => {
+    createUser.mockResolvedValue({ name: "accounts/123/users/a@x.com" });
+
+    await run(["accounts", "users", "add", "a@x.com", "123", "--access-rights", "admin, standard"]);
+
+    expect(createUser).toHaveBeenCalledWith("123", "a@x.com", {
+      accessRights: ["ADMIN", "STANDARD"],
+    });
+    expect(writes.join("")).toContain("Added user a@x.com to account 123.");
+  });
+
+  it("users add rejects an unknown access right (exit 2)", async () => {
+    await run(["accounts", "users", "add", "a@x.com", "123", "--access-rights", "WIZARD"]);
+
+    expect(createUser).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain('Invalid access right "WIZARD"');
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("users add requires --access-rights (exit 2)", async () => {
+    await run(["accounts", "users", "add", "a@x.com", "123"]);
+
+    expect(createUser).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("users update replaces the access rights", async () => {
+    updateUser.mockResolvedValue({ name: "accounts/123/users/a@x.com" });
+
+    await run(["accounts", "users", "update", "a@x.com", "123", "--access-rights", "ADMIN"]);
+
+    expect(updateUser).toHaveBeenCalledWith("123", "a@x.com", { accessRights: ["ADMIN"] });
+    expect(writes.join("")).toContain("Updated user a@x.com.");
+  });
+
+  it("users remove deletes a user and emits JSON", async () => {
+    deleteUser.mockResolvedValue(undefined);
+
+    await run(["-j", "accounts", "users", "remove", "accounts/123/users/a@x.com", "123"]);
+
+    expect(deleteUser).toHaveBeenCalledWith("123", "accounts/123/users/a@x.com");
+    expect(JSON.parse(writes.join(""))).toEqual({ removed: "a@x.com" });
   });
 });
