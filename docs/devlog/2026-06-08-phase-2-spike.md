@@ -7,7 +7,7 @@ date: 2026-06-08
 
 _2026-06-08_
 
-Google is retiring the Content API for Shopping in favor of the [Merchant API](https://developers.google.com/merchant/api). Thousands of merchants and agencies have to migrate, and the tooling is thin. That is the opening gmc is built for.
+Google is retiring the Content API for Shopping in favor of the [Merchant API](https://developers.google.com/merchant/api). Thousands of merchants and agencies have to migrate, and the tooling is thin. That is the opening GMC is built for.
 
 But before building breadth, the plan front-loads one question: **does the wedge feel real?** So the first milestone isn't a broad feature set — it's a single arc against one live Merchant Center account.
 

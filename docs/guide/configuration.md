@@ -2,7 +2,7 @@
 
 ## Config file
 
-gmc reads an optional JSON config from:
+GMC reads an optional JSON config from:
 
 ```
 ${GMC_CONFIG_DIR:-~/.config/gmc}/config.json

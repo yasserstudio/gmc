@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: gmc
+  name: GMC
   text: The Google Merchant Center CLI
   tagline: Typed, CI-friendly access to the Google Merchant API — with an offline feed-compliance preflight.
   actions:

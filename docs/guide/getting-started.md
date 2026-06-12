@@ -24,7 +24,7 @@ gmc auth login
 gmc auth whoami      # confirm the resolved identity (no network call)
 ```
 
-gmc also accepts service-account keys and Application Default Credentials — see [Authentication](/guide/authentication).
+GMC also accepts service-account keys and Application Default Credentials — see [Authentication](/guide/authentication).
 
 ## Diagnose
 
