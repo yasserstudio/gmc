@@ -1,4 +1,7 @@
-<p align="center"><sub>by <a href="https://yasser.studio">Yasser's Studio</a></sub></p>
+<p align="center">
+  by<br>
+  <a href="https://yasser.studio"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/yasser-studio-logo-white.svg"><img src="./assets/yasser-studio-logo.svg" alt="Yasser's Studio" height="30"></picture></a>
+</p>
 
 # gmc — Google Merchant Center CLI
 
