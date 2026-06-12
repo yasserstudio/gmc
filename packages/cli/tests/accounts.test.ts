@@ -20,6 +20,16 @@ const updateUser = vi.fn();
 const deleteUser = vi.fn();
 const createAccount = vi.fn();
 const deleteAccount = vi.fn();
+const getBusinessIdentity = vi.fn();
+const updateBusinessIdentity = vi.fn();
+const getAutofeedSettings = vi.fn();
+const updateAutofeedSettings = vi.fn();
+const getShippingSettings = vi.fn();
+const insertShippingSettings = vi.fn();
+const listReturnPolicies = vi.fn();
+const getReturnPolicy = vi.fn();
+const createReturnPolicy = vi.fn();
+const deleteReturnPolicy = vi.fn();
 
 // resolveAuth is mocked so the real core.createMerchantClient builds a (dummy)
 // client without touching credentials; the Accounts service itself is stubbed.
@@ -57,6 +67,16 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       deleteUser = deleteUser;
       createAccount = createAccount;
       deleteAccount = deleteAccount;
+      getBusinessIdentity = getBusinessIdentity;
+      updateBusinessIdentity = updateBusinessIdentity;
+      getAutofeedSettings = getAutofeedSettings;
+      updateAutofeedSettings = updateAutofeedSettings;
+      getShippingSettings = getShippingSettings;
+      insertShippingSettings = insertShippingSettings;
+      listReturnPolicies = listReturnPolicies;
+      getReturnPolicy = getReturnPolicy;
+      createReturnPolicy = createReturnPolicy;
+      deleteReturnPolicy = deleteReturnPolicy;
     },
   };
 });
@@ -512,5 +532,129 @@ describe("gmc accounts", () => {
 
     expect(deleteAccount).toHaveBeenCalledWith("123", { force: true });
     expect(JSON.parse(writes.join(""))).toEqual({ deleted: "123" });
+  });
+
+  it("business-identity update maps --small-business yes to SELF_IDENTIFIES_AS", async () => {
+    updateBusinessIdentity.mockResolvedValue({});
+
+    await run([
+      "accounts",
+      "business-identity",
+      "update",
+      "123",
+      "--small-business",
+      "yes",
+      "--promotions-consent",
+      "given",
+    ]);
+
+    expect(updateBusinessIdentity).toHaveBeenCalledWith(
+      "123",
+      {
+        promotionsConsent: "PROMOTIONS_CONSENT_GIVEN",
+        smallBusiness: { identityDeclaration: "SELF_IDENTIFIES_AS" },
+      },
+      {},
+    );
+  });
+
+  it("business-identity update rejects a bad identity value (exit 2)", async () => {
+    await run(["accounts", "business-identity", "update", "123", "--women-owned", "maybe"]);
+
+    expect(updateBusinessIdentity).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("business-identity update rejects a no-op (exit 2)", async () => {
+    await run(["accounts", "business-identity", "update", "123"]);
+
+    expect(updateBusinessIdentity).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("Nothing to update");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("business-identity get renders attribute labels", async () => {
+    getBusinessIdentity.mockResolvedValue({
+      smallBusiness: { identityDeclaration: "SELF_IDENTIFIES_AS" },
+      womenOwned: { identityDeclaration: "DOES_NOT_SELF_IDENTIFY_AS" },
+    });
+
+    await run(["accounts", "business-identity", "get", "123"]);
+
+    const out = writes.join("");
+    expect(out).toContain("Small business");
+    expect(out).toContain("yes");
+    expect(out).toContain("no");
+  });
+
+  it("autofeed update parses --enable-products false", async () => {
+    updateAutofeedSettings.mockResolvedValue({});
+
+    await run(["accounts", "autofeed", "update", "123", "--enable-products", "false"]);
+
+    expect(updateAutofeedSettings).toHaveBeenCalledWith("123", { enableProducts: false }, {});
+  });
+
+  it("autofeed get renders enable/eligible", async () => {
+    getAutofeedSettings.mockResolvedValue({ enableProducts: true, eligible: false });
+
+    await run(["accounts", "autofeed", "get", "123"]);
+
+    const out = writes.join("");
+    expect(out).toContain("Enable products");
+    expect(out).toContain("Eligible");
+  });
+
+  it("shipping set sends the --file body whole (etag preserved)", async () => {
+    const file = join(dir, "ship.json");
+    writeFileSync(file, JSON.stringify({ etag: "abc", services: [{ serviceName: "s" }] }));
+    insertShippingSettings.mockResolvedValue({ etag: "def" });
+
+    await run(["accounts", "shipping", "set", "123", "--file", file]);
+
+    expect(insertShippingSettings).toHaveBeenCalledWith("123", {
+      etag: "abc",
+      services: [{ serviceName: "s" }],
+    });
+    expect(writes.join("")).toContain("Replaced shipping settings");
+  });
+
+  it("return-policies list renders id · countries", async () => {
+    listReturnPolicies.mockResolvedValue([
+      { name: "accounts/123/onlineReturnPolicies/rp1", label: "default", countries: ["US", "CA"] },
+    ]);
+
+    await run(["accounts", "return-policies", "list", "123"]);
+
+    const out = writes.join("");
+    expect(out).toContain("rp1");
+    expect(out).toContain("US, CA");
+  });
+
+  it("return-policies create posts the --file body and reports the id", async () => {
+    const file = join(dir, "rp.json");
+    writeFileSync(file, JSON.stringify({ label: "default", countries: ["US"] }));
+    createReturnPolicy.mockResolvedValue({ returnPolicyId: "rp9" });
+
+    await run(["accounts", "return-policies", "create", "123", "--file", file]);
+
+    expect(createReturnPolicy).toHaveBeenCalledWith("123", { label: "default", countries: ["US"] });
+    expect(writes.join("")).toContain("Created return policy rp9.");
+  });
+
+  it("return-policies delete emits { deleted }", async () => {
+    deleteReturnPolicy.mockResolvedValue(undefined);
+
+    await run([
+      "-j",
+      "accounts",
+      "return-policies",
+      "delete",
+      "accounts/123/onlineReturnPolicies/rp1",
+      "123",
+    ]);
+
+    expect(deleteReturnPolicy).toHaveBeenCalledWith("123", "accounts/123/onlineReturnPolicies/rp1");
+    expect(JSON.parse(writes.join(""))).toEqual({ deleted: "rp1" });
   });
 });

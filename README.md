@@ -95,6 +95,9 @@ gmc accounts homepage set https://mystore.com 123456789   # set / claim / unclai
 gmc accounts users add jane@example.com --access-rights STANDARD,ADMIN 123456789
 gmc accounts create --name "Sub" --time-zone America/New_York --language en-US --aggregator 123456789
 gmc accounts delete 987654321 --yes        # irreversible (--yes required)
+gmc accounts autofeed update 123456789 --enable-products true
+gmc accounts shipping get 123456789 --json > shipping.json   # edit, then `shipping set --file`
+gmc accounts return-policies list 123456789
 ```
 
 ## Products

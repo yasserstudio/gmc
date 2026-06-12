@@ -9,7 +9,12 @@ export { SUB_APIS } from "./types.js";
 export { MerchantClient } from "./client.js";
 export type { MerchantClientOptions, RequestOptions } from "./client.js";
 
-export { AccountsService, accountResourceName, userSegment } from "./accounts.js";
+export {
+  AccountsService,
+  accountResourceName,
+  userSegment,
+  returnPolicySegment,
+} from "./accounts.js";
 export type {
   Account,
   AccountUpdate,
@@ -23,6 +28,13 @@ export type {
   User,
   UserInput,
   AccessRight,
+  BusinessIdentity,
+  BusinessIdentityInput,
+  IdentityAttribute,
+  AutofeedSettings,
+  AutofeedSettingsInput,
+  ShippingSettings,
+  OnlineReturnPolicy,
   PostalAddress,
   Phone,
   CustomerService,
