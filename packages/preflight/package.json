@@ -1,7 +1,7 @@
 {
   "name": "@gmc-cli/preflight",
   "private": true,
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Offline feed-compliance scanner for the Google Merchant Center CLI — checks required attributes, formats, and disapproval triggers before upload.",
   "type": "module",
   "main": "./dist/index.js",
