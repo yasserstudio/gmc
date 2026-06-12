@@ -2,9 +2,9 @@
 // over MerchantClient: read a single account, list accessible accounts, and
 // compose the `info` profile (account + business info + homepage); plus profile
 // writes — patch the account / business info / homepage, claim / unclaim the
-// homepage, and full CRUD on account users / access rights (mirroring `regions`'
-// patch shape). All calls run on the "accounts" rate-limit bucket. v0.7 adds
-// ProductsService alongside this.
+// homepage, full CRUD on account users / access rights, and account lifecycle
+// (create-and-configure / delete) (mirroring `regions`' patch shape). All calls run
+// on the "accounts" rate-limit bucket. v0.7 adds ProductsService alongside this.
 
 import type { MerchantClient } from "./client.js";
 import { MerchantApiError } from "./errors.js";
@@ -97,6 +97,32 @@ export type BusinessInfoInput = Pick<
 
 /** The writable subset of a Homepage accepted on patch (`updateHomepage`). */
 export type HomepageInput = Pick<Homepage, "uri">;
+
+/**
+ * One service relationship attached on `accounts:createAndConfigure`. At least one is
+ * required, each with a `provider` (the managing/aggregator account). The standard
+ * sub-account case is `{ accountAggregation: {}, provider: "accounts/{aggregatorId}" }`;
+ * other service types (`accountManagement`, `comparisonShopping`, …) round-trip via
+ * `--file`, so this is typed loosely (like `Region.radiusArea`).
+ */
+export interface AddAccountService {
+  /** The account that provides the service, e.g. `accounts/{aggregatorId}`. */
+  provider?: string;
+  /** Marks this as an account-aggregation relationship (a sub-account under the provider). */
+  accountAggregation?: object;
+}
+
+/**
+ * The body of `accounts:createAndConfigure` (modelled to what the CLI builds). The API
+ * accepts more (`user[]`, `setAlias[]`); those round-trip from a `--file` body via
+ * `client.request`, so `--json` / file-driven creation is never lossy.
+ */
+export interface CreateAccountRequest {
+  /** The account to create (`accountName` / `timeZone` / `languageCode` required). */
+  account: AccountUpdate;
+  /** At least one service relationship — the API rejects a create with none. */
+  service: AddAccountService[];
+}
 
 /** An access right a user can hold on an account. */
 export type AccessRight =
@@ -346,6 +372,34 @@ export class AccountsService {
     await this.client.delete<undefined>(
       "accounts",
       `${this.usersBase(account)}/${encodeURIComponent(userSegment(email))}`,
+    );
+  }
+
+  /**
+   * Create and configure an account (`accounts:createAndConfigure`). The body carries
+   * the new `account` plus its `service` relationships (and optionally `user`/`setAlias`
+   * from a `--file` body); the API returns the created Account. Account-agnostic — the
+   * client need not be scoped to an existing account.
+   */
+  createAccount(body: CreateAccountRequest): Promise<Account> {
+    return this.client.request<Account>(
+      "accounts",
+      "POST",
+      `${ACCOUNTS_API}/accounts:createAndConfigure`,
+      { body },
+    );
+  }
+
+  /**
+   * Delete an account. Pass `force: true` to delete one that still provides services to
+   * other accounts or has processed offers (the API otherwise refuses). Irreversible.
+   */
+  async deleteAccount(account: string, opts: { force?: boolean } = {}): Promise<void> {
+    await this.client.request<undefined>(
+      "accounts",
+      "DELETE",
+      `${ACCOUNTS_API}/${accountResourceName(account)}`,
+      opts.force ? { query: { force: "true" } } : {},
     );
   }
 }
