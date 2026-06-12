@@ -55,5 +55,5 @@ so a crafted `args` can't inject shell. The key file is written `0600` and lives
 temp dir.
 
 ::: tip Pin a version
-`@v1` tracks the latest v1.x. Pin an exact release tag (e.g. `@v1.0.6`) for fully reproducible CI.
+`@v1` tracks the latest v1.x. Pin an exact release tag (e.g. `@v1.0.7`) for fully reproducible CI.
 :::

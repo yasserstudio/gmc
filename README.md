@@ -211,7 +211,7 @@ gmc launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`)
 | 7     | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights         |   ✅   |
 | 8     | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening |   ✅   |
 | 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                              |   ✅   |
-| 10    | v1.0.2+         | Feature surface — `regions`, full `accounts` management   |   🚀   |
+| 10    | v1.0.2+         | Feature surface — `regions`, `accounts`, `datasources`    |   🚀   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

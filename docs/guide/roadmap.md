@@ -14,11 +14,12 @@ gmc launched at **`v1.0.0`** and now ships small, frequent **patch** releases (`
 | 7     | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights              | ✅ Done    |
 | 8     | v0.9.14–v0.9.16 | CI/CD — JSON/exit-code hardening, GitHub Action, GitLab recipe | ✅ Done    |
 | 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                                   | ✅ Done    |
-| 10    | v1.0.2+         | Feature surface — `regions`, full `accounts` management        | 🚀 Ongoing |
+| 10    | v1.0.2+         | Feature surface — `regions`, `accounts`, `datasources`         | 🚀 Ongoing |
 
-Phase 10 (post-launch) adds API coverage as patches: `regions` (v1.0.2), then the full `accounts`
+Phase 10 (post-launch) adds API coverage as patches: `regions` (v1.0.2); the full `accounts`
 surface — profile writes, users/access, lifecycle, and the business-identity / autofeed / shipping /
-return-policy sub-resources (v1.0.3–v1.0.6).
+return-policy sub-resources (v1.0.3–v1.0.6); and completing `datasources` with `update` / `fetch`
+(v1.0.7).
 
 Versions track [`@gmc-cli/cli`](https://github.com/yasserstudio/gmc/tree/main/packages/cli) (the `gmc` command); since the 1.0.0 launch every feature ships as a patch (`v1.0.2`, `v1.0.3`, …). Supporting packages version independently.
 
