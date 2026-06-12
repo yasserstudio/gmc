@@ -92,6 +92,7 @@ gmc accounts info 123456789        # a profile: account + business info + homepa
 gmc accounts update 123456789 --name "My Store" --time-zone America/New_York
 gmc accounts business-info update 123456789 --file business-info.json
 gmc accounts homepage set https://mystore.com 123456789   # set / claim / unclaim
+gmc accounts users add jane@example.com --access-rights STANDARD,ADMIN 123456789
 ```
 
 ## Products

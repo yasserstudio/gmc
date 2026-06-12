@@ -2,11 +2,15 @@ import type { Command } from "commander";
 import { emitJson, reportError, UsageError } from "@gmc-cli/core";
 import {
   AccountsService,
+  userSegment,
   type Account,
   type AccountUpdate,
   type AccountInfo,
   type BusinessInfoInput,
   type Homepage,
+  type User,
+  type UserInput,
+  type AccessRight,
   type PostalAddress,
   type CustomerService,
 } from "@gmc-cli/api";
@@ -126,6 +130,71 @@ function pick<T>(obj: Record<string, unknown>, fields: readonly (keyof T & strin
 function renderHomepage(homepage: Homepage): void {
   line("URI", homepage.uri ?? "—");
   line("Claimed", homepage.claimed ? "yes" : "no");
+}
+
+/** The access rights the Accounts API accepts (see the AccessRight enum). */
+const ACCESS_RIGHTS: readonly AccessRight[] = [
+  "STANDARD",
+  "READ_ONLY",
+  "ADMIN",
+  "PERFORMANCE_REPORTING",
+  "API_DEVELOPER",
+];
+
+/** Parse the required `--access-rights "admin,standard"` flag into a deduped, validated list. */
+function parseAccessRights(raw: string | undefined): AccessRight[] {
+  if (!raw) {
+    throw new UsageError(
+      "--access-rights is required.",
+      `Pass a comma-separated list of: ${ACCESS_RIGHTS.join(", ")}.`,
+    );
+  }
+  const seen = new Set<AccessRight>();
+  for (const token of raw
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean)) {
+    const right = token.toUpperCase();
+    if (!(ACCESS_RIGHTS as readonly string[]).includes(right)) {
+      throw new UsageError(
+        `Invalid access right "${token}".`,
+        `Use a comma-separated list of: ${ACCESS_RIGHTS.join(", ")}.`,
+      );
+    }
+    seen.add(right as AccessRight);
+  }
+  if (seen.size === 0) {
+    throw new UsageError(
+      "--access-rights is empty.",
+      `Pass at least one of: ${ACCESS_RIGHTS.join(", ")}.`,
+    );
+  }
+  return [...seen];
+}
+
+/** The bare email id of a user, preferring the resource `name` segment. */
+function userEmailOf(user: User): string {
+  return user.name ? userSegment(user.name) : "—";
+}
+
+function renderUsers(users: User[]): void {
+  if (users.length === 0) {
+    process.stdout.write("No users on this account.\n");
+    return;
+  }
+  const width = Math.max(...users.map((u) => userEmailOf(u).length));
+  process.stdout.write(`${users.length} user(s):\n`);
+  for (const u of users) {
+    const rights = u.accessRights?.join(", ") ?? "—";
+    const state = u.state ? ` [${u.state}]` : "";
+    process.stdout.write(`  ${userEmailOf(u).padEnd(width)}  ${rights}${state}\n`);
+  }
+}
+
+function renderUser(user: User): void {
+  line("Email", userEmailOf(user));
+  if (user.state) line("State", user.state);
+  line("Access rights", user.accessRights?.join(", ") ?? "—");
 }
 
 interface AccountWriteOpts {
@@ -364,6 +433,113 @@ export function registerAccountsCommands(program: Command): void {
         else process.stdout.write(`Unclaimed homepage for account ${account}.\n`);
       } catch (err) {
         reportError(err, { json }, "gmc accounts homepage unclaim");
+      }
+    });
+
+  const users = accounts
+    .command("users")
+    .description("Manage who can access the account and their access rights");
+
+  users
+    .command("list")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("List users with access to the account")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const list = await service.listUsers(account);
+        if (ctx.json) emitJson({ users: list });
+        else renderUsers(list);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts users list");
+      }
+    });
+
+  users
+    .command("get")
+    .argument("<email>", "User email (or `me`)")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Fetch a single user")
+    .action(async (email: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getUser(account, email);
+        if (ctx.json) emitJson(result);
+        else renderUser(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts users get");
+      }
+    });
+
+  users
+    .command("add")
+    .argument("<email>", "User email to add")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--access-rights <list>", `Comma-separated: ${ACCESS_RIGHTS.join(", ")}`)
+    .description("Add a user to the account")
+    .action(
+      async (email: string, accountId: string | undefined, opts: { accessRights?: string }) => {
+        const json = wantsJson(program);
+        try {
+          const ctx = contextFrom(program);
+          const account = resolveAccount(accountId, ctx);
+          const input: UserInput = { accessRights: parseAccessRights(opts.accessRights) };
+          const service = new AccountsService(await clientFor(ctx));
+          const result = await service.createUser(account, email, input);
+          if (ctx.json) emitJson(result);
+          else process.stdout.write(`Added user ${userSegment(email)} to account ${account}.\n`);
+        } catch (err) {
+          reportError(err, { json }, "gmc accounts users add");
+        }
+      },
+    );
+
+  users
+    .command("update")
+    .argument("<email>", "User email (or `me`)")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--access-rights <list>", `Comma-separated: ${ACCESS_RIGHTS.join(", ")}`)
+    .description("Replace a user's access rights")
+    .action(
+      async (email: string, accountId: string | undefined, opts: { accessRights?: string }) => {
+        const json = wantsJson(program);
+        try {
+          const ctx = contextFrom(program);
+          const account = resolveAccount(accountId, ctx);
+          const input: UserInput = { accessRights: parseAccessRights(opts.accessRights) };
+          const service = new AccountsService(await clientFor(ctx));
+          const result = await service.updateUser(account, email, input);
+          if (ctx.json) emitJson(result);
+          else process.stdout.write(`Updated user ${userSegment(email)}.\n`);
+        } catch (err) {
+          reportError(err, { json }, "gmc accounts users update");
+        }
+      },
+    );
+
+  users
+    .command("remove")
+    .argument("<email>", "User email to remove")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Remove a user from the account")
+    .action(async (email: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        await service.deleteUser(account, email);
+        const id = userSegment(email);
+        if (ctx.json) emitJson({ removed: id });
+        else process.stdout.write(`Removed user ${id} from account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts users remove");
       }
     });
 }

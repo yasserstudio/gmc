@@ -1,9 +1,10 @@
 // Typed Accounts sub-API service (Merchant API `accounts/v1`). A thin wrapper
 // over MerchantClient: read a single account, list accessible accounts, and
 // compose the `info` profile (account + business info + homepage); plus profile
-// writes — patch the account / business info / homepage and claim / unclaim the
-// homepage (mirroring `regions`' patch shape). All calls run on the "accounts"
-// rate-limit bucket. v0.7 adds ProductsService alongside this.
+// writes — patch the account / business info / homepage, claim / unclaim the
+// homepage, and full CRUD on account users / access rights (mirroring `regions`'
+// patch shape). All calls run on the "accounts" rate-limit bucket. v0.7 adds
+// ProductsService alongside this.
 
 import type { MerchantClient } from "./client.js";
 import { MerchantApiError } from "./errors.js";
@@ -97,10 +98,47 @@ export type BusinessInfoInput = Pick<
 /** The writable subset of a Homepage accepted on patch (`updateHomepage`). */
 export type HomepageInput = Pick<Homepage, "uri">;
 
+/** An access right a user can hold on an account. */
+export type AccessRight =
+  | "STANDARD"
+  | "READ_ONLY"
+  | "ADMIN"
+  | "PERFORMANCE_REPORTING"
+  | "API_DEVELOPER";
+
+/**
+ * A user with access to an account (`accounts/{account}/users/{email}`). `name` and
+ * `state` (PENDING / VERIFIED) are output-only; `accessRights` is the writable field.
+ */
+export interface User {
+  /** Output-only resource name: `accounts/{account}/users/{email}`. */
+  name?: string;
+  /** Output-only: `PENDING` until the user accepts, then `VERIFIED`. */
+  state?: string;
+  accessRights?: AccessRight[];
+}
+
+/** The writable subset of a User accepted on create / patch. */
+export type UserInput = Pick<User, "accessRights">;
+
 /** One page of `accounts.list`. */
 interface AccountsListPage {
   accounts?: Account[];
   nextPageToken?: string;
+}
+
+/** One page of `accounts.users.list`. */
+interface UsersListPage {
+  users?: User[];
+  nextPageToken?: string;
+}
+
+/**
+ * Reduce a user email or full resource name to its bare email id, so callers can pass
+ * either an email (or `me`) or the `name` returned by `list`.
+ */
+export function userSegment(idOrName: string): string {
+  return idOrName.replace(/^.*\/users\//, "");
 }
 
 /**
@@ -245,6 +283,69 @@ export class AccountsService {
       "accounts",
       "POST",
       `${ACCOUNTS_API}/${accountResourceName(account)}/homepage:unclaim`,
+    );
+  }
+
+  /** The `accounts/{account}/users` path the user sub-resource hangs off. */
+  private usersBase(account: string): string {
+    return `${ACCOUNTS_API}/${accountResourceName(account)}/users`;
+  }
+
+  /** List every user with access to the account, following pagination. */
+  async listUsers(account: string): Promise<User[]> {
+    const users: User[] = [];
+    for await (const u of this.client.paginate<User>("accounts", this.usersBase(account), {
+      select: (page) => (page as UsersListPage).users ?? [],
+    })) {
+      users.push(u);
+    }
+    return users;
+  }
+
+  /** Fetch a single user by email (or `me`). Accepts an email or a full resource name. */
+  getUser(account: string, email: string): Promise<User> {
+    return this.client.get<User>(
+      "accounts",
+      `${this.usersBase(account)}/${encodeURIComponent(userSegment(email))}`,
+    );
+  }
+
+  /**
+   * Add a user. The email is supplied as a `userId` query param (the body is the User
+   * itself) — mirrors `regions.create` / `productInputs:insert`. Fails if the user
+   * already exists.
+   */
+  createUser(account: string, email: string, input: UserInput): Promise<User> {
+    return this.client.request<User>("accounts", "POST", this.usersBase(account), {
+      query: { userId: userSegment(email) },
+      body: input,
+    });
+  }
+
+  /**
+   * Patch a user. The `updateMask` defaults to the input's own keys (so a plain
+   * `{ accessRights }` replaces just the access rights); pass `updateMask` to override.
+   */
+  updateUser(
+    account: string,
+    email: string,
+    input: UserInput,
+    opts: { updateMask?: string } = {},
+  ): Promise<User> {
+    const updateMask = opts.updateMask ?? Object.keys(input).join(",");
+    return this.client.request<User>(
+      "accounts",
+      "PATCH",
+      `${this.usersBase(account)}/${encodeURIComponent(userSegment(email))}`,
+      { query: { updateMask }, body: input },
+    );
+  }
+
+  /** Remove a user by email. */
+  async deleteUser(account: string, email: string): Promise<void> {
+    await this.client.delete<undefined>(
+      "accounts",
+      `${this.usersBase(account)}/${encodeURIComponent(userSegment(email))}`,
     );
   }
 }
