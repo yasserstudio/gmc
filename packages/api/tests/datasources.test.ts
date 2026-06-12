@@ -111,6 +111,61 @@ describe("DataSourcesService", () => {
     );
   });
 
+  it("updateDataSource PATCHes with an updateMask derived from the body keys", async () => {
+    let url = "";
+    let init: RequestInit | undefined;
+    const fetchImpl = (async (u: string, i: RequestInit) => {
+      url = u;
+      init = i;
+      return jsonResponse(200, { dataSourceId: "55", displayName: "Renamed" });
+    }) as unknown as typeof fetch;
+
+    const result = await service(fetchImpl).updateDataSource("55", { displayName: "Renamed" });
+
+    expect(result.displayName).toBe("Renamed");
+    expect(init?.method).toBe("PATCH");
+    expect(url).toBe(
+      "https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55?updateMask=displayName",
+    );
+    expect(JSON.parse(init?.body as string)).toEqual({ displayName: "Renamed" });
+  });
+
+  it("updateDataSource honors an explicit updateMask", async () => {
+    let url = "";
+    const fetchImpl = (async (u: string) => {
+      url = u;
+      return jsonResponse(200, {});
+    }) as unknown as typeof fetch;
+
+    await service(fetchImpl).updateDataSource(
+      "accounts/123/dataSources/55",
+      { displayName: "X" },
+      { updateMask: "displayName" },
+    );
+
+    expect(url).toBe(
+      "https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55?updateMask=displayName",
+    );
+  });
+
+  it("fetchDataSource POSTs :fetch with no body", async () => {
+    let url = "";
+    let init: RequestInit | undefined;
+    const fetchImpl = (async (u: string, i: RequestInit) => {
+      url = u;
+      init = i;
+      return jsonResponse(200, {});
+    }) as unknown as typeof fetch;
+
+    await service(fetchImpl).fetchDataSource("55");
+
+    expect(init?.method).toBe("POST");
+    expect(init?.body).toBeUndefined();
+    expect(url).toBe(
+      "https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources/55:fetch",
+    );
+  });
+
   it("dataSourceSegment normalizes ids and resource names", () => {
     expect(dataSourceSegment("55")).toBe("55");
     expect(dataSourceSegment("accounts/123/dataSources/55")).toBe("55");

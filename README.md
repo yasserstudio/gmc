@@ -119,6 +119,8 @@ A data source is the feed your products live in. Create a primary feed (API push
 ```bash
 gmc datasources create --name "API feed" --content-language en --feed-label US
 gmc datasources list
+gmc datasources update <id> --name "Renamed feed"
+gmc datasources fetch <id>          # trigger an immediate pull (scheduled feeds)
 gmc datasources delete <id>
 ```
 

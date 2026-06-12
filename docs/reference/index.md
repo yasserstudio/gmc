@@ -13,7 +13,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc config`](/reference/config)           | Inspect configuration and profiles (`path` / `list` / `current`)                                                  |
 | [`gmc accounts`](/reference/accounts)       | Inspect & manage accounts — profile, users, lifecycle, identity, autofeed, shipping, return-policies              |
 | [`gmc products`](/reference/products)       | Manage products (`list` / `get` / `insert` / `delete`)                                                            |
-| [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `delete`)                                                |
+| [`gmc datasources`](/reference/datasources) | Manage data sources / feeds (`list` / `get` / `create` / `update` / `fetch` / `delete`)                           |
 | [`gmc inventory`](/reference/inventory)     | Local + regional inventory overrides (`local` / `regional` · `list` / `insert` / `delete`)                        |
 | [`gmc promotions`](/reference/promotions)   | Manage promotions (`list` / `get` / `insert`)                                                                     |
 | [`gmc regions`](/reference/regions)         | Define geographic regions for regional inventory + shipping (`list` / `get` / `create` / `update` / `delete`)     |

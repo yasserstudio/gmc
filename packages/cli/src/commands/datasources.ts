@@ -24,6 +24,12 @@ interface CreateFlags {
   file?: string;
 }
 
+interface UpdateFlags {
+  name?: string;
+  file?: string;
+  updateMask?: string;
+}
+
 const FREQUENCY: Record<string, string> = {
   daily: "FREQUENCY_DAILY",
   weekly: "FREQUENCY_WEEKLY",
@@ -158,6 +164,30 @@ function dataSourceIdOf(ds: DataSource): string {
   return ds.dataSourceId ?? (ds.name ? dataSourceSegment(ds.name) : "—");
 }
 
+/** The writable DataSource fields — `name`/`dataSourceId`/`input` are output-only. */
+const DATASOURCE_WRITABLE_FIELDS = [
+  "displayName",
+  "primaryProductDataSource",
+  "supplementalProductDataSource",
+  "localInventoryDataSource",
+  "regionalInventoryDataSource",
+  "promotionDataSource",
+  "fileInput",
+] as const satisfies readonly (keyof DataSource)[];
+
+/**
+ * Keep only the writable keys of a parsed `--file` body, dropping the output-only
+ * `name`/`dataSourceId`/`input` the API rejects in a PATCH `updateMask`. Mirrors
+ * `pickWritable` in `regions.ts`, so a body saved from `datasources get` re-applies cleanly.
+ */
+function pickWritable(obj: Record<string, unknown>): DataSource {
+  const out: Record<string, unknown> = {};
+  for (const key of DATASOURCE_WRITABLE_FIELDS) {
+    if (key in obj) out[key] = obj[key];
+  }
+  return out as DataSource;
+}
+
 function dataSourceType(ds: DataSource): string {
   if (ds.primaryProductDataSource) return "primary product";
   if (ds.supplementalProductDataSource) return "supplemental";
@@ -203,7 +233,7 @@ function renderDataSource(ds: DataSource): void {
     line("Fetch", `${fetch.fetchUri}${fetch.frequency ? ` (${fetch.frequency})` : ""}`);
 }
 
-/** Register the `gmc datasources` command group (list / get / create / delete). */
+/** Register the `gmc datasources` command group (list / get / create / update / fetch / delete). */
 export function registerDataSourcesCommands(program: Command): void {
   const datasources = program
     .command("datasources")
@@ -298,6 +328,61 @@ export function registerDataSourcesCommands(program: Command): void {
         }
       } catch (err) {
         reportError(err, { json }, "gmc datasources create");
+      }
+    });
+
+  datasources
+    .command("update")
+    .argument("<dataSourceId>", "Data source id or resource name (from `datasources list`)")
+    .option("--name <displayName>", "New display name")
+    .option("--file <path>", "Read the DataSource JSON body from this file (else stdin)")
+    .option("--update-mask <fields>", "Explicit field mask (defaults to the fields you pass)")
+    .description("Patch a data source (only the fields you pass are changed)")
+    .action(async (dataSourceId: string, opts: UpdateFlags) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(undefined, ctx);
+        // Read a body from --file, or from stdin only when no flags were given (so
+        // `update <id> --name X` doesn't block on stdin in a non-TTY/CI context).
+        let body: DataSource = {};
+        if (opts.file || (opts.name === undefined && !process.stdin.isTTY)) {
+          body = pickWritable(await readJsonObject(opts.file, "data source"));
+        }
+        if (opts.name !== undefined) body.displayName = opts.name;
+        if (Object.keys(body).length === 0) {
+          throw new UsageError(
+            "Nothing to update.",
+            "Pass --name, or a DataSource body via --file / stdin.",
+          );
+        }
+        const service = new DataSourcesService(await clientFor(ctx, account));
+        const result = await service.updateDataSource(dataSourceId, body, {
+          ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+        });
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Updated data source ${dataSourceSegment(dataSourceId)}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc datasources update");
+      }
+    });
+
+  datasources
+    .command("fetch")
+    .argument("<dataSourceId>", "Data source id or resource name (from `datasources list`)")
+    .description("Trigger an immediate fetch of a scheduled file feed (file-input sources only)")
+    .action(async (dataSourceId: string) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(undefined, ctx);
+        const service = new DataSourcesService(await clientFor(ctx, account));
+        await service.fetchDataSource(dataSourceId);
+        const id = dataSourceSegment(dataSourceId);
+        if (ctx.json) emitJson({ fetched: id });
+        else process.stdout.write(`Triggered fetch for data source ${id}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc datasources fetch");
       }
     });
 
