@@ -2,8 +2,9 @@
 // source is the container a product feed lives in — a primary product source can
 // receive products via the API (what `productInputs.insert` targets) or via a
 // scheduled file fetch. This service wraps a MerchantClient scoped to one account
-// (it reads `client.accountResource`) and covers the create/list/get/delete
-// lifecycle. v0.9+ (feeds) build on it.
+// (it reads `client.accountResource`) and covers the full create/list/get/update/
+// delete lifecycle plus `fetch` (trigger an immediate scheduled-feed pull). v0.9+
+// (feeds) build on it.
 
 import type { MerchantClient } from "./client.js";
 
@@ -73,7 +74,7 @@ export function dataSourceSegment(idOrName: string): string {
   return idOrName.replace(/^.*\/dataSources\//, "");
 }
 
-/** Create, list, get, and delete access to the Merchant API Data Sources sub-API. */
+/** Full create/list/get/update/delete + fetch access to the Merchant API Data Sources sub-API. */
 export class DataSourcesService {
   constructor(private readonly client: MerchantClient) {}
 
@@ -107,6 +108,37 @@ export class DataSourcesService {
   /** Create a data source from a full DataSource body. */
   createDataSource(body: DataSource): Promise<DataSource> {
     return this.client.post<DataSource>("datasources", `${this.base}/dataSources`, body);
+  }
+
+  /**
+   * Patch a data source. The `updateMask` lists the fields to replace; when omitted it
+   * defaults to the body's own top-level keys, so only what you pass is changed. (A field
+   * in the mask but absent from the body is deleted by the API.) Mirrors `regions.patch`.
+   */
+  updateDataSource(
+    idOrName: string,
+    body: DataSource,
+    opts: { updateMask?: string } = {},
+  ): Promise<DataSource> {
+    const updateMask = opts.updateMask ?? Object.keys(body).join(",");
+    return this.client.request<DataSource>(
+      "datasources",
+      "PATCH",
+      `${this.base}/dataSources/${encodeURIComponent(dataSourceSegment(idOrName))}`,
+      { query: { updateMask }, body },
+    );
+  }
+
+  /**
+   * Trigger an immediate fetch of a scheduled file data source (`dataSources:fetch`).
+   * Only works on file-input (scheduled-fetch) sources; the API rejects others.
+   */
+  async fetchDataSource(idOrName: string): Promise<void> {
+    await this.client.request<undefined>(
+      "datasources",
+      "POST",
+      `${this.base}/dataSources/${encodeURIComponent(dataSourceSegment(idOrName))}:fetch`,
+    );
   }
 
   /** Delete a data source. */

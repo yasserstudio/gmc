@@ -7,6 +7,8 @@ import { Readable } from "node:stream";
 const getDataSource = vi.fn();
 const listDataSources = vi.fn();
 const createDataSource = vi.fn();
+const updateDataSource = vi.fn();
+const fetchDataSource = vi.fn();
 const deleteDataSource = vi.fn();
 
 vi.mock("@gmc-cli/auth", () => ({
@@ -28,6 +30,8 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       getDataSource = getDataSource;
       listDataSources = listDataSources;
       createDataSource = createDataSource;
+      updateDataSource = updateDataSource;
+      fetchDataSource = fetchDataSource;
       deleteDataSource = deleteDataSource;
     },
   };
@@ -347,6 +351,62 @@ describe("gmc datasources", () => {
     expect(deleteDataSource).toHaveBeenCalledWith("55");
     const out = JSON.parse(writes.join("")) as { deleted: string };
     expect(out.deleted).toBe("55");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("update --name patches displayName and confirms", async () => {
+    updateDataSource.mockResolvedValue({ dataSourceId: "55", displayName: "Renamed" });
+
+    await run(["datasources", "update", "55", "--name", "Renamed"]);
+
+    expect(updateDataSource).toHaveBeenCalledWith("55", { displayName: "Renamed" }, {});
+    expect(writes.join("")).toContain("Updated data source 55.");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("update --file strips output-only fields from the body", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "gmc-ds-"));
+    const file = join(tmp, "ds.json");
+    writeFileSync(
+      file,
+      JSON.stringify({
+        name: "accounts/123/dataSources/55",
+        dataSourceId: "55",
+        input: "API",
+        displayName: "Renamed",
+      }),
+    );
+    updateDataSource.mockResolvedValue({ dataSourceId: "55" });
+
+    await run(["datasources", "update", "55", "--file", file]);
+
+    expect(updateDataSource).toHaveBeenCalledWith("55", { displayName: "Renamed" }, {});
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("update with nothing to change exits 2", async () => {
+    // Simulate an interactive terminal so the command doesn't read stdin.
+    const original = Object.getOwnPropertyDescriptor(process.stdin, "isTTY");
+    Object.defineProperty(process.stdin, "isTTY", { value: true, configurable: true });
+    try {
+      await run(["datasources", "update", "55"]);
+
+      expect(updateDataSource).not.toHaveBeenCalled();
+      expect(errs.join("")).toContain("Nothing to update");
+      expect(process.exitCode).toBe(2);
+    } finally {
+      if (original) Object.defineProperty(process.stdin, "isTTY", original);
+      else delete (process.stdin as { isTTY?: boolean }).isTTY;
+    }
+  });
+
+  it("fetch triggers an immediate fetch and reports it in --json", async () => {
+    fetchDataSource.mockResolvedValue(undefined);
+
+    await run(["datasources", "fetch", "55", "--json"]);
+
+    expect(fetchDataSource).toHaveBeenCalledWith("55");
+    expect(JSON.parse(writes.join(""))).toEqual({ fetched: "55" });
     expect(process.exitCode).toBe(0);
   });
 

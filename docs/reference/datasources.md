@@ -65,6 +65,37 @@ Then push products into the new source:
 gmc products insert --data-source <id> --file product.json
 ```
 
+## `gmc datasources update <dataSourceId>`
+
+Patch a data source — only the fields you pass change (the `updateMask` is derived from them, or set
+it explicitly with `--update-mask`).
+
+```sh
+gmc datasources update 55 --name "Renamed feed"
+gmc datasources update 55 --file datasource.json        # or pipe a body on stdin
+```
+
+| Flag                     | Sets                                            |
+| ------------------------ | ----------------------------------------------- |
+| `--name <displayName>`   | `displayName`                                   |
+| `--file <path>`          | A `DataSource` JSON body (else read from stdin) |
+| `--update-mask <fields>` | Explicit field mask                             |
+
+Output-only fields (`name`, `dataSourceId`, `input`) in a `--file` body are ignored, so a body saved
+from `datasources get` re-applies cleanly. When you pass both `--file` and `--name`, `--name` wins
+(it overrides the body's `displayName`). A field named in the `updateMask` but absent from the body
+is **deleted** by the API. `--json` emits the updated `DataSource`.
+
+## `gmc datasources fetch <dataSourceId>`
+
+Trigger an immediate fetch of a **scheduled file feed**, outside its normal schedule. Only works on
+file-input (scheduled-fetch) data sources — the API rejects API-input feeds.
+
+```sh
+gmc datasources fetch 55
+gmc datasources fetch 55 --json   # { "fetched": "55" }
+```
+
 ## `gmc datasources delete <dataSourceId>`
 
 ```sh
@@ -74,8 +105,4 @@ gmc datasources delete 55 --json   # { "deleted": "55" }
 
 ## Exit codes
 
-`2` for usage (no account, missing/invalid flags, conflicting `--file`+flags, bad JSON) · `3` auth · `5` Merchant API.
-
-::: tip Not yet implemented
-`datasources update` and `datasources fetch` (trigger an immediate pull) are not yet implemented.
-:::
+`2` for usage (no account, missing/invalid flags, conflicting `--file`+flags, nothing-to-update, bad JSON) · `3` auth · `5` Merchant API.
