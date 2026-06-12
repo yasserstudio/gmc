@@ -85,6 +85,7 @@ export default defineConfig({
             { text: "gmc inventory", link: "/reference/inventory" },
             { text: "gmc promotions", link: "/reference/promotions" },
             { text: "gmc regions", link: "/reference/regions" },
+            { text: "gmc notifications", link: "/reference/notifications" },
             { text: "gmc reports", link: "/reference/reports" },
             { text: "gmc preflight", link: "/reference/preflight" },
             { text: "gmc migrate", link: "/reference/migrate" },
