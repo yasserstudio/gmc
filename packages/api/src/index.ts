@@ -66,6 +66,9 @@ export type { LocalInventory, RegionalInventory, TimePeriod } from "./inventorie
 export { PromotionsService, promotionSegment } from "./promotions.js";
 export type { Promotion, PromotionAttributes } from "./promotions.js";
 
+export { QuotaService } from "./quota.js";
+export type { QuotaGroup, MethodDetail } from "./quota.js";
+
 export { NotificationsService, notificationSegment } from "./notifications.js";
 export type {
   NotificationSubscription,
