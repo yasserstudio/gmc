@@ -89,6 +89,9 @@ gmc doctor --json | jq '.checks[] | select(.status != "pass")'
 gmc accounts list                  # accounts your credential can access
 gmc accounts get 123456789         # the raw account resource
 gmc accounts info 123456789        # a profile: account + business info + homepage
+gmc accounts update 123456789 --name "My Store" --time-zone America/New_York
+gmc accounts business-info update 123456789 --file business-info.json
+gmc accounts homepage set https://mystore.com 123456789   # set / claim / unclaim
 ```
 
 ## Products

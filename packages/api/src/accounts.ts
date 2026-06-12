@@ -1,7 +1,9 @@
 // Typed Accounts sub-API service (Merchant API `accounts/v1`). A thin wrapper
-// over MerchantClient: get a single account, list accessible accounts, and
-// compose the `info` profile (account + business info + homepage). All calls run
-// on the "accounts" rate-limit bucket. v0.7 adds ProductsService alongside this.
+// over MerchantClient: read a single account, list accessible accounts, and
+// compose the `info` profile (account + business info + homepage); plus profile
+// writes — patch the account / business info / homepage and claim / unclaim the
+// homepage (mirroring `regions`' patch shape). All calls run on the "accounts"
+// rate-limit bucket. v0.7 adds ProductsService alongside this.
 
 import type { MerchantClient } from "./client.js";
 import { MerchantApiError } from "./errors.js";
@@ -54,8 +56,11 @@ export interface CustomerService {
 export interface BusinessInfo {
   name: string;
   address?: PostalAddress;
+  /** Output-only: the verified business phone (set via Merchant Center, not writable here). */
   phone?: Phone;
   customerService?: CustomerService;
+  /** The 10-digit Korean business registration number (writable; Korea only). */
+  koreanBusinessRegistrationNumber?: string;
 }
 
 /** Online store homepage for an account (`accounts/{account}/homepage`). */
@@ -73,6 +78,24 @@ export interface AccountInfo {
   /** null when the account has no homepage configured (404). */
   homepage: Homepage | null;
 }
+
+/** The writable subset of an Account accepted on patch (`updateAccount`). */
+export type AccountUpdate = Pick<
+  Account,
+  "accountName" | "adultContent" | "timeZone" | "languageCode"
+>;
+
+/**
+ * The writable subset of a BusinessInfo accepted on patch (`updateBusinessInfo`).
+ * `phone` (and `phoneVerificationState`) are output-only, so they're excluded.
+ */
+export type BusinessInfoInput = Pick<
+  BusinessInfo,
+  "address" | "customerService" | "koreanBusinessRegistrationNumber"
+>;
+
+/** The writable subset of a Homepage accepted on patch (`updateHomepage`). */
+export type HomepageInput = Pick<Homepage, "uri">;
 
 /** One page of `accounts.list`. */
 interface AccountsListPage {
@@ -96,7 +119,7 @@ function notFoundToNull(err: unknown): null {
   throw err;
 }
 
-/** Read access to the Merchant API Accounts sub-API. */
+/** Read and write access to the Merchant API Accounts sub-API. */
 export class AccountsService {
   constructor(private readonly client: MerchantClient) {}
 
@@ -152,5 +175,76 @@ export class AccountsService {
       this.getHomepage(account).catch(notFoundToNull),
     ]);
     return { account: acct, businessInfo, homepage };
+  }
+
+  /**
+   * Patch an account. The `updateMask` lists the fields to replace; when omitted it
+   * defaults to the input's own top-level keys, so only what you pass is changed.
+   * Mirrors `regions.patch` — `client.request` attaches the `updateMask` query param.
+   */
+  updateAccount(
+    account: string,
+    input: AccountUpdate,
+    opts: { updateMask?: string } = {},
+  ): Promise<Account> {
+    const updateMask = opts.updateMask ?? Object.keys(input).join(",");
+    return this.client.request<Account>(
+      "accounts",
+      "PATCH",
+      `${ACCOUNTS_API}/${accountResourceName(account)}`,
+      { query: { updateMask }, body: input },
+    );
+  }
+
+  /** Patch an account's business info (address, customer service, Korean BRN). */
+  updateBusinessInfo(
+    account: string,
+    input: BusinessInfoInput,
+    opts: { updateMask?: string } = {},
+  ): Promise<BusinessInfo> {
+    const updateMask = opts.updateMask ?? Object.keys(input).join(",");
+    return this.client.request<BusinessInfo>(
+      "accounts",
+      "PATCH",
+      `${ACCOUNTS_API}/${accountResourceName(account)}/businessInfo`,
+      { query: { updateMask }, body: input },
+    );
+  }
+
+  /** Set an account's homepage URI. */
+  updateHomepage(
+    account: string,
+    input: HomepageInput,
+    opts: { updateMask?: string } = {},
+  ): Promise<Homepage> {
+    const updateMask = opts.updateMask ?? Object.keys(input).join(",");
+    return this.client.request<Homepage>(
+      "accounts",
+      "PATCH",
+      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage`,
+      { query: { updateMask }, body: input },
+    );
+  }
+
+  /**
+   * Claim the account's homepage (`homepage:claim`). Pass `overwrite: true` to take
+   * the claim from another account that currently holds it.
+   */
+  claimHomepage(account: string, opts: { overwrite?: boolean } = {}): Promise<Homepage> {
+    return this.client.request<Homepage>(
+      "accounts",
+      "POST",
+      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage:claim`,
+      { body: opts.overwrite === undefined ? {} : { overwrite: opts.overwrite } },
+    );
+  }
+
+  /** Unclaim the account's homepage (`homepage:unclaim`). */
+  unclaimHomepage(account: string): Promise<Homepage> {
+    return this.client.request<Homepage>(
+      "accounts",
+      "POST",
+      `${ACCOUNTS_API}/${accountResourceName(account)}/homepage:unclaim`,
+    );
   }
 }

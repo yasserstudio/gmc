@@ -1,14 +1,17 @@
 import type { Command } from "commander";
-import { emitJson, reportError } from "@gmc-cli/core";
+import { emitJson, reportError, UsageError } from "@gmc-cli/core";
 import {
   AccountsService,
   type Account,
+  type AccountUpdate,
   type AccountInfo,
+  type BusinessInfoInput,
+  type Homepage,
   type PostalAddress,
   type CustomerService,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, line } from "./_shared.js";
+import { clientFor, resolveAccount, line, readJsonObject } from "./_shared.js";
 
 function accountIdOf(account: Account): string {
   return account.accountId ?? account.name.replace(/^accounts\//, "");
@@ -81,9 +84,84 @@ function renderAccountInfo(info: AccountInfo): void {
   }
 }
 
-/** Register the `gmc accounts` command group (list / get / info). */
+/** Parse a `--flag true|false` value into a boolean, or throw a UsageError. */
+function parseBool(raw: string, flag: string): boolean {
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  throw new UsageError(`Invalid ${flag} "${raw}".`, "Pass true or false.");
+}
+
+// `satisfies` ties each field list to its input type, so adding a writable field to
+// `AccountUpdate`/`BusinessInfoInput` without listing it here (or a typo) is a compile error.
+
+/** The writable Account fields — everything else is output-only or an identifier. */
+const ACCOUNT_FIELDS = [
+  "accountName",
+  "adultContent",
+  "timeZone",
+  "languageCode",
+] as const satisfies readonly (keyof AccountUpdate)[];
+
+/** The writable BusinessInfo fields — `name`/`phone`/`phoneVerificationState` are output-only. */
+const BUSINESS_INFO_FIELDS = [
+  "address",
+  "customerService",
+  "koreanBusinessRegistrationNumber",
+] as const satisfies readonly (keyof BusinessInfoInput)[];
+
+/**
+ * Keep only the writable keys of a parsed `--file` body, dropping output-only fields
+ * the API rejects in a PATCH `updateMask`. Mirrors `pickWritable` in `regions.ts`, so a
+ * body saved from `accounts get`/`info` can be re-applied as-is. `fields` is constrained
+ * to keys of `T`, so the field list can't drift from the return type.
+ */
+function pick<T>(obj: Record<string, unknown>, fields: readonly (keyof T & string)[]): T {
+  const out: Record<string, unknown> = {};
+  for (const key of fields) {
+    if (key in obj) out[key] = obj[key];
+  }
+  return out as T;
+}
+
+function renderHomepage(homepage: Homepage): void {
+  line("URI", homepage.uri ?? "—");
+  line("Claimed", homepage.claimed ? "yes" : "no");
+}
+
+interface AccountWriteOpts {
+  name?: string;
+  adultContent?: string;
+  timeZone?: string;
+  language?: string;
+  file?: string;
+  updateMask?: string;
+}
+
+/** Build an AccountUpdate from `--file` overlaid with the convenience flags, or throw. */
+async function buildAccountUpdate(opts: AccountWriteOpts): Promise<AccountUpdate> {
+  const input: AccountUpdate = opts.file
+    ? pick<AccountUpdate>(await readJsonObject(opts.file, "account"), ACCOUNT_FIELDS)
+    : {};
+  if (opts.name !== undefined) input.accountName = opts.name;
+  if (opts.adultContent !== undefined) {
+    input.adultContent = parseBool(opts.adultContent, "--adult-content");
+  }
+  if (opts.timeZone !== undefined) input.timeZone = { id: opts.timeZone };
+  if (opts.language !== undefined) input.languageCode = opts.language;
+  if (Object.keys(input).length === 0) {
+    throw new UsageError(
+      "Nothing to update.",
+      "Pass --name, --adult-content, --time-zone, --language, or --file.",
+    );
+  }
+  return input;
+}
+
+/** Register the `gmc accounts` command group (list / get / info / update + business-info / homepage). */
 export function registerAccountsCommands(program: Command): void {
-  const accounts = program.command("accounts").description("Inspect Merchant Center accounts");
+  const accounts = program
+    .command("accounts")
+    .description("Inspect and manage Merchant Center accounts");
 
   accounts
     .command("list")
@@ -134,6 +212,158 @@ export function registerAccountsCommands(program: Command): void {
         else renderAccountInfo(result);
       } catch (err) {
         reportError(err, { json }, "gmc accounts info");
+      }
+    });
+
+  accounts
+    .command("update")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--name <name>", "Account display name")
+    .option("--adult-content <bool>", "Whether the account offers adult content (true/false)")
+    .option("--time-zone <id>", "IANA time zone id, e.g. America/New_York")
+    .option("--language <code>", "BCP-47 language code, e.g. en-US")
+    .option("--file <path>", "Read the Account JSON body from this file")
+    .option("--update-mask <fields>", "Explicit field mask (defaults to the fields you pass)")
+    .description("Patch an account (only the fields you pass are changed)")
+    .action(async (accountId: string | undefined, opts: AccountWriteOpts) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const input = await buildAccountUpdate(opts);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.updateAccount(account, input, {
+          ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+        });
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Updated account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts update");
+      }
+    });
+
+  const businessInfo = accounts
+    .command("business-info")
+    .description("Manage an account's business info (address, customer service)");
+
+  businessInfo
+    .command("update")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--file <path>", "Read the BusinessInfo JSON body from this file")
+    .option("--korean-brn <number>", "10-digit Korean business registration number")
+    .option("--update-mask <fields>", "Explicit field mask (defaults to the fields you pass)")
+    .description("Patch an account's business info (only the fields you pass are changed)")
+    .action(
+      async (
+        accountId: string | undefined,
+        opts: { file?: string; koreanBrn?: string; updateMask?: string },
+      ) => {
+        const json = wantsJson(program);
+        try {
+          const ctx = contextFrom(program);
+          const account = resolveAccount(accountId, ctx);
+          const input: BusinessInfoInput = opts.file
+            ? pick<BusinessInfoInput>(
+                await readJsonObject(opts.file, "business info"),
+                BUSINESS_INFO_FIELDS,
+              )
+            : {};
+          if (opts.koreanBrn !== undefined) input.koreanBusinessRegistrationNumber = opts.koreanBrn;
+          if (Object.keys(input).length === 0) {
+            throw new UsageError(
+              "Nothing to update.",
+              "Pass --file (address / customerService) or --korean-brn.",
+            );
+          }
+          const service = new AccountsService(await clientFor(ctx));
+          const result = await service.updateBusinessInfo(account, input, {
+            ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+          });
+          if (ctx.json) emitJson(result);
+          else process.stdout.write(`Updated business info for account ${account}.\n`);
+        } catch (err) {
+          reportError(err, { json }, "gmc accounts business-info update");
+        }
+      },
+    );
+
+  const homepage = accounts
+    .command("homepage")
+    .description("Manage an account's online store homepage (URI + claim status)");
+
+  homepage
+    .command("get")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Show the homepage URI and claim status")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getHomepage(account);
+        if (ctx.json) emitJson(result);
+        else renderHomepage(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts homepage get");
+      }
+    });
+
+  homepage
+    .command("set")
+    .argument("<uri>", "Homepage URI, e.g. https://mystore.com")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Set the homepage URI")
+    .action(async (uri: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.updateHomepage(account, { uri });
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Set homepage for account ${account} to ${uri}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts homepage set");
+      }
+    });
+
+  homepage
+    .command("claim")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--overwrite", "Take the claim from another account that currently holds it")
+    .description("Claim the homepage")
+    .action(async (accountId: string | undefined, opts: { overwrite?: boolean }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.claimHomepage(account, {
+          ...(opts.overwrite ? { overwrite: true } : {}),
+        });
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Claimed homepage for account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts homepage claim");
+      }
+    });
+
+  homepage
+    .command("unclaim")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Unclaim the homepage")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.unclaimHomepage(account);
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Unclaimed homepage for account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts homepage unclaim");
       }
     });
 }
