@@ -1,6 +1,6 @@
 # Roadmap
 
-gmc launched at **`v1.0.0`** and now ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches, not minors. The phases below front-loaded the differentiators (`doctor`, `preflight`, `migrate`) on the way to 1.0; post-launch work expands API coverage.
+GMC launched at **`v1.0.0`** and now ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches, not minors. The phases below front-loaded the differentiators (`doctor`, `preflight`, `migrate`) on the way to 1.0; post-launch work expands API coverage.
 
 | Phase | Versions        | Theme                                                          | Status     |
 | ----- | --------------- | -------------------------------------------------------------- | ---------- |

@@ -1,6 +1,6 @@
 # Devlog
 
-Building gmc in the open — notes on the design decisions, the Merchant API's sharp edges, and the Content API migration deadline driving it all.
+Building GMC in the open — notes on the design decisions, the Merchant API's sharp edges, and the Content API migration deadline driving it all.
 
 ## Posts
 

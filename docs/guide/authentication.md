@@ -25,7 +25,7 @@ The login is stored per [profile](/guide/configuration), so you can keep separat
 
 ## Service account
 
-Best for CI and automation. Point gmc at a key file or inline JSON:
+Best for CI and automation. Point GMC at a key file or inline JSON:
 
 ```sh
 export GMC_SERVICE_ACCOUNT="/path/to/key.json"

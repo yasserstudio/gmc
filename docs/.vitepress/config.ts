@@ -2,12 +2,12 @@ import { defineConfig } from "vitepress";
 
 // Project site under https://yasserstudio.github.io/gmc/ — hence base "/gmc/".
 export default defineConfig({
-  // `title` is the homepage <title> and the suffix on every page title — keyword-rich
-  // on purpose (the bare "gmc" collides with unrelated brands in search). The navbar
-  // still shows the short "gmc" via themeConfig.siteTitle below.
-  title: "gmc — Google Merchant Center CLI",
+  // `title` is the homepage <title> and the suffix on every page title — the GMC brand
+  // plus keywords (the bare "gmc" alone collides with unrelated brands in search). Brand
+  // text is "GMC"; the lowercase "gmc" is reserved for the command itself.
+  title: "GMC — Google Merchant Center CLI",
   description:
-    "Google Merchant Center CLI (gmc): typed, CI-friendly access to the Google Merchant API, with an offline feed-compliance preflight and a Content API → Merchant API migrator.",
+    "GMC — the Google Merchant Center CLI: typed, CI-friendly access to the Google Merchant API, with an offline feed-compliance preflight and a Content API → Merchant API migrator.",
   base: "/gmc/",
   cleanUrls: true,
   lastUpdated: true,
@@ -16,7 +16,7 @@ export default defineConfig({
     ["link", { rel: "icon", type: "image/png", href: "/gmc/icon-200.png" }],
     ["meta", { name: "theme-color", content: "#1a73e8" }],
     ["meta", { name: "og:type", content: "website" }],
-    ["meta", { name: "og:title", content: "gmc — Google Merchant Center CLI" }],
+    ["meta", { name: "og:title", content: "GMC — Google Merchant Center CLI" }],
     [
       "meta",
       {
@@ -28,7 +28,7 @@ export default defineConfig({
     ["meta", { name: "og:url", content: "https://yasserstudio.github.io/gmc/" }],
     ["meta", { name: "og:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
     ["meta", { name: "twitter:card", content: "summary" }],
-    ["meta", { name: "twitter:title", content: "gmc — Google Merchant Center CLI" }],
+    ["meta", { name: "twitter:title", content: "GMC — Google Merchant Center CLI" }],
     [
       "meta",
       {
@@ -40,8 +40,8 @@ export default defineConfig({
   ],
   themeConfig: {
     logo: "/icon-200.png",
-    // Keep the navbar brand short even though the document <title> is descriptive.
-    siteTitle: "gmc",
+    // Brand text in the navbar is "GMC"; the lowercase "gmc" is the command.
+    siteTitle: "GMC",
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Reference", link: "/reference/" },
@@ -59,7 +59,7 @@ export default defineConfig({
         {
           text: "Introduction",
           items: [
-            { text: "What is gmc?", link: "/guide/" },
+            { text: "What is GMC?", link: "/guide/" },
             { text: "Installation", link: "/guide/installation" },
             { text: "Getting started", link: "/guide/getting-started" },
             { text: "Authentication", link: "/guide/authentication" },

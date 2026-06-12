@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/icon-200.png" alt="gmc icon" width="120">
+  <img src="./assets/icon-200.png" alt="GMC icon" width="120">
 </p>
 
 <p align="center">
@@ -7,9 +7,9 @@
   <a href="https://yasser.studio"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/yasser-studio-logo-white.svg"><img src="./assets/yasser-studio-logo.svg" alt="Yasser's Studio" height="30"></picture></a>
 </p>
 
-# gmc — Google Merchant Center CLI
+# GMC — Google Merchant Center CLI
 
-**gmc** is a command-line interface for the [Google Merchant API](https://developers.google.com/merchant/api) — the successor to the Content API for Shopping. It gives you typed, scriptable, CI-friendly access to your Merchant Center accounts and product catalog from a single binary, without a browser.
+**GMC** is a command-line interface for the [Google Merchant API](https://developers.google.com/merchant/api) — the successor to the Content API for Shopping. It gives you typed, scriptable, CI-friendly access to your Merchant Center accounts and product catalog from a single binary, without a browser.
 
 It is built for the **Content API → Merchant API migration** (the Content API is being retired), and around the three things that API makes harder than it should: catching the _silent_ setup failures (`doctor`), validating feeds offline before they get disapproved (preflight), and moving off the Content API cleanly (migrate).
 
@@ -52,11 +52,11 @@ Set an account once in a [profile](https://yasserstudio.github.io/gmc/guide/conf
 
 ---
 
-## Why gmc?
+## Why GMC?
 
-Most Merchant Center work is still done by hand in the web UI, and the Content API that powered automation is being retired. gmc makes the move scriptable.
+Most Merchant Center work is still done by hand in the web UI, and the Content API that powered automation is being retired. GMC makes the move scriptable.
 
-|                                            |    **gmc**     | Merchant Center UI | Raw API / client libs |
+|                                            |    **GMC**     | Merchant Center UI | Raw API / client libs |
 | ------------------------------------------ | :------------: | :----------------: | :-------------------: |
 | Typed CLI, one binary                      |       ✅       |         —          |  you write the code   |
 | `--json` + classed exit codes              |       ✅       |         —          |          DIY          |
@@ -80,7 +80,7 @@ gmc auth whoami                # resolved identity (no network call)
 gmc auth test                  # confirm the credential mints a token
 ```
 
-For CI, point gmc at a service-account key: `export GMC_SERVICE_ACCOUNT=/path/to/key.json` (or the standard `GOOGLE_APPLICATION_CREDENTIALS`). Application Default Credentials (`gcloud auth application-default login`) also work.
+For CI, point GMC at a service-account key: `export GMC_SERVICE_ACCOUNT=/path/to/key.json` (or the standard `GOOGLE_APPLICATION_CREDENTIALS`). Application Default Credentials (`gcloud auth application-default login`) also work.
 
 ## Diagnose
 
@@ -204,7 +204,7 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 
 ## Roadmap
 
-gmc launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches.
+GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches.
 
 | Phase | Versions        | Theme                                                     | Status |
 | ----- | --------------- | --------------------------------------------------------- | :----: |
@@ -243,4 +243,4 @@ Free to use. Released under the [MIT License](LICENSE).
 
 <p align="center"><sub>Made by <a href="https://yasser.studio">Yasser's Studio</a> · <a href="https://www.linkedin.com/in/yasserberrehail/">LinkedIn</a> · <a href="https://x.com/yassersstudio">X</a> · <a href="mailto:hello@yasser.studio">hello@yasser.studio</a></sub></p>
 
-<p align="center"><sub>gmc is an independent project. Not affiliated with, endorsed by, or sponsored by Google LLC. "Google Merchant Center", "Google Shopping", and "Google" are trademarks of Google LLC.</sub></p>
+<p align="center"><sub>GMC is an independent project. Not affiliated with, endorsed by, or sponsored by Google LLC. "Google Merchant Center", "Google Shopping", and "Google" are trademarks of Google LLC.</sub></p>
