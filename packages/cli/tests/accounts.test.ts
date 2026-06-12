@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 
 // Shared per-test stubs for the AccountsService methods.
 const listAccounts = vi.fn();
 const getAccount = vi.fn();
 const getInfo = vi.fn();
+const getHomepage = vi.fn();
+const updateAccount = vi.fn();
+const updateBusinessInfo = vi.fn();
+const updateHomepage = vi.fn();
+const claimHomepage = vi.fn();
+const unclaimHomepage = vi.fn();
 
 // resolveAuth is mocked so the real core.createMerchantClient builds a (dummy)
 // client without touching credentials; the Accounts service itself is stubbed.
@@ -30,6 +37,12 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       listAccounts = listAccounts;
       getAccount = getAccount;
       getInfo = getInfo;
+      getHomepage = getHomepage;
+      updateAccount = updateAccount;
+      updateBusinessInfo = updateBusinessInfo;
+      updateHomepage = updateHomepage;
+      claimHomepage = claimHomepage;
+      unclaimHomepage = unclaimHomepage;
     },
   };
 });
@@ -44,6 +57,7 @@ function run(args: string[]): Promise<unknown> {
 describe("gmc accounts", () => {
   let writes: string[];
   let errs: string[];
+  let dir: string;
   let savedEnv: Record<string, string | undefined>;
   const ENV = ["GMC_CONFIG_DIR", "GMC_PROFILE", "GMC_ACCOUNT_ID"] as const;
 
@@ -56,6 +70,7 @@ describe("gmc accounts", () => {
       delete process.env[key];
     }
     process.env["GMC_CONFIG_DIR"] = join(tmpdir(), "gmc-accounts-test-no-config");
+    dir = mkdtempSync(join(tmpdir(), "gmc-accounts-"));
     writes = [];
     errs = [];
     vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
@@ -70,6 +85,7 @@ describe("gmc accounts", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    rmSync(dir, { recursive: true, force: true });
     for (const key of ENV) {
       const value = savedEnv[key];
       if (value === undefined) delete process.env[key];
@@ -170,5 +186,152 @@ describe("gmc accounts", () => {
     const out = JSON.parse(writes.join("")) as { ok: boolean; error: { code?: string } };
     expect(out.ok).toBe(false);
     expect(process.exitCode).toBe(5);
+  });
+
+  it("update patches the account with the fields passed and confirms", async () => {
+    updateAccount.mockResolvedValue({ name: "accounts/123", accountName: "Demo" });
+
+    await run(["accounts", "update", "123", "--name", "Demo"]);
+
+    expect(updateAccount).toHaveBeenCalledWith("123", { accountName: "Demo" }, {});
+    expect(writes.join("")).toContain("Updated account 123.");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("update parses --adult-content false into a boolean", async () => {
+    updateAccount.mockResolvedValue({});
+
+    await run(["accounts", "update", "123", "--adult-content", "false", "--time-zone", "UTC"]);
+
+    expect(updateAccount).toHaveBeenCalledWith(
+      "123",
+      { adultContent: false, timeZone: { id: "UTC" } },
+      {},
+    );
+  });
+
+  it("update passes an explicit --update-mask through", async () => {
+    updateAccount.mockResolvedValue({});
+
+    await run(["accounts", "update", "123", "--name", "Demo", "--update-mask", "accountName"]);
+
+    expect(updateAccount).toHaveBeenCalledWith(
+      "123",
+      { accountName: "Demo" },
+      { updateMask: "accountName" },
+    );
+  });
+
+  it("update rejects a no-op with no fields (exit 2)", async () => {
+    await run(["accounts", "update", "123"]);
+
+    expect(updateAccount).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("Nothing to update");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("update rejects a non-boolean --adult-content (exit 2)", async () => {
+    await run(["accounts", "update", "123", "--adult-content", "yes"]);
+
+    expect(updateAccount).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("business-info update sets the Korean BRN", async () => {
+    updateBusinessInfo.mockResolvedValue({ name: "accounts/123/businessInfo" });
+
+    await run(["accounts", "business-info", "update", "123", "--korean-brn", "1234567890"]);
+
+    expect(updateBusinessInfo).toHaveBeenCalledWith(
+      "123",
+      { koreanBusinessRegistrationNumber: "1234567890" },
+      {},
+    );
+    expect(writes.join("")).toContain("Updated business info for account 123.");
+  });
+
+  it("business-info update strips output-only fields from a --file body", async () => {
+    const file = join(dir, "bi.json");
+    writeFileSync(
+      file,
+      JSON.stringify({
+        name: "accounts/123/businessInfo",
+        phone: { number: "+1" },
+        phoneVerificationState: "PHONE_VERIFIED",
+        address: { regionCode: "US" },
+      }),
+    );
+    updateBusinessInfo.mockResolvedValue({});
+
+    await run(["accounts", "business-info", "update", "123", "--file", file]);
+
+    expect(updateBusinessInfo).toHaveBeenCalledWith("123", { address: { regionCode: "US" } }, {});
+  });
+
+  it("business-info update passes an explicit --update-mask through", async () => {
+    updateBusinessInfo.mockResolvedValue({});
+
+    await run([
+      "accounts",
+      "business-info",
+      "update",
+      "123",
+      "--korean-brn",
+      "1234567890",
+      "--update-mask",
+      "koreanBusinessRegistrationNumber",
+    ]);
+
+    expect(updateBusinessInfo).toHaveBeenCalledWith(
+      "123",
+      { koreanBusinessRegistrationNumber: "1234567890" },
+      { updateMask: "koreanBusinessRegistrationNumber" },
+    );
+  });
+
+  it("business-info update rejects a no-op (exit 2)", async () => {
+    await run(["accounts", "business-info", "update", "123"]);
+
+    expect(updateBusinessInfo).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("homepage set updates the URI", async () => {
+    updateHomepage.mockResolvedValue({ uri: "https://x.com" });
+
+    await run(["accounts", "homepage", "set", "https://x.com", "123"]);
+
+    expect(updateHomepage).toHaveBeenCalledWith("123", { uri: "https://x.com" });
+    expect(writes.join("")).toContain("Set homepage for account 123");
+  });
+
+  it("homepage claim --overwrite passes the flag; plain claim omits it", async () => {
+    claimHomepage.mockResolvedValue({ claimed: true });
+
+    await run(["accounts", "homepage", "claim", "123", "--overwrite"]);
+    expect(claimHomepage).toHaveBeenCalledWith("123", { overwrite: true });
+
+    await run(["accounts", "homepage", "claim", "123"]);
+    expect(claimHomepage).toHaveBeenLastCalledWith("123", {});
+  });
+
+  it("homepage unclaim calls the service", async () => {
+    unclaimHomepage.mockResolvedValue({ claimed: false });
+
+    await run(["accounts", "homepage", "unclaim", "123"]);
+
+    expect(unclaimHomepage).toHaveBeenCalledWith("123");
+    expect(writes.join("")).toContain("Unclaimed homepage for account 123.");
+  });
+
+  it("homepage get renders the URI and claim status", async () => {
+    getHomepage.mockResolvedValue({ name: "h", uri: "https://x.com", claimed: true });
+
+    await run(["accounts", "homepage", "get", "123"]);
+
+    expect(getHomepage).toHaveBeenCalledWith("123");
+    const out = writes.join("");
+    expect(out).toContain("https://x.com");
+    expect(out).toContain("yes");
   });
 });

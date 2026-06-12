@@ -12,8 +12,11 @@ export type { MerchantClientOptions, RequestOptions } from "./client.js";
 export { AccountsService, accountResourceName } from "./accounts.js";
 export type {
   Account,
+  AccountUpdate,
   BusinessInfo,
+  BusinessInfoInput,
   Homepage,
+  HomepageInput,
   AccountInfo,
   PostalAddress,
   Phone,
