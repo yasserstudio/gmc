@@ -2,9 +2,12 @@ import { defineConfig } from "vitepress";
 
 // Project site under https://yasserstudio.github.io/gmc/ — hence base "/gmc/".
 export default defineConfig({
-  title: "gmc",
+  // `title` is the homepage <title> and the suffix on every page title — keyword-rich
+  // on purpose (the bare "gmc" collides with unrelated brands in search). The navbar
+  // still shows the short "gmc" via themeConfig.siteTitle below.
+  title: "gmc — Google Merchant Center CLI",
   description:
-    "Typed, CI-friendly CLI for the Google Merchant API — with an offline feed-compliance preflight.",
+    "Google Merchant Center CLI (gmc): typed, CI-friendly access to the Google Merchant API, with an offline feed-compliance preflight and a Content API → Merchant API migrator.",
   base: "/gmc/",
   cleanUrls: true,
   lastUpdated: true,
@@ -33,6 +36,8 @@ export default defineConfig({
     ],
   ],
   themeConfig: {
+    // Keep the navbar brand short even though the document <title> is descriptive.
+    siteTitle: "gmc",
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Reference", link: "/reference/" },
