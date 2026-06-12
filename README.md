@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="./assets/icon-200.png" alt="gmc icon" width="120">
+</p>
+
+<p align="center">
   by<br>
   <a href="https://yasser.studio"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/yasser-studio-logo-white.svg"><img src="./assets/yasser-studio-logo.svg" alt="Yasser's Studio" height="30"></picture></a>
 </p>
