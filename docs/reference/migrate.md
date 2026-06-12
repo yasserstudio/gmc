@@ -1,6 +1,6 @@
 # gmc migrate
 
-**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API. Phase 5 builds it in three steps, all below: `migrate scopes` (v0.9.6), `migrate products` (v0.9.7), and `migrate feed-labels` (v0.9.8).
+**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API in three steps, all below: `migrate scopes` (auth-readiness audit), `migrate products` (transform to push-ready inputs), and `migrate feed-labels` (catch feed-label breaks).
 
 ```sh
 gmc migrate scopes                                   # audit auth readiness

@@ -143,7 +143,7 @@ gmc preflight --dir feeds        # scan the pulled catalog
 gmc preflight --json             # full machine-readable report
 ```
 
-Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The required-attribute / format library (v0.9.4) and policy / disapproval-trigger checks (v0.9.5) build on this engine.
+Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The engine checks required attributes, value formats, and policy / disapproval triggers.
 
 ---
 
@@ -194,7 +194,7 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 
 ## Roadmap
 
-gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0` at launch.
+gmc launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches.
 
 | Phase | Versions        | Theme                                                     | Status |
 | ----- | --------------- | --------------------------------------------------------- | :----: |
@@ -207,7 +207,8 @@ gmc ships in small, frequent releases through the `0.x` series, reaching `1.0.0`
 | 6     | v0.9.9–v0.9.10  | Inventories + promotions                                  |   ✅   |
 | 7     | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights         |   ✅   |
 | 8     | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening |   ✅   |
-| 9     | v0.9.17+        | Polish & launch → **v1.0.0**                              |   🚧   |
+| 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                              |   ✅   |
+| 10    | v1.0.2+         | Feature surface — `regions`, full `accounts` management   |   🚀   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

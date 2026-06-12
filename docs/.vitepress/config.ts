@@ -38,7 +38,7 @@ export default defineConfig({
       { text: "Reference", link: "/reference/" },
       { text: "Devlog", link: "/devlog/" },
       {
-        text: "v1.0.0",
+        text: "v1.x",
         items: [
           { text: "Changelog", link: "https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md" },
           { text: "Roadmap", link: "/guide/roadmap" },
@@ -75,6 +75,7 @@ export default defineConfig({
             { text: "gmc feeds", link: "/reference/feeds" },
             { text: "gmc inventory", link: "/reference/inventory" },
             { text: "gmc promotions", link: "/reference/promotions" },
+            { text: "gmc regions", link: "/reference/regions" },
             { text: "gmc reports", link: "/reference/reports" },
             { text: "gmc preflight", link: "/reference/preflight" },
             { text: "gmc migrate", link: "/reference/migrate" },
