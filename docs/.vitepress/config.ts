@@ -13,6 +13,7 @@ export default defineConfig({
   lastUpdated: true,
   sitemap: { hostname: "https://yasserstudio.github.io/gmc/" },
   head: [
+    ["link", { rel: "icon", type: "image/png", href: "/gmc/icon-200.png" }],
     ["meta", { name: "theme-color", content: "#1a73e8" }],
     ["meta", { name: "og:type", content: "website" }],
     ["meta", { name: "og:title", content: "gmc — Google Merchant Center CLI" }],
@@ -25,6 +26,7 @@ export default defineConfig({
       },
     ],
     ["meta", { name: "og:url", content: "https://yasserstudio.github.io/gmc/" }],
+    ["meta", { name: "og:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
     ["meta", { name: "twitter:card", content: "summary" }],
     ["meta", { name: "twitter:title", content: "gmc — Google Merchant Center CLI" }],
     [
@@ -34,8 +36,10 @@ export default defineConfig({
         content: "Typed, CI-friendly CLI for the Google Merchant API, with an offline preflight.",
       },
     ],
+    ["meta", { name: "twitter:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
   ],
   themeConfig: {
+    logo: "/icon-200.png",
     // Keep the navbar brand short even though the document <title> is descriptive.
     siteTitle: "gmc",
     nav: [
