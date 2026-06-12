@@ -18,6 +18,8 @@ export type {
   Homepage,
   HomepageInput,
   AccountInfo,
+  CreateAccountRequest,
+  AddAccountService,
   User,
   UserInput,
   AccessRight,

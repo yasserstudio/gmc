@@ -3,6 +3,7 @@ import { emitJson, reportError, UsageError } from "@gmc-cli/core";
 import {
   AccountsService,
   userSegment,
+  accountResourceName,
   type Account,
   type AccountUpdate,
   type AccountInfo,
@@ -11,6 +12,7 @@ import {
   type User,
   type UserInput,
   type AccessRight,
+  type CreateAccountRequest,
   type PostalAddress,
   type CustomerService,
 } from "@gmc-cli/api";
@@ -224,6 +226,63 @@ async function buildAccountUpdate(opts: AccountWriteOpts): Promise<AccountUpdate
     );
   }
   return input;
+}
+
+interface AccountCreateOpts {
+  name?: string;
+  timeZone?: string;
+  language?: string;
+  adultContent?: string;
+  aggregator?: string;
+  file?: string;
+}
+
+/**
+ * Build the `accounts:createAndConfigure` body from `--file` overlaid with the convenience
+ * flags. Unlike a patch, the `--file` body is kept whole (it legitimately carries
+ * `account` / `service` / `user` / `setAlias`); the flags build/override `account` and add
+ * the standard `--aggregator` service. Requires a name and at least one service.
+ */
+async function buildCreateRequest(opts: AccountCreateOpts): Promise<CreateAccountRequest> {
+  const base: Record<string, unknown> = opts.file
+    ? await readJsonObject(opts.file, "account request")
+    : {};
+  // Shallow-copy the account / service that a `--file` body may carry, so the flags
+  // and `--aggregator` build on a copy rather than mutating the parsed body in place.
+  const account: AccountUpdate = { ...(base["account"] as AccountUpdate | undefined) };
+  if (opts.name !== undefined) account.accountName = opts.name;
+  if (opts.timeZone !== undefined) account.timeZone = { id: opts.timeZone };
+  if (opts.language !== undefined) account.languageCode = opts.language;
+  if (opts.adultContent !== undefined) {
+    account.adultContent = parseBool(opts.adultContent, "--adult-content");
+  }
+
+  const service: CreateAccountRequest["service"] = Array.isArray(base["service"])
+    ? [...(base["service"] as CreateAccountRequest["service"])]
+    : [];
+  if (opts.aggregator !== undefined) {
+    if (!/^\d+$/.test(opts.aggregator)) {
+      throw new UsageError(
+        `Invalid --aggregator "${opts.aggregator}".`,
+        "Account ids are numeric, e.g. 123456789.",
+      );
+    }
+    service.push({ accountAggregation: {}, provider: accountResourceName(opts.aggregator) });
+  }
+
+  if (!account.accountName) {
+    throw new UsageError(
+      "A new account needs a name.",
+      "Pass --name (or an `account.accountName` in --file).",
+    );
+  }
+  if (service.length === 0) {
+    throw new UsageError(
+      "A new account needs a service relationship.",
+      "Pass --aggregator <id> to create a sub-account, or a `service` array in --file.",
+    );
+  }
+  return { ...base, account, service };
 }
 
 /** Register the `gmc accounts` command group (list / get / info / update + business-info / homepage). */
@@ -540,6 +599,55 @@ export function registerAccountsCommands(program: Command): void {
         else process.stdout.write(`Removed user ${id} from account ${account}.\n`);
       } catch (err) {
         reportError(err, { json }, "gmc accounts users remove");
+      }
+    });
+
+  accounts
+    .command("create")
+    .option("--name <name>", "Account display name (required)")
+    .option("--time-zone <id>", "IANA time zone id, e.g. America/New_York")
+    .option("--language <code>", "BCP-47 language code, e.g. en-US")
+    .option("--adult-content <bool>", "Whether the account offers adult content (true/false)")
+    .option("--aggregator <id>", "Create a sub-account under this advanced/aggregator account")
+    .option("--file <path>", "Read the full createAndConfigure JSON body from this file")
+    .description("Create and configure an account (typically a sub-account)")
+    .action(async (opts: AccountCreateOpts) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const body = await buildCreateRequest(opts);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.createAccount(body);
+        if (ctx.json) emitJson(result);
+        else process.stdout.write(`Created account ${accountIdOf(result)}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts create");
+      }
+    });
+
+  accounts
+    .command("delete")
+    .argument("<accountId>", "Account id to delete (required — no profile fallback)")
+    .option("--yes", "Confirm the irreversible deletion (required)")
+    .option("--force", "Delete even if it has sub-accounts or processed offers")
+    .description("Delete an account (irreversible)")
+    .action(async (accountId: string, opts: { yes?: boolean; force?: boolean }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        if (!opts.yes) {
+          throw new UsageError(
+            `Refusing to delete account ${account} without --yes.`,
+            "Account deletion is irreversible — pass --yes to confirm (and --force if it has sub-accounts or processed offers).",
+          );
+        }
+        const service = new AccountsService(await clientFor(ctx));
+        await service.deleteAccount(account, { ...(opts.force ? { force: true } : {}) });
+        if (ctx.json) emitJson({ deleted: account });
+        else process.stdout.write(`Deleted account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts delete");
       }
     });
 }

@@ -18,6 +18,8 @@ const getUser = vi.fn();
 const createUser = vi.fn();
 const updateUser = vi.fn();
 const deleteUser = vi.fn();
+const createAccount = vi.fn();
+const deleteAccount = vi.fn();
 
 // resolveAuth is mocked so the real core.createMerchantClient builds a (dummy)
 // client without touching credentials; the Accounts service itself is stubbed.
@@ -53,6 +55,8 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       createUser = createUser;
       updateUser = updateUser;
       deleteUser = deleteUser;
+      createAccount = createAccount;
+      deleteAccount = deleteAccount;
     },
   };
 });
@@ -422,5 +426,91 @@ describe("gmc accounts", () => {
 
     expect(deleteUser).toHaveBeenCalledWith("123", "accounts/123/users/a@x.com");
     expect(JSON.parse(writes.join(""))).toEqual({ removed: "a@x.com" });
+  });
+
+  it("create builds the request from flags + --aggregator", async () => {
+    createAccount.mockResolvedValue({ name: "accounts/999", accountId: "999" });
+
+    await run([
+      "accounts",
+      "create",
+      "--name",
+      "Sub",
+      "--time-zone",
+      "UTC",
+      "--language",
+      "en-US",
+      "--aggregator",
+      "123",
+    ]);
+
+    expect(createAccount).toHaveBeenCalledWith({
+      account: { accountName: "Sub", timeZone: { id: "UTC" }, languageCode: "en-US" },
+      service: [{ accountAggregation: {}, provider: "accounts/123" }],
+    });
+    expect(writes.join("")).toContain("Created account 999.");
+  });
+
+  it("create rejects a missing --name (exit 2)", async () => {
+    await run(["accounts", "create", "--aggregator", "123"]);
+
+    expect(createAccount).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("A new account needs a name");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("create rejects no service relationship (exit 2)", async () => {
+    await run(["accounts", "create", "--name", "Sub"]);
+
+    expect(createAccount).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("needs a service relationship");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("create merges --file with flags (file keeps user[], flags add the account name)", async () => {
+    const file = join(dir, "req.json");
+    writeFileSync(
+      file,
+      JSON.stringify({
+        account: { timeZone: { id: "UTC" }, languageCode: "en-US" },
+        service: [{ accountAggregation: {}, provider: "accounts/123" }],
+        user: [{ userId: "a@x.com", user: { accessRights: ["ADMIN"] } }],
+      }),
+    );
+    createAccount.mockResolvedValue({ accountId: "999" });
+
+    await run(["accounts", "create", "--file", file, "--name", "Sub"]);
+
+    expect(createAccount).toHaveBeenCalledWith({
+      account: { timeZone: { id: "UTC" }, languageCode: "en-US", accountName: "Sub" },
+      service: [{ accountAggregation: {}, provider: "accounts/123" }],
+      user: [{ userId: "a@x.com", user: { accessRights: ["ADMIN"] } }],
+    });
+  });
+
+  it("delete refuses without --yes (exit 2) and never calls the API", async () => {
+    await run(["accounts", "delete", "123"]);
+
+    expect(deleteAccount).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("without --yes");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("delete with --yes calls the service and confirms", async () => {
+    deleteAccount.mockResolvedValue(undefined);
+
+    await run(["accounts", "delete", "123", "--yes"]);
+
+    expect(deleteAccount).toHaveBeenCalledWith("123", {});
+    expect(writes.join("")).toContain("Deleted account 123.");
+  });
+
+  it("delete --force forwards force; --json emits { deleted }", async () => {
+    deleteAccount.mockResolvedValue(undefined);
+
+    await run(["-j", "accounts", "delete", "123", "--yes", "--force"]);
+
+    expect(deleteAccount).toHaveBeenCalledWith("123", { force: true });
+    expect(JSON.parse(writes.join(""))).toEqual({ deleted: "123" });
   });
 });

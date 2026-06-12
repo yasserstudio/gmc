@@ -1,6 +1,6 @@
 # gmc accounts
 
-Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`.
+Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `delete`.
 
 ## `gmc accounts list`
 
@@ -128,7 +128,59 @@ gmc accounts users remove jane@example.com 123456789
 `update` (it's the only writable field; `update` replaces the whole set). `--json` emits the raw
 `User` (`{ users }` for list, `{ "removed": "<email>" }` for remove).
 
+## `gmc accounts create`
+
+Create and configure an account (`accounts:createAndConfigure`) — most commonly a **sub-account**
+under an advanced/aggregator account. The API requires the account's `accountName` / `timeZone` /
+`languageCode` **and** at least one service relationship.
+
+```sh
+gmc accounts create --name "West Coast Store" --time-zone America/Los_Angeles \
+  --language en-US --aggregator 123456789
+gmc accounts create --file account-request.json   # full body (users, aliases, other services)
+```
+
+| Flag                     | Builds                                                        |
+| ------------------------ | ------------------------------------------------------------- |
+| `--name <name>`          | `account.accountName` (required)                              |
+| `--time-zone <id>`       | `account.timeZone` (IANA id)                                  |
+| `--language <code>`      | `account.languageCode` (BCP-47)                               |
+| `--adult-content <bool>` | `account.adultContent`                                        |
+| `--aggregator <id>`      | A `service` entry making this a sub-account of account `<id>` |
+| `--file <path>`          | A full `createAndConfigure` body — overlaid by the flags      |
+
+The `--file` body is kept whole (it can carry `account`, `service`, `user`, `setAlias`); the flags
+build/override `account` and append the `--aggregator` service. A create needs an `accountName` and
+at least one service (from `--aggregator` or `--file`). `--json` emits the created `Account`. Add
+users afterward with [`gmc accounts users add`](#gmc-accounts-users-list-get-add-update-remove).
+
+```json
+{
+  "account": {
+    "accountName": "West Coast Store",
+    "timeZone": { "id": "America/Los_Angeles" },
+    "languageCode": "en-US"
+  },
+  "service": [{ "accountAggregation": {}, "provider": "accounts/123456789" }]
+}
+```
+
+## `gmc accounts delete`
+
+**Irreversibly** delete an account. The id is a required argument (no `--account`/profile fallback),
+and `--yes` is required to confirm.
+
+```sh
+gmc accounts delete 123456789 --yes
+gmc accounts delete 123456789 --yes --force   # also when it has sub-accounts or processed offers
+```
+
+`--yes` confirms the deletion (the command refuses without it). `--force` maps to the API's `force`
+— it lets you delete an account that still provides services to other accounts or has processed
+offers. `--json` emits `{ "deleted": "<id>" }`.
+
 ## Exit codes
 
 `2` usage (no/non-numeric account id, nothing-to-update, a non-boolean `--adult-content`, a missing
-or invalid `--access-rights`, an unreadable/invalid `--file`) · `3` auth · `5` Merchant API.
+or invalid `--access-rights`, `create` without a name/service, `delete` without `--yes`, an
+unreadable/invalid `--file`) · `3` auth · `5` Merchant API.

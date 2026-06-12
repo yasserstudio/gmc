@@ -214,6 +214,34 @@ describe("AccountsService", () => {
     expect(calls[0]?.url).toBe(`${ACCT}/users/a%40x.com`);
   });
 
+  it("createAccount POSTs accounts:createAndConfigure with the request body", async () => {
+    const { service, calls } = capturing({ name: "accounts/999", accountId: "999" });
+    const body = {
+      account: { accountName: "Sub", timeZone: { id: "UTC" }, languageCode: "en-US" },
+      service: [{ accountAggregation: {}, provider: "accounts/123" }],
+    };
+    const result = await service.createAccount(body);
+    expect(result.accountId).toBe("999");
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(
+      "https://merchantapi.googleapis.com/accounts/v1/accounts:createAndConfigure",
+    );
+    expect(calls[0]?.body).toEqual(body);
+  });
+
+  it("deleteAccount DELETEs the account, omitting force by default", async () => {
+    const { service, calls } = capturing(undefined, 204);
+    await service.deleteAccount("123");
+    expect(calls[0]?.method).toBe("DELETE");
+    expect(calls[0]?.url).toBe(ACCT);
+  });
+
+  it("deleteAccount adds ?force=true when force is set", async () => {
+    const { service, calls } = capturing(undefined, 204);
+    await service.deleteAccount("123", { force: true });
+    expect(calls[0]?.url).toBe(`${ACCT}?force=true`);
+  });
+
   it("userSegment reduces a full resource name to the bare email", () => {
     expect(userSegment("accounts/123/users/a@x.com")).toBe("a@x.com");
     expect(userSegment("a@x.com")).toBe("a@x.com");
