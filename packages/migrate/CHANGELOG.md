@@ -1,5 +1,13 @@
 # @gmc-cli/migrate
 
+## 0.1.15
+
+### Patch Changes
+
+- Updated dependencies [abe94bd]
+  - @gmc-cli/api@0.9.14
+  - @gmc-cli/auth@0.7.2
+
 ## 0.1.14
 
 ### Patch Changes
