@@ -9,7 +9,7 @@ import {
   type GeoTargetArea,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, line, readJsonObject, parsePageSize } from "./_shared.js";
+import { clientFor, resolveAccount, line, readJsonObject, parsePageSize, pick } from "./_shared.js";
 
 interface RegionWriteOpts {
   displayName?: string;
@@ -69,21 +69,12 @@ function parseGeotargetIds(raw: string): GeoTargetArea {
 }
 
 /** The writable Region fields — everything else (`name`, the `*Eligible` flags) is output-only. */
-const WRITABLE_FIELDS = ["displayName", "postalCodeArea", "geotargetArea", "radiusArea"] as const;
-
-/**
- * Keep only the writable fields of a parsed `--file` body. A body saved from
- * `regions get` carries output-only `name` / `*Eligible` flags, which the API rejects
- * in a PATCH `updateMask` (and shouldn't be sent on a write) — allowlisting drops them,
- * mirroring how `toProductInput` strips output-only product data.
- */
-function pickWritable(obj: Record<string, unknown>): RegionInput {
-  const out: Record<string, unknown> = {};
-  for (const key of WRITABLE_FIELDS) {
-    if (key in obj) out[key] = obj[key];
-  }
-  return out as RegionInput;
-}
+const WRITABLE_FIELDS = [
+  "displayName",
+  "postalCodeArea",
+  "geotargetArea",
+  "radiusArea",
+] as const satisfies readonly (keyof RegionInput)[];
 
 /**
  * Build a RegionInput from `--file` (JSON base) overlaid with the convenience flags.
@@ -92,7 +83,7 @@ function pickWritable(obj: Record<string, unknown>): RegionInput {
  */
 async function buildRegionInput(opts: RegionWriteOpts, requireArea: boolean): Promise<RegionInput> {
   const input: RegionInput = opts.file
-    ? pickWritable(await readJsonObject(opts.file, "region"))
+    ? pick<RegionInput>(await readJsonObject(opts.file, "region"), WRITABLE_FIELDS)
     : {};
   if (opts.regionCode && !opts.postalCodes) {
     throw new UsageError(

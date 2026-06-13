@@ -169,6 +169,22 @@ export async function readJsonObject(
   return parsed as Record<string, unknown>;
 }
 
+/**
+ * Keep only the writable keys of a parsed `--file` body, dropping the output-only
+ * fields (`name`, `*Eligible`, `dataSourceId`, …) the API rejects in a PATCH
+ * `updateMask` — so a body saved from a `get` can be re-applied as-is. `fields` is
+ * constrained to keys of `T`, so the allowlist can't drift from the return type.
+ * Shared by the accounts / regions / datasources write commands; mirrors how
+ * `toProductInput` strips output-only product data.
+ */
+export function pick<T>(obj: Record<string, unknown>, fields: readonly (keyof T & string)[]): T {
+  const out: Record<string, unknown> = {};
+  for (const key of fields) {
+    if (key in obj) out[key] = obj[key];
+  }
+  return out as T;
+}
+
 /** A feed file that couldn't be read or parsed as a product input. */
 export interface FileLoadFailure {
   file: string;
