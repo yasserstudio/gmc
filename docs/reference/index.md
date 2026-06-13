@@ -19,6 +19,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc regions`](/reference/regions)             | Define geographic regions for regional inventory + shipping (`list` / `get` / `create` / `update` / `delete`)     |
 | [`gmc notifications`](/reference/notifications) | Webhook notification subscriptions (`list` / `get` / `create` / `update` / `delete`)                              |
 | [`gmc quota`](/reference/quota)                 | Inspect daily Merchant API call quota and usage (`list`)                                                          |
+| [`gmc issues`](/reference/issues)               | Render account & product issues with resolution content (`account` / `product`)                                   |
 | [`gmc reports`](/reference/reports)             | Reports — `performance` / `competitive-visibility` / `price-competitiveness` / `check` (CI gate) / `query` (MCQL) |
 | [`gmc feeds`](/reference/feeds)                 | Feeds as code (`pull` / `push` / `diff`)                                                                          |
 | [`gmc preflight`](/reference/preflight)         | Offline feed-compliance scanner — catch disapprovals before upload                                                |
