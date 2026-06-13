@@ -20,8 +20,8 @@ function fakeClock(): Clock & { advance: (ms: number) => void; sleeps: number[] 
 }
 
 describe("rate limiter buckets", () => {
-  it("DEFAULT_RATE_LIMITS has a bucket for all eight sub-APIs", () => {
-    expect(SUB_APIS).toHaveLength(8);
+  it("DEFAULT_RATE_LIMITS has a bucket for all nine sub-APIs", () => {
+    expect(SUB_APIS).toHaveLength(9);
     expect(SUB_APIS).toContain("notifications");
     expect(Object.keys(DEFAULT_RATE_LIMITS).sort()).toEqual([...SUB_APIS].sort());
   });

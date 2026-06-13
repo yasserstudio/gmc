@@ -87,6 +87,7 @@ export default defineConfig({
             { text: "gmc regions", link: "/reference/regions" },
             { text: "gmc notifications", link: "/reference/notifications" },
             { text: "gmc quota", link: "/reference/quota" },
+            { text: "gmc issues", link: "/reference/issues" },
             { text: "gmc reports", link: "/reference/reports" },
             { text: "gmc preflight", link: "/reference/preflight" },
             { text: "gmc migrate", link: "/reference/migrate" },

@@ -69,6 +69,15 @@ export type { Promotion, PromotionAttributes } from "./promotions.js";
 export { QuotaService } from "./quota.js";
 export type { QuotaGroup, MethodDetail } from "./quota.js";
 
+export { IssuesService } from "./issues.js";
+export type {
+  RenderedIssue,
+  IssueImpact,
+  IssueBreakdown,
+  IssueRegion,
+  RenderOptions,
+} from "./issues.js";
+
 export { NotificationsService, notificationSegment } from "./notifications.js";
 export type {
   NotificationSubscription,
