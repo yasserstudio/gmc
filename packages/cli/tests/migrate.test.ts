@@ -250,7 +250,7 @@ describe("gmc migrate products", () => {
     expect(written).toMatchObject({
       offerId: "SKU1",
       feedLabel: "US",
-      attributes: {
+      productAttributes: {
         price: { amountMicros: "49990000", currencyCode: "USD" },
         availability: "in_stock",
       },
@@ -344,7 +344,7 @@ const pi = (offerId: string, feedLabel?: string) => ({
   offerId,
   contentLanguage: "en",
   ...(feedLabel !== undefined ? { feedLabel } : {}),
-  attributes: { title: offerId },
+  productAttributes: { title: offerId },
 });
 const source = (feedLabel: string) => ({
   primaryProductDataSource: { feedLabel, contentLanguage: "en" },

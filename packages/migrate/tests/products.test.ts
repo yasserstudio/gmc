@@ -51,12 +51,12 @@ describe("transformProduct", () => {
       feedLabel: "US",
     });
     expect(input.legacyLocal).toBeUndefined();
-    expect(input.attributes).toMatchObject({
+    expect(input.productAttributes).toMatchObject({
       title: "Shoe",
       price: { amountMicros: "49990000", currencyCode: "USD" },
     });
     // identity fields are NOT duplicated into attributes
-    expect((input.attributes as Record<string, unknown>)["targetCountry"]).toBeUndefined();
+    expect((input.productAttributes as Record<string, unknown>)["targetCountry"]).toBeUndefined();
   });
 
   it("remaps targetCountry → feedLabel and reports it", () => {
@@ -73,19 +73,21 @@ describe("transformProduct", () => {
 
   it("normalizes the availability enum (spaces → underscores)", () => {
     const r = ok({ offerId: "X", availability: "in stock" });
-    expect((r.input.attributes as Record<string, unknown>)["availability"]).toBe("in_stock");
+    expect((r.input.productAttributes as Record<string, unknown>)["availability"]).toBe("in_stock");
     expect(r.remapped).toContain('availability "in stock" → "in_stock"');
   });
 
   it("leaves an already-valid availability untouched (no remap note)", () => {
     const r = ok({ offerId: "X", availability: "preorder" });
-    expect((r.input.attributes as Record<string, unknown>)["availability"]).toBe("preorder");
+    expect((r.input.productAttributes as Record<string, unknown>)["availability"]).toBe("preorder");
     expect(r.remapped).toHaveLength(0);
   });
 
   it("does not invent an invalid availability — leaves it for preflight to flag", () => {
     const r = ok({ offerId: "X", availability: "pre order" });
-    expect((r.input.attributes as Record<string, unknown>)["availability"]).toBe("pre order");
+    expect((r.input.productAttributes as Record<string, unknown>)["availability"]).toBe(
+      "pre order",
+    );
     expect(r.remapped).toHaveLength(0);
   });
 
@@ -95,7 +97,7 @@ describe("transformProduct", () => {
       shipping: [{ country: "US", price: { value: "5.00", currency: "USD" } }],
       shippingWeight: { value: "1.2", unit: "kg" },
     });
-    const attrs = input.attributes as Record<string, unknown>;
+    const attrs = input.productAttributes as Record<string, unknown>;
     expect((attrs["shipping"] as { price: unknown }[])[0].price).toEqual({
       amountMicros: "5000000",
       currencyCode: "USD",
@@ -119,7 +121,7 @@ describe("transformProduct", () => {
     const r = ok({ offerId: "X", price: { value: "free", currency: "USD" } });
     expect(r.warnings.some((w) => w.includes("price"))).toBe(true);
     // left as-is, not converted
-    expect((r.input.attributes as Record<string, unknown>)["price"]).toEqual({
+    expect((r.input.productAttributes as Record<string, unknown>)["price"]).toEqual({
       value: "free",
       currency: "USD",
     });

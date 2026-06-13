@@ -32,7 +32,7 @@ describe("IssuesService", () => {
       method = String(init.method);
       return jsonResponse(200, {
         renderedIssues: [
-          { title: "Misrepresentation", impact: { severity: "DISAPPROVED", message: "why" } },
+          { title: "Misrepresentation", impact: { severity: "ERROR", message: "why" } },
         ],
       });
     }) as unknown as typeof fetch;

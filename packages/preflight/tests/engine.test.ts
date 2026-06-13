@@ -106,7 +106,7 @@ describe("runPreflight", () => {
 
   it("runs the default registry and catches a missing title", () => {
     const report = runPreflight([
-      { offerId: "x", attributes: { price: { amountMicros: "1", currencyCode: "USD" } } },
+      { offerId: "x", productAttributes: { price: { amountMicros: "1", currencyCode: "USD" } } },
     ]);
     const ids = report.findings.map((f) => f.ruleId);
     expect(ids).toContain("required.title");

@@ -44,7 +44,7 @@ gmc issues account --json | jq '.issues[] | { title, severity: .impact.severity 
 ## Output
 
 Each issue prints `[SEVERITY] title`, the impact message, and a region/destination breakdown. Severity
-is the Merchant API enum: `DISAPPROVED`, `DEMOTED`, or `NOT_IMPACTED`. The full how-to-fix detail is
+is the value the API returns for the rendered issue, e.g. `ERROR` or `WARNING`. The full how-to-fix detail is
 **HTML** — it is omitted from the table and available under `--json`. `--json` emits `{ "issues": [...] }`
 — the raw `RenderedIssue`s, including `prerenderedContent` (the HTML) and `actions`.
 

@@ -49,20 +49,22 @@ export interface ProductInput {
   feedLabel?: string;
   /** True for products sold exclusively in physical stores (Merchant API v1 replaced `channel` with this). */
   legacyLocal?: boolean;
-  attributes?: ProductAttributes;
+  productAttributes?: ProductAttributes;
   customAttributes?: CustomAttribute[];
 }
 
-/** A single item-level issue from product processing. */
+/** A single item-level issue from product processing (Merchant API v1). */
 export interface ItemLevelIssue {
   code?: string;
-  servability?: string;
+  /** e.g. `ERROR`, `SUGGESTION`. v1 field (v1beta used `servability`). */
+  severity?: string;
   resolution?: string;
-  attribute?: string;
-  destination?: string;
+  /** Destination/program the issue applies to (e.g. `SHOPPING_ADS`). v1 renamed `destination`. */
+  reportingContext?: string;
   description?: string;
   detail?: string;
   documentation?: string;
+  applicableCountries?: string[];
 }
 
 /** Processing status for a product. */
@@ -81,7 +83,7 @@ export interface Product {
   feedLabel?: string;
   legacyLocal?: boolean;
   dataSource?: string;
-  attributes?: ProductAttributes;
+  productAttributes?: ProductAttributes;
   customAttributes?: CustomAttribute[];
   productStatus?: ProductStatus;
 }
@@ -121,8 +123,8 @@ export function productKey(input: ProductInput): string {
  * Map a processed Product to a push-ready ProductInput. Intentional allowlist:
  * output-only data (`name`, `productStatus`, `dataSource`, …) can never leak into
  * a file that will later be pushed, at the cost of dropping edge writable fields
- * (e.g. `versionNumber`). `attributes`/`customAttributes` are kept by reference —
- * the caller must not mutate the result.
+ * (e.g. `versionNumber`). `productAttributes`/`customAttributes` are kept by
+ * reference — the caller must not mutate the result.
  */
 export function toProductInput(product: Product): ProductInput {
   const input: ProductInput = {};
@@ -130,7 +132,7 @@ export function toProductInput(product: Product): ProductInput {
   if (product.contentLanguage !== undefined) input.contentLanguage = product.contentLanguage;
   if (product.feedLabel !== undefined) input.feedLabel = product.feedLabel;
   if (product.legacyLocal !== undefined) input.legacyLocal = product.legacyLocal;
-  if (product.attributes !== undefined) input.attributes = product.attributes;
+  if (product.productAttributes !== undefined) input.productAttributes = product.productAttributes;
   if (product.customAttributes !== undefined) input.customAttributes = product.customAttributes;
   return input;
 }

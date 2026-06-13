@@ -46,7 +46,7 @@ cat product.json | gmc products insert --data-source 11223344
   "offerId": "SKU1",
   "contentLanguage": "en",
   "feedLabel": "US",
-  "attributes": {
+  "productAttributes": {
     "title": "Trail Runner",
     "link": "https://shop.com/p/run01",
     "price": { "amountMicros": "49990000", "currencyCode": "USD" },

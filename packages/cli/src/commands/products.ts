@@ -19,7 +19,7 @@ function offerIdOf(product: Product): string {
 function issueSummary(product: Product): string {
   const issues = product.productStatus?.itemLevelIssues ?? [];
   if (issues.length === 0) return "no issues";
-  const disapproved = issues.filter((i) => i.servability === "disapproved").length;
+  const disapproved = issues.filter((i) => i.severity === "DISAPPROVED").length;
   return disapproved > 0
     ? `${disapproved} disapproved / ${issues.length} issue(s)`
     : `${issues.length} issue(s)`;
@@ -32,8 +32,8 @@ function renderProducts(products: Product[]): void {
   }
   const rows = products.map((p) => ({
     id: offerIdOf(p),
-    title: p.attributes?.title ?? "—",
-    avail: p.attributes?.availability ?? "—",
+    title: p.productAttributes?.title ?? "—",
+    avail: p.productAttributes?.availability ?? "—",
     issues: issueSummary(p),
   }));
   const idWidth = Math.max(...rows.map((r) => r.id.length));
@@ -44,7 +44,7 @@ function renderProducts(products: Product[]): void {
 }
 
 function renderProduct(product: Product): void {
-  const a = product.attributes ?? {};
+  const a = product.productAttributes ?? {};
   line("Offer ID", offerIdOf(product));
   if (a.title) line("Title", a.title);
   if (a.link) line("Link", a.link);
@@ -52,7 +52,7 @@ function renderProduct(product: Product): void {
   if (a.availability) line("Availability", a.availability);
   line("Status", issueSummary(product));
   for (const issue of product.productStatus?.itemLevelIssues ?? []) {
-    const sev = issue.servability ? `${issue.servability}: ` : "";
+    const sev = issue.severity ? `${issue.severity}: ` : "";
     process.stdout.write(`    - ${sev}${issue.description ?? issue.code ?? "issue"}\n`);
   }
 }
