@@ -25,7 +25,7 @@ import {
   type CustomerService,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, line, readJsonObject } from "./_shared.js";
+import { clientFor, resolveAccount, line, readJsonObject, pick } from "./_shared.js";
 
 function accountIdOf(account: Account): string {
   return account.accountId ?? account.name.replace(/^accounts\//, "");
@@ -127,20 +127,6 @@ const BUSINESS_INFO_FIELDS = [
 const AUTOFEED_FIELDS = [
   "enableProducts",
 ] as const satisfies readonly (keyof AutofeedSettingsInput)[];
-
-/**
- * Keep only the writable keys of a parsed `--file` body, dropping output-only fields
- * the API rejects in a PATCH `updateMask`. Mirrors `pickWritable` in `regions.ts`, so a
- * body saved from `accounts get`/`info` can be re-applied as-is. `fields` is constrained
- * to keys of `T`, so the field list can't drift from the return type.
- */
-function pick<T>(obj: Record<string, unknown>, fields: readonly (keyof T & string)[]): T {
-  const out: Record<string, unknown> = {};
-  for (const key of fields) {
-    if (key in obj) out[key] = obj[key];
-  }
-  return out as T;
-}
 
 function renderHomepage(homepage: Homepage): void {
   line("URI", homepage.uri ?? "—");

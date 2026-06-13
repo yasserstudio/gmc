@@ -7,7 +7,7 @@ import {
   type PrimaryProductDataSource,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, readJsonObject, line } from "./_shared.js";
+import { clientFor, resolveAccount, readJsonObject, line, pick } from "./_shared.js";
 
 interface CreateFlags {
   name?: string;
@@ -175,19 +175,6 @@ const DATASOURCE_WRITABLE_FIELDS = [
   "fileInput",
 ] as const satisfies readonly (keyof DataSource)[];
 
-/**
- * Keep only the writable keys of a parsed `--file` body, dropping the output-only
- * `name`/`dataSourceId`/`input` the API rejects in a PATCH `updateMask`. Mirrors
- * `pickWritable` in `regions.ts`, so a body saved from `datasources get` re-applies cleanly.
- */
-function pickWritable(obj: Record<string, unknown>): DataSource {
-  const out: Record<string, unknown> = {};
-  for (const key of DATASOURCE_WRITABLE_FIELDS) {
-    if (key in obj) out[key] = obj[key];
-  }
-  return out as DataSource;
-}
-
 function dataSourceType(ds: DataSource): string {
   if (ds.primaryProductDataSource) return "primary product";
   if (ds.supplementalProductDataSource) return "supplemental";
@@ -347,7 +334,10 @@ export function registerDataSourcesCommands(program: Command): void {
         // `update <id> --name X` doesn't block on stdin in a non-TTY/CI context).
         let body: DataSource = {};
         if (opts.file || (opts.name === undefined && !process.stdin.isTTY)) {
-          body = pickWritable(await readJsonObject(opts.file, "data source"));
+          body = pick<DataSource>(
+            await readJsonObject(opts.file, "data source"),
+            DATASOURCE_WRITABLE_FIELDS,
+          );
         }
         if (opts.name !== undefined) body.displayName = opts.name;
         if (Object.keys(body).length === 0) {
