@@ -1,3 +1,7 @@
+---
+description: "Full command reference for the GMC CLI — every gmc command and subcommand for the Google Merchant API, with flags, examples, and classed exit codes."
+---
+
 # CLI reference
 
 ```

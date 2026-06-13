@@ -1,3 +1,7 @@
+---
+description: "GMC is a free command-line tool for the Google Merchant API — the successor to the Content API for Shopping. Typed, scriptable, and CI-friendly access to Merchant Center accounts and feeds."
+---
+
 # What is GMC?
 
 **GMC** is a command-line interface for the [Google Merchant API](https://developers.google.com/merchant/api) — the successor to the Content API for Shopping. It gives you typed, scriptable, CI-friendly access to your Merchant Center accounts and product data.

@@ -1,0 +1,20 @@
+# GMC — Google Merchant Center CLI
+
+> A free, open-source command-line interface for the Google Merchant API (the successor to the Content API for Shopping). It gives developers typed, scriptable, CI-friendly access to Merchant Center accounts and product feeds — and leads with three things the API makes harder than it should: diagnosing the silent GCP-registration failure, validating feeds offline before products get disapproved, and migrating off the retiring Content API. MIT-licensed and free ($0).
+
+## Start here
+
+- [What is GMC?](https://yasserstudio.github.io/gmc/guide/): overview and concepts
+- [Installation](https://yasserstudio.github.io/gmc/guide/installation): npm, npx, Homebrew, or a standalone binary
+- [Getting started](https://yasserstudio.github.io/gmc/guide/getting-started): auth → doctor → first commands
+
+## Key capabilities
+
+- [gmc doctor](https://yasserstudio.github.io/gmc/reference/doctor): diagnose auth, GCP registration, and Merchant API access — catches the silent failure where a credential authenticates but every call returns empty
+- [gmc preflight](https://yasserstudio.github.io/gmc/reference/preflight): validate a Google Shopping feed offline (no API call, no auth) against required-attribute, format, and disapproval-trigger rules
+- [gmc migrate](https://yasserstudio.github.io/gmc/reference/migrate): move off the Content API for Shopping — scope/auth audit, product transform (price→micros, field remap), and feed-label safety check
+- [CLI reference](https://yasserstudio.github.io/gmc/reference/): every command (accounts, products, datasources, feeds, inventory, promotions, regions, notifications, quota, issues, reports)
+
+## CI usage
+
+- [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) and [GitLab CI](https://yasserstudio.github.io/gmc/guide/gitlab-ci): `--json` everywhere and classed exit codes let a pipeline gate a merge on a feed disapproval or a performance threshold

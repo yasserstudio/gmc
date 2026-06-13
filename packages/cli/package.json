@@ -1,7 +1,7 @@
 {
   "name": "@gmc-cli/cli",
   "version": "1.0.10",
-  "description": "Google Merchant Center CLI — a typed, CI-friendly command-line interface for the Google Merchant API, with an offline feed-compliance preflight. Provides the gmc command.",
+  "description": "Free, open-source CLI for the Google Merchant API. Migrate off the retiring Content API, diagnose silent setup failures (gmc doctor), and preflight feeds offline to catch disapprovals before upload — typed, --json, CI-native. Provides the gmc command.",
   "type": "module",
   "bin": {
     "gmc": "./dist/bin.js"
@@ -34,13 +34,17 @@
   "keywords": [
     "google-merchant-center",
     "merchant-api",
+    "merchant-api-migration",
+    "content-api-shopping",
+    "content-api-migration",
     "google-shopping",
+    "google-shopping-feed",
     "product-feed",
+    "feed-validation",
+    "feed-validator",
+    "preflight",
     "cli",
     "ecommerce",
-    "feed",
-    "preflight",
-    "content-api-migration",
     "merchant-center-next",
     "devops",
     "ci-cd",

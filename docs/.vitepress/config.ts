@@ -15,29 +15,71 @@ export default defineConfig({
   head: [
     ["link", { rel: "icon", type: "image/png", href: "/gmc/icon-200.png" }],
     ["meta", { name: "theme-color", content: "#1a73e8" }],
-    ["meta", { name: "og:type", content: "website" }],
-    ["meta", { name: "og:title", content: "GMC — Google Merchant Center CLI" }],
-    [
-      "meta",
-      {
-        name: "og:description",
-        content:
-          "Typed, CI-friendly CLI for the Google Merchant API — with an offline feed-compliance preflight and a Content API → Merchant API migrator.",
-      },
-    ],
-    ["meta", { name: "og:url", content: "https://yasserstudio.github.io/gmc/" }],
-    ["meta", { name: "og:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:site_name", content: "GMC — Google Merchant Center CLI" }],
+    // og:image. TODO: swap the square app icon for a dedicated 1200×630 social card,
+    // then switch twitter:card to "summary_large_image".
+    ["meta", { property: "og:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
     ["meta", { name: "twitter:card", content: "summary" }],
-    ["meta", { name: "twitter:title", content: "GMC — Google Merchant Center CLI" }],
-    [
-      "meta",
-      {
-        name: "twitter:description",
-        content: "Typed, CI-friendly CLI for the Google Merchant API, with an offline preflight.",
-      },
-    ],
     ["meta", { name: "twitter:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
   ],
+  // Per-page canonical + Open Graph (title/url/description) and a SoftwareApplication
+  // JSON-LD on the homepage. Title/description fall back to the page title and the
+  // frontmatter `description` (set per page; the site `description` is the default).
+  transformPageData(pageData) {
+    const base = "https://yasserstudio.github.io/gmc";
+    const slug = pageData.relativePath.replace(/(?:index)?\.md$/, "").replace(/\/$/, "");
+    const url = slug ? `${base}/${slug}/` : `${base}/`;
+    const isHome = pageData.relativePath === "index.md";
+    const title =
+      isHome || !pageData.title
+        ? "GMC — Google Merchant Center CLI"
+        : `${pageData.title} | GMC — Google Merchant Center CLI`;
+    const description = pageData.frontmatter.description ?? pageData.description;
+    const head = (pageData.frontmatter.head ??= []);
+    head.push(
+      ["link", { rel: "canonical", href: url }],
+      ["meta", { property: "og:url", content: url }],
+      ["meta", { property: "og:title", content: title }],
+      ["meta", { name: "twitter:title", content: title }],
+    );
+    if (description) {
+      head.push(
+        ["meta", { property: "og:description", content: description }],
+        ["meta", { name: "twitter:description", content: description }],
+      );
+    }
+    if (isHome) {
+      head.push([
+        "script",
+        { type: "application/ld+json" },
+        JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "SoftwareApplication",
+              name: "GMC — Google Merchant Center CLI",
+              applicationCategory: "DeveloperApplication",
+              operatingSystem: "Linux, macOS, Windows",
+              description:
+                "Free, open-source CLI for the Google Merchant API: typed, CI-friendly access with an offline feed-compliance preflight and a Content API → Merchant API migrator.",
+              url: `${base}/`,
+              license: "https://opensource.org/licenses/MIT",
+              isAccessibleForFree: true,
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+              author: {
+                "@type": "Organization",
+                name: "Yasser Studio",
+                url: "https://yasser.studio",
+              },
+              codeRepository: "https://github.com/yasserstudio/gmc",
+            },
+            { "@type": "WebSite", name: "GMC", url: `${base}/` },
+          ],
+        }),
+      ]);
+    }
+  },
   themeConfig: {
     logo: "/icon-200.png",
     // Brand text in the navbar is "GMC"; the lowercase "gmc" is the command.

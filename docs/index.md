@@ -1,9 +1,10 @@
 ---
 layout: home
+description: "Free, open-source CLI for the Google Merchant API. Typed, CI-friendly access with an offline feed-compliance preflight and a Content API → Merchant API migrator."
 hero:
   name: GMC
   text: The Google Merchant Center CLI
-  tagline: Typed, CI-friendly access to the Google Merchant API — with an offline feed-compliance preflight.
+  tagline: Validate feeds offline, diagnose the silent setup trap, and move off the retiring Content API — one typed CLI, built for CI.
   actions:
     - theme: brand
       text: Get started
@@ -16,15 +17,15 @@ hero:
       link: https://github.com/yasserstudio/gmc
 features:
   - title: Typed Merchant API
-    details: A typed client for full account management (profile, users, lifecycle, shipping, return policies), products, data sources, inventory, promotions, regions, and reports — per-sub-API rate limiting, retry/backoff, and pagination built in.
+    details: A fully typed client for the whole Merchant API — accounts, products, data sources, inventory, promotions, regions, and reports. Rate limiting, retry/backoff, and pagination are built in, so you don't hand-roll them.
   - title: gmc doctor
     details: Diagnoses the silent GCP-registration / API-not-enabled trap that quietly breaks Merchant API access.
   - title: Offline preflight
     details: gmc preflight scans your feed for required-attribute, format, and disapproval-trigger issues locally — no API call — so you catch a rejection before upload.
   - title: Content API → Merchant API
-    details: gmc migrate moves you off the retired Content API — scope/auth audit, product transform (price→micros, field remap), and a feed-label safety check.
+    details: gmc migrate moves you off the retiring Content API — scope/auth audit, product transform (price→micros, field remap), and a feed-label safety check.
   - title: Feeds as code
-    details: Pull your catalog to version-controllable JSON, diff what would change, and push it back. Inventory and promotions too.
+    details: Pull your catalog to version-controllable JSON, review the diff, and push it back — products, inventory, and promotions. Your feed lives in Git.
   - title: Built for CI
-    details: "--json everywhere and classed exit codes, plus a GitHub Action and GitLab recipe — gate a merge on preflight or a performance threshold."
+    details: "Block a bad feed from shipping: every command speaks --json and returns a classed exit code, so a GitHub Action or GitLab job can fail the build on a disapproval or a performance drop."
 ---

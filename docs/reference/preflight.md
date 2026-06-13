@@ -1,3 +1,7 @@
+---
+description: "Validate your Google Shopping product feed offline and catch disapprovals before upload — required-attribute, format, and policy rules. No API call, no auth. A drop-in CI gate."
+---
+
 # gmc preflight
 
 **Offline feed-compliance scanner.** `preflight` checks your product data against Merchant Center rules **before** you upload — catching disapprovals locally, with no API call and no auth. Run it on a [`feeds pull`](/reference/feeds) directory, a single file, or (with `--remote`) the live catalog. Its exit code makes it a drop-in CI gate.
