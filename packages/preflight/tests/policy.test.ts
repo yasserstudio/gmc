@@ -8,7 +8,7 @@ const rule = (id: string) => {
   return found;
 };
 const check = (id: string, product: ProductInput) => rule(id).check(product, {});
-const title = (t: string): ProductInput => ({ attributes: { title: t } });
+const title = (t: string): ProductInput => ({ productAttributes: { title: t } });
 
 describe("policy.promotional-title", () => {
   it("is an error and flags promotional phrases, not legit names", () => {
@@ -72,9 +72,15 @@ describe("policy.phone-in-title", () => {
 describe("policy.link-https", () => {
   it("warns on http, passes https / absent / malformed", () => {
     expect(rule("policy.link-https").defaultSeverity).toBe("warning");
-    expect(check("policy.link-https", { attributes: { link: "http://x.com/p" } })).toHaveLength(1);
-    expect(check("policy.link-https", { attributes: { link: "https://x.com/p" } })).toHaveLength(0);
-    expect(check("policy.link-https", { attributes: { link: "not a url" } })).toHaveLength(0);
+    expect(
+      check("policy.link-https", { productAttributes: { link: "http://x.com/p" } }),
+    ).toHaveLength(1);
+    expect(
+      check("policy.link-https", { productAttributes: { link: "https://x.com/p" } }),
+    ).toHaveLength(0);
+    expect(check("policy.link-https", { productAttributes: { link: "not a url" } })).toHaveLength(
+      0,
+    );
     expect(check("policy.link-https", {})).toHaveLength(0);
   });
 });

@@ -81,10 +81,14 @@ describe("gmc feeds pull", () => {
       {
         name: "accounts/123/products/en~US~SKU1",
         offerId: "SKU1",
-        attributes: { title: "A" },
+        productAttributes: { title: "A" },
         productStatus: { itemLevelIssues: [] },
       },
-      { name: "accounts/123/products/en~US~SKU2", offerId: "SKU2", attributes: { title: "B" } },
+      {
+        name: "accounts/123/products/en~US~SKU2",
+        offerId: "SKU2",
+        productAttributes: { title: "B" },
+      },
     ]);
 
     await run(["feeds", "pull", "--dir", dir, "--json"]);
@@ -99,7 +103,7 @@ describe("gmc feeds pull", () => {
       string,
       unknown
     >;
-    expect(f1).toEqual({ offerId: "SKU1", attributes: { title: "A" } });
+    expect(f1).toEqual({ offerId: "SKU1", productAttributes: { title: "A" } });
     expect("productStatus" in f1).toBe(false);
     expect("name" in f1).toBe(false);
     expect(process.exitCode).toBe(0);
@@ -124,7 +128,7 @@ describe("gmc feeds pull", () => {
 
   it("sanitizes path-unsafe characters in the filename", async () => {
     listProducts.mockResolvedValue([
-      { name: "accounts/123/products/en~US~A:B", offerId: "A:B", attributes: {} },
+      { name: "accounts/123/products/en~US~A:B", offerId: "A:B", productAttributes: {} },
     ]);
     await run(["feeds", "pull", "--dir", dir]);
     expect(readdirSync(dir)).toEqual(["en~US~A_B.json"]);
@@ -143,8 +147,8 @@ describe("gmc feeds pull", () => {
 
   it("skips a colliding filename instead of overwriting", async () => {
     listProducts.mockResolvedValue([
-      { name: "accounts/123/products/en~US~A:B", attributes: { title: "first" } },
-      { name: "accounts/123/products/en~US~A_B", attributes: { title: "second" } },
+      { name: "accounts/123/products/en~US~A:B", productAttributes: { title: "first" } },
+      { name: "accounts/123/products/en~US~A_B", productAttributes: { title: "second" } },
     ]);
     await run(["feeds", "pull", "--dir", dir, "--json"]);
     const out = JSON.parse(writes.join("")) as { pulled: number; skipped?: number };
@@ -152,9 +156,9 @@ describe("gmc feeds pull", () => {
     expect(out.skipped).toBe(1);
     expect(readdirSync(dir)).toEqual(["en~US~A_B.json"]);
     const written = JSON.parse(readFileSync(join(dir, "en~US~A_B.json"), "utf8")) as {
-      attributes: { title: string };
+      productAttributes: { title: string };
     };
-    expect(written.attributes.title).toBe("first");
+    expect(written.productAttributes.title).toBe("first");
     expect(process.exitCode).toBe(0);
   });
 
@@ -234,11 +238,11 @@ describe("gmc feeds push", () => {
   it("inserts one product input per JSON file, under the given data source", async () => {
     writeFileSync(
       join(dir, "a.json"),
-      JSON.stringify({ offerId: "SKU1", attributes: { title: "A" } }),
+      JSON.stringify({ offerId: "SKU1", productAttributes: { title: "A" } }),
     );
     writeFileSync(
       join(dir, "b.json"),
-      JSON.stringify({ offerId: "SKU2", attributes: { title: "B" } }),
+      JSON.stringify({ offerId: "SKU2", productAttributes: { title: "B" } }),
     );
 
     await run(["feeds", "push", "--dir", dir, "--data-source", "55", "--json"]);
@@ -253,7 +257,7 @@ describe("gmc feeds push", () => {
     expect("failed" in out).toBe(false);
     expect(insertProductInput).toHaveBeenCalledTimes(2);
     expect(insertProductInput).toHaveBeenCalledWith(
-      { offerId: "SKU1", attributes: { title: "A" } },
+      { offerId: "SKU1", productAttributes: { title: "A" } },
       "55",
     );
     expect(process.exitCode).toBe(0);
@@ -363,14 +367,14 @@ describe("gmc feeds diff", () => {
     offerId,
     contentLanguage: "en",
     feedLabel: "US",
-    attributes: { title },
+    productAttributes: { title },
   });
   // The pulled-file equivalent of the product above (key fields + attributes).
   const file = (offerId: string, title: string) => ({
     offerId,
     contentLanguage: "en",
     feedLabel: "US",
-    attributes: { title },
+    productAttributes: { title },
   });
 
   beforeEach(() => {
@@ -463,7 +467,7 @@ describe("gmc feeds diff", () => {
     writeFileSync(
       join(dir, "a.json"),
       JSON.stringify({
-        attributes: { title: "A" },
+        productAttributes: { title: "A" },
         feedLabel: "US",
         contentLanguage: "en",
         offerId: "SKU1",

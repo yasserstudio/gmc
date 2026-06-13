@@ -11,17 +11,23 @@ const check = (id: string, product: ProductInput) => rule(id).check(product, {})
 
 describe("format.link-url / format.image-link-url", () => {
   it("passes valid http(s) URLs, flags malformed, ignores absent", () => {
-    expect(check("format.link-url", { attributes: {} })).toHaveLength(0);
-    expect(check("format.link-url", { attributes: { link: "https://x.com/p" } })).toHaveLength(0);
-    expect(check("format.link-url", { attributes: { link: "http://x.com" } })).toHaveLength(0);
-    expect(check("format.link-url", { attributes: { link: "ftp://x.com" } })).toHaveLength(1);
-    expect(check("format.link-url", { attributes: { link: "not a url" } })).toHaveLength(1);
+    expect(check("format.link-url", { productAttributes: {} })).toHaveLength(0);
+    expect(
+      check("format.link-url", { productAttributes: { link: "https://x.com/p" } }),
+    ).toHaveLength(0);
+    expect(check("format.link-url", { productAttributes: { link: "http://x.com" } })).toHaveLength(
+      0,
+    );
+    expect(check("format.link-url", { productAttributes: { link: "ftp://x.com" } })).toHaveLength(
+      1,
+    );
+    expect(check("format.link-url", { productAttributes: { link: "not a url" } })).toHaveLength(1);
 
     expect(
-      check("format.image-link-url", { attributes: { imageLink: "https://x.com/a.jpg" } }),
+      check("format.image-link-url", { productAttributes: { imageLink: "https://x.com/a.jpg" } }),
     ).toHaveLength(0);
     expect(
-      check("format.image-link-url", { attributes: { imageLink: "/relative.jpg" } }),
+      check("format.image-link-url", { productAttributes: { imageLink: "/relative.jpg" } }),
     ).toHaveLength(1);
   });
 });
@@ -29,11 +35,11 @@ describe("format.link-url / format.image-link-url", () => {
 describe("format.price-amount", () => {
   const c = (amountMicros: unknown) =>
     check("format.price-amount", {
-      attributes: { price: { amountMicros: amountMicros as string } },
+      productAttributes: { price: { amountMicros: amountMicros as string } },
     });
 
   it("flags only a present-but-malformed amount", () => {
-    expect(check("format.price-amount", { attributes: {} })).toHaveLength(0); // absent
+    expect(check("format.price-amount", { productAttributes: {} })).toHaveLength(0); // absent
     expect(c("")).toHaveLength(0); // empty == absent
     expect(c("49990000")).toHaveLength(0);
     expect(c(49990000)).toHaveLength(0); // numeric tolerated
@@ -44,10 +50,10 @@ describe("format.price-amount", () => {
 });
 
 describe("format.price-currency", () => {
-  const c = (price: Price) => check("format.price-currency", { attributes: { price } });
+  const c = (price: Price) => check("format.price-currency", { productAttributes: { price } });
 
   it("only fires when an amount is present", () => {
-    expect(check("format.price-currency", { attributes: {} })).toHaveLength(0);
+    expect(check("format.price-currency", { productAttributes: {} })).toHaveLength(0);
     expect(c({ currencyCode: "USD" })).toHaveLength(0); // no amount → not our job
   });
 
@@ -67,10 +73,10 @@ describe("format.price-currency", () => {
 
 describe("format.availability-enum", () => {
   const c = (availability: string) =>
-    check("format.availability-enum", { attributes: { availability } });
+    check("format.availability-enum", { productAttributes: { availability } });
 
   it("accepts canonical values and case/space variants, flags the rest", () => {
-    expect(check("format.availability-enum", { attributes: {} })).toHaveLength(0);
+    expect(check("format.availability-enum", { productAttributes: {} })).toHaveLength(0);
     expect(c("in_stock")).toHaveLength(0);
     expect(c("In Stock")).toHaveLength(0); // normalized
     expect(c("backorder")).toHaveLength(0);
@@ -79,7 +85,8 @@ describe("format.availability-enum", () => {
 });
 
 describe("format.condition-enum", () => {
-  const c = (condition: string) => check("format.condition-enum", { attributes: { condition } });
+  const c = (condition: string) =>
+    check("format.condition-enum", { productAttributes: { condition } });
 
   it("accepts new/refurbished/used (any case), flags the rest", () => {
     expect(c("new")).toHaveLength(0);
@@ -89,11 +96,11 @@ describe("format.condition-enum", () => {
 });
 
 describe("format.gtin-checksum", () => {
-  const c = (gtin: string) => check("format.gtin-checksum", { attributes: { gtin } });
+  const c = (gtin: string) => check("format.gtin-checksum", { productAttributes: { gtin } });
 
   it("passes valid GTINs and flags bad check digits (as a warning)", () => {
     expect(rule("format.gtin-checksum").defaultSeverity).toBe("warning");
-    expect(check("format.gtin-checksum", { attributes: {} })).toHaveLength(0);
+    expect(check("format.gtin-checksum", { productAttributes: {} })).toHaveLength(0);
     expect(c("4006381333931")).toHaveLength(0); // valid EAN-13
     expect(c("036000291452")).toHaveLength(0); // valid UPC-A
     expect(c("4006381333930")).toHaveLength(1); // bad check digit
@@ -105,11 +112,11 @@ describe("non-string values (hand-edited feeds) yield real findings, not crashes
   it("coerces a non-string attribute and flags it instead of throwing", () => {
     expect(
       check("format.availability-enum", {
-        attributes: { availability: 0 as unknown as string },
+        productAttributes: { availability: 0 as unknown as string },
       }),
     ).toHaveLength(1); // "0" is not a recognized value
     expect(
-      check("format.link-url", { attributes: { link: ["x"] as unknown as string } }),
+      check("format.link-url", { productAttributes: { link: ["x"] as unknown as string } }),
     ).toHaveLength(1);
   });
 });
@@ -117,18 +124,18 @@ describe("non-string values (hand-edited feeds) yield real findings, not crashes
 describe("format length limits", () => {
   it("warns past the cap, passes within (and ignores absent)", () => {
     expect(rule("format.title-length").defaultSeverity).toBe("warning");
-    expect(check("format.title-length", { attributes: {} })).toHaveLength(0);
-    expect(check("format.title-length", { attributes: { title: "x".repeat(150) } })).toHaveLength(
-      0,
-    );
-    expect(check("format.title-length", { attributes: { title: "x".repeat(151) } })).toHaveLength(
-      1,
-    );
+    expect(check("format.title-length", { productAttributes: {} })).toHaveLength(0);
     expect(
-      check("format.description-length", { attributes: { description: "x".repeat(5000) } }),
+      check("format.title-length", { productAttributes: { title: "x".repeat(150) } }),
     ).toHaveLength(0);
     expect(
-      check("format.description-length", { attributes: { description: "x".repeat(5001) } }),
+      check("format.title-length", { productAttributes: { title: "x".repeat(151) } }),
+    ).toHaveLength(1);
+    expect(
+      check("format.description-length", { productAttributes: { description: "x".repeat(5000) } }),
+    ).toHaveLength(0);
+    expect(
+      check("format.description-length", { productAttributes: { description: "x".repeat(5001) } }),
     ).toHaveLength(1);
   });
 });

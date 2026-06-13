@@ -105,11 +105,34 @@ describe("gmc products", () => {
     expect(process.exitCode).toBe(0);
   });
 
+  it("list (text) renders title, availability, and the disapproved/issue counts", async () => {
+    listProducts.mockResolvedValue([
+      {
+        name: "accounts/123/products/en~US~SKU1",
+        offerId: "SKU1",
+        productAttributes: { title: "Trail Runner", availability: "in_stock" },
+        productStatus: {
+          itemLevelIssues: [
+            { code: "x", severity: "DISAPPROVED", reportingContext: "SHOPPING_ADS" },
+            { code: "y", severity: "NOT_IMPACTED", reportingContext: "FREE_LISTINGS" },
+          ],
+        },
+      },
+    ]);
+
+    await run(["products", "list"]);
+
+    const out = writes.join("");
+    expect(out).toContain("Trail Runner");
+    expect(out).toContain("[in_stock]");
+    expect(out).toContain("1 disapproved / 2 issue(s)");
+  });
+
   it("get fetches the product by id", async () => {
     getProduct.mockResolvedValue({
       name: "accounts/123/products/online~en~US~SKU1",
       offerId: "SKU1",
-      attributes: { title: "Shoe" },
+      productAttributes: { title: "Shoe" },
     });
 
     await run(["products", "get", "online~en~US~SKU1", "--json"]);
@@ -126,7 +149,7 @@ describe("gmc products", () => {
     });
     const file = tmpFile(
       "gmc-prod-insert.json",
-      JSON.stringify({ offerId: "SKU1", attributes: { title: "Shoe" } }),
+      JSON.stringify({ offerId: "SKU1", productAttributes: { title: "Shoe" } }),
     );
 
     try {
@@ -136,7 +159,7 @@ describe("gmc products", () => {
     }
 
     expect(insertProductInput).toHaveBeenCalledWith(
-      { offerId: "SKU1", attributes: { title: "Shoe" } },
+      { offerId: "SKU1", productAttributes: { title: "Shoe" } },
       "55",
     );
     expect(process.exitCode).toBe(0);

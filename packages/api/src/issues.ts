@@ -30,7 +30,8 @@ export interface IssueBreakdown {
 /** How an issue affects the account or product. */
 export interface IssueImpact {
   message?: string;
-  /** Severity enum: `NOT_IMPACTED` | `DEMOTED` | `DISAPPROVED` | `SEVERITY_UNSPECIFIED`. */
+  /** Severity the API returns for a rendered issue, e.g. `ERROR` or `WARNING` (confirmed
+   * live against `renderaccountissues`; not the v1beta RPC enum). Rendered verbatim. */
   severity?: string;
   breakdowns?: IssueBreakdown[];
 }

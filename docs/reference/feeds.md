@@ -31,7 +31,7 @@ feeds/
   "offerId": "SKU1",
   "contentLanguage": "en",
   "feedLabel": "US",
-  "attributes": {
+  "productAttributes": {
     "title": "Trail Runner",
     "price": { "amountMicros": "49990000", "currencyCode": "USD" }
   }

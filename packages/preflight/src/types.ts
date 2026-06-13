@@ -16,8 +16,8 @@ export type RuleSetting = Severity | "off";
 /**
  * One problem a rule found with a product, before the engine attaches the
  * product identity and effective severity. Shaped to echo the Merchant API's
- * `ItemLevelIssue` (attribute / description / documentation) so preflight reads
- * like a prediction of what the API would report.
+ * `ItemLevelIssue` (description, documentation, and the faulting attribute) so
+ * preflight reads like a prediction of what the API would report.
  */
 export interface RuleViolation {
   /** The product attribute at fault (e.g. "title", "price.currencyCode"), if any. */

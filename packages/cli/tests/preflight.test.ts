@@ -37,7 +37,7 @@ const GOOD = JSON.stringify({
   offerId: "SKU1",
   contentLanguage: "en",
   feedLabel: "US",
-  attributes: {
+  productAttributes: {
     title: "Trail Runner",
     description: "A lightweight trail running shoe.",
     link: "https://example.com/trail-runner",
@@ -54,7 +54,7 @@ const MISSING_TITLE = JSON.stringify({
   offerId: "SKU2",
   contentLanguage: "en",
   feedLabel: "US",
-  attributes: {
+  productAttributes: {
     description: "A lightweight trail running shoe.",
     link: "https://example.com/trail-runner",
     imageLink: "https://example.com/trail-runner.jpg",
@@ -155,7 +155,7 @@ describe("gmc preflight", () => {
         offerId: "SKU9",
         contentLanguage: "en",
         feedLabel: "US",
-        attributes: { price: { amountMicros: "1000", currencyCode: "USD" } }, // no title
+        productAttributes: { price: { amountMicros: "1000", currencyCode: "USD" } }, // no title
       },
     ]);
     await run(["preflight", "--remote"]);

@@ -105,17 +105,17 @@ gmc preflight --dir feeds                           # validate the converted cat
 
 ### What it converts
 
-The Merchant API keeps only _identity_ fields at the top level and nests everything descriptive under `attributes`, and both APIs share the product-spec attribute names — so the transform moves every field except the identity ones into `attributes`, converts prices to micros, and remaps the identity fields:
+The Merchant API keeps only _identity_ fields at the top level and nests everything descriptive under `productAttributes`, and both APIs share the product-spec attribute names — so the transform moves every field except the identity ones into `productAttributes`, converts prices to micros, and remaps the identity fields:
 
-| Content API v2.1                                              | Merchant API                                                      |                                                                                             |
-| ------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `price: {value:"49.99", currency:"USD"}`                      | `attributes.price: {amountMicros:"49990000", currencyCode:"USD"}` | value × 1,000,000 (BigInt, half-up at 6 dp); also `salePrice`, nested `shipping[].price`, … |
-| `availability: "in stock"`                                    | `attributes.availability: "in_stock"`                             | enum spaces → underscores                                                                   |
-| `targetCountry: "US"`                                         | `feedLabel: "US"`                                                 | the key remap (an explicit `feedLabel` wins; `--feed-label` overrides)                      |
-| `id: "online:en:US:SKU1"`                                     | `offerId`/`contentLanguage`/`feedLabel`                           | parsed to backfill missing identity, then dropped                                           |
-| `title`, `description`, `link`, `customLabel0`, `shipping`, … | `attributes.*`                                                    | moved as-is (names match)                                                                   |
-| `customAttributes: [{name,value}]`                            | `customAttributes`                                                | carried through                                                                             |
-| `id` / `kind` / `source` / `selfLink`                         | —                                                                 | output-only → dropped                                                                       |
+| Content API v2.1                                              | Merchant API                                                             |                                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `price: {value:"49.99", currency:"USD"}`                      | `productAttributes.price: {amountMicros:"49990000", currencyCode:"USD"}` | value × 1,000,000 (BigInt, half-up at 6 dp); also `salePrice`, nested `shipping[].price`, … |
+| `availability: "in stock"`                                    | `productAttributes.availability: "in_stock"`                             | enum spaces → underscores                                                                   |
+| `targetCountry: "US"`                                         | `feedLabel: "US"`                                                        | the key remap (an explicit `feedLabel` wins; `--feed-label` overrides)                      |
+| `id: "online:en:US:SKU1"`                                     | `offerId`/`contentLanguage`/`feedLabel`                                  | parsed to backfill missing identity, then dropped                                           |
+| `title`, `description`, `link`, `customLabel0`, `shipping`, … | `productAttributes.*`                                                    | moved as-is (names match)                                                                   |
+| `customAttributes: [{name,value}]`                            | `customAttributes`                                                       | carried through                                                                             |
+| `id` / `kind` / `source` / `selfLink`                         | —                                                                        | output-only → dropped                                                                       |
 
 Each run prints a **migration report** — products converted, identity remaps, dropped fields, and any warnings (e.g. a price whose value isn't a number, left for `preflight` to flag) — or the full report as `--json`.
 

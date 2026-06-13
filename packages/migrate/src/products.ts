@@ -5,15 +5,15 @@
 // writing the output dir, rendering the report); this engine only transforms.
 //
 // The Merchant API keeps only identity fields at the top level and nests everything
-// descriptive under `attributes`, and the two APIs share product-spec attribute
+// descriptive under `productAttributes`, and the two APIs share product-spec attribute
 // names — so the transform is data-driven: move every field except the identity
-// ones into `attributes`, convert price-shaped values to micros, and remap the
+// ones into `productAttributes`, convert price-shaped values to micros, and remap the
 // identity / `id` / `targetCountry` fields. The one real rename is
 // `targetCountry` → `feedLabel`.
 
 import { toMicros, type CustomAttribute, type Price, type ProductInput } from "@gmc-cli/api";
 
-// Identity / structural fields handled explicitly — never hoisted into attributes.
+// Identity / structural fields handled explicitly — never hoisted into productAttributes.
 const IDENTITY_FIELDS = new Set([
   "offerId",
   "channel",
@@ -167,8 +167,8 @@ export function transformProduct(raw: unknown): ProductTransformResult {
     input.customAttributes = src["customAttributes"] as CustomAttribute[];
   }
 
-  // Hoist every remaining field into attributes, converting prices to micros.
-  const attributes: Record<string, unknown> = {};
+  // Hoist every remaining field into productAttributes, converting prices to micros.
+  const productAttributes: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(src)) {
     if (IDENTITY_FIELDS.has(key)) continue;
     if (DROP_FIELDS.has(key)) {
@@ -187,12 +187,12 @@ export function transformProduct(raw: unknown): ProductTransformResult {
         value = norm;
       }
     }
-    attributes[key] = value;
+    productAttributes[key] = value;
   }
-  if (Object.keys(attributes).length > 0) {
+  if (Object.keys(productAttributes).length > 0) {
     // The Merchant API accepts more attributes than ProductAttributes models; the
     // typed view is intentionally partial (see @gmc-cli/api products.ts), so cast.
-    input.attributes = attributes as ProductInput["attributes"];
+    input.productAttributes = productAttributes as ProductInput["productAttributes"];
   }
 
   return { input, remapped, dropped, warnings };

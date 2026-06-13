@@ -71,9 +71,9 @@ gmc preflight — scanned 2 product(s)
 
 en~US~SKU2
   ✗ title — Missing title — every product must have a `title`.
-      → Set attributes.title to the product's name as shown to shoppers.
+      → Set productAttributes.title to the product's name as shown to shoppers.
   ✗ price — Missing price — every product must have a `price` with an amount.
-      → Set attributes.price.amountMicros (and currencyCode), e.g. 49990000 / "USD".
+      → Set productAttributes.price.amountMicros (and currencyCode), e.g. 49990000 / "USD".
 
 2 errors across 1 product(s).
 Failed.

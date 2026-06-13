@@ -56,7 +56,7 @@ export const policyRules: Rule[] = [
     title: "No promotional text in title",
     defaultSeverity: "error",
     check(product) {
-      const title = text(product.attributes?.title);
+      const title = text(product.productAttributes?.title);
       if (title === undefined) return [];
       const match = PROMO_PHRASE_RE.exec(title) ?? PROMO_PERCENT_RE.exec(title);
       if (!match) return [];
@@ -76,7 +76,7 @@ export const policyRules: Rule[] = [
     title: "Title isn't excessively capitalized",
     defaultSeverity: "warning",
     check(product) {
-      const title = text(product.attributes?.title);
+      const title = text(product.productAttributes?.title);
       if (title === undefined) return [];
       // Count Unicode letters / uppercase letters so non-Latin scripts (Cyrillic, Greek,
       // …) are judged too; caseless scripts (CJK) have 0 uppercase and never trip.
@@ -99,7 +99,7 @@ export const policyRules: Rule[] = [
     title: "No gimmicky symbols in title",
     defaultSeverity: "warning",
     check(product) {
-      const title = text(product.attributes?.title);
+      const title = text(product.productAttributes?.title);
       if (title === undefined) return [];
       if (!SYMBOL_RUN_RE.test(title) && !DECORATIVE_RE.test(title) && !EMOJI_RE.test(title)) {
         return [];
@@ -120,7 +120,7 @@ export const policyRules: Rule[] = [
     title: "No phone number in title",
     defaultSeverity: "warning",
     check(product) {
-      const title = text(product.attributes?.title);
+      const title = text(product.productAttributes?.title);
       if (title === undefined) return [];
       const match = PHONE_RE.exec(title);
       if (!match) return [];
@@ -139,7 +139,7 @@ export const policyRules: Rule[] = [
     title: "Landing page is served over https",
     defaultSeverity: "warning",
     check(product) {
-      const link = text(product.attributes?.link);
+      const link = text(product.productAttributes?.link);
       if (link === undefined) return [];
       let protocol: string;
       try {

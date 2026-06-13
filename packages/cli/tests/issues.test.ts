@@ -77,7 +77,7 @@ describe("gmc issues", () => {
       {
         title: "Misrepresentation",
         impact: {
-          severity: "DISAPPROVED",
+          severity: "ERROR",
           message: "Account suspended for policy violation.",
           breakdowns: [
             { regions: [{ code: "US", name: "United States" }], details: ["Shopping ads"] },
@@ -88,7 +88,7 @@ describe("gmc issues", () => {
     ]);
     await run(["issues", "account"]);
     expect(out()).toContain("1 issue(s)");
-    expect(out()).toContain("[DISAPPROVED] Misrepresentation");
+    expect(out()).toContain("[ERROR] Misrepresentation");
     expect(out()).toContain("Account suspended");
     expect(out()).toContain("United States — Shopping ads");
     expect(out()).toContain("prerenderedContent");

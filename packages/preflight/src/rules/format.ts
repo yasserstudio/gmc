@@ -31,7 +31,7 @@ export const formatRules: Rule[] = [
     title: "Link is a valid URL",
     defaultSeverity: "error",
     check(product) {
-      const link = text(product.attributes?.link);
+      const link = text(product.productAttributes?.link);
       if (link === undefined || isHttpUrl(link)) return [];
       return [
         {
@@ -48,7 +48,7 @@ export const formatRules: Rule[] = [
     title: "Image link is a valid URL",
     defaultSeverity: "error",
     check(product) {
-      const image = text(product.attributes?.imageLink);
+      const image = text(product.productAttributes?.imageLink);
       if (image === undefined || isHttpUrl(image)) return [];
       return [
         {
@@ -65,7 +65,7 @@ export const formatRules: Rule[] = [
     title: "Price amount is well-formed",
     defaultSeverity: "error",
     check(product) {
-      const parsed = parseMicros(product.attributes?.price?.amountMicros);
+      const parsed = parseMicros(product.productAttributes?.price?.amountMicros);
       if (parsed.kind !== "invalid") return [];
       return [
         {
@@ -83,7 +83,7 @@ export const formatRules: Rule[] = [
     title: "Price currency is well-formed",
     defaultSeverity: "error",
     check(product) {
-      const price = product.attributes?.price;
+      const price = product.productAttributes?.price;
       // Only check the currency once the amount itself is well-formed: an absent price
       // is required.price's job, and a malformed amount is format.price-amount's — so a
       // broken price yields one finding, not a pile-on about a price being rebuilt anyway.
@@ -117,7 +117,7 @@ export const formatRules: Rule[] = [
     title: "Availability is a recognized value",
     defaultSeverity: "error",
     check(product) {
-      const value = text(product.attributes?.availability);
+      const value = text(product.productAttributes?.availability);
       if (value === undefined || AVAILABILITY.has(normalizeEnum(value))) return [];
       return [
         {
@@ -137,7 +137,7 @@ export const formatRules: Rule[] = [
     title: "Condition is a recognized value",
     defaultSeverity: "error",
     check(product) {
-      const value = text(product.attributes?.condition);
+      const value = text(product.productAttributes?.condition);
       if (value === undefined || CONDITION.has(normalizeEnum(value))) return [];
       return [
         {
@@ -154,7 +154,7 @@ export const formatRules: Rule[] = [
     title: "GTIN check digit is valid",
     defaultSeverity: "warning",
     check(product) {
-      const gtin = text(product.attributes?.gtin);
+      const gtin = text(product.productAttributes?.gtin);
       if (gtin === undefined || isValidGtin(gtin)) return [];
       return [
         {
@@ -172,7 +172,7 @@ export const formatRules: Rule[] = [
     title: "Title within length limit",
     defaultSeverity: "warning",
     check(product) {
-      const title = text(product.attributes?.title);
+      const title = text(product.productAttributes?.title);
       if (title === undefined || title.length <= TITLE_MAX) return [];
       return [
         {
@@ -189,7 +189,7 @@ export const formatRules: Rule[] = [
     title: "Description within length limit",
     defaultSeverity: "warning",
     check(product) {
-      const description = text(product.attributes?.description);
+      const description = text(product.productAttributes?.description);
       if (description === undefined || description.length <= DESCRIPTION_MAX) return [];
       return [
         {

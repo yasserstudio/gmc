@@ -54,6 +54,59 @@ describe("ProductsService", () => {
     );
   });
 
+  // Contract test: a recorded-shape Merchant API v1 product response. Locks the v1
+  // field names (`productAttributes`, itemLevelIssue `severity`/`reportingContext`/
+  // `applicableCountries`) at compile time (the typed reads below) and runtime — the
+  // exact bug class that shipped in 1.0.10 (`attributes`→`productAttributes`) and that
+  // fully-mocked tests missed. Structure mirrors a real v1 response; content is synthetic.
+  it("parses the real Merchant API v1 product shape (productAttributes + item-level issues)", async () => {
+    const v1Response = {
+      products: [
+        {
+          name: "accounts/123/products/en~GB~SKU1",
+          offerId: "SKU1",
+          contentLanguage: "en",
+          feedLabel: "GB",
+          dataSource: "accounts/123/dataSources/456",
+          base64EncodedName: "ZXhhbXBsZQ==",
+          productAttributes: {
+            title: "Sample Product",
+            description: "A sample product.",
+            link: "https://example.com/p/sku1",
+            availability: "in_stock",
+            price: { amountMicros: "19990000", currencyCode: "GBP" },
+          },
+          productStatus: {
+            itemLevelIssues: [
+              {
+                code: "policy_enforcement_account_disapproval",
+                severity: "DISAPPROVED",
+                resolution: "merchant_action",
+                reportingContext: "SHOPPING_ADS",
+                description: "Your products are not showing to customers",
+                detail: "Fix policy issues.",
+                documentation: "https://support.google.com/merchants/answer/12153802",
+                applicableCountries: ["GB"],
+              },
+            ],
+            creationDate: "2026-06-01T00:00:00Z",
+            lastUpdateDate: "2026-06-13T00:00:00Z",
+          },
+        },
+      ],
+    };
+    const fetchImpl = (async () => jsonResponse(200, v1Response)) as unknown as typeof fetch;
+
+    const [p] = await service(fetchImpl).listProducts();
+
+    expect(p?.productAttributes?.title).toBe("Sample Product");
+    expect(p?.productAttributes?.price?.amountMicros).toBe("19990000");
+    const issue = p?.productStatus?.itemLevelIssues?.[0];
+    expect(issue?.severity).toBe("DISAPPROVED");
+    expect(issue?.reportingContext).toBe("SHOPPING_ADS");
+    expect(issue?.applicableCountries).toEqual(["GB"]);
+  });
+
   it("listProducts follows pagination and passes pageSize", async () => {
     const pages = [
       { products: [{ name: "p1" }, { name: "p2" }], nextPageToken: "p2tok" },
@@ -136,7 +189,7 @@ describe("toProductInput", () => {
       feedLabel: "US",
       legacyLocal: true,
       dataSource: "accounts/123/dataSources/55",
-      attributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
+      productAttributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
       customAttributes: [{ name: "x", value: "y" }],
       productStatus: { itemLevelIssues: [{ code: "image_link" }] },
     });
@@ -146,7 +199,7 @@ describe("toProductInput", () => {
       contentLanguage: "en",
       feedLabel: "US",
       legacyLocal: true,
-      attributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
+      productAttributes: { title: "Shoe", price: { amountMicros: "9990000", currencyCode: "USD" } },
       customAttributes: [{ name: "x", value: "y" }],
     });
     // Output-only fields must not survive into a push-ready input.
