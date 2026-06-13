@@ -1,3 +1,7 @@
+---
+description: "Install GMC, authenticate, run gmc doctor, and make your first Google Merchant API calls from the terminal."
+---
+
 # Getting started
 
 ## Prerequisites

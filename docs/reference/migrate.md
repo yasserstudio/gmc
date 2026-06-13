@@ -1,3 +1,7 @@
+---
+description: "Migrate from the Content API for Shopping to the Google Merchant API before the August 18, 2026 sunset: scope/auth audit, price-to-micros transform, and feed-label checks."
+---
+
 # gmc migrate
 
 **Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API in three steps, all below: `migrate scopes` (auth-readiness audit), `migrate products` (transform to push-ready inputs), and `migrate feed-labels` (catch feed-label breaks).

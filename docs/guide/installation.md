@@ -1,6 +1,10 @@
+---
+description: "Install the GMC CLI four ways — npm, npx, Homebrew, or a standalone binary (no Node). The npm and npx paths need Node.js 20+."
+---
+
 # Installation
 
-`gmc` needs **Node.js ≥ 20**. Pick whichever fits your setup.
+Four ways in — **npm**, **npx**, **Homebrew**, or a **standalone binary** (no Node needed). The npm and npx paths require **Node.js ≥ 20**; pick whichever fits your setup.
 
 ## npm (recommended)
 

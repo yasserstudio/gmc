@@ -17,7 +17,7 @@ It is built for the **Content API → Merchant API migration** (the Content API 
   <a href="https://www.npmjs.com/package/@gmc-cli/cli"><img src="https://img.shields.io/npm/v/%40gmc-cli%2Fcli?style=for-the-badge&color=1a73e8&label=npm" alt="npm version"></a>
   <a href="https://yasserstudio.github.io/gmc/"><img src="https://img.shields.io/badge/docs-yasserstudio.github.io%2Fgmc-1a73e8?style=for-the-badge" alt="Documentation"></a>
   <a href="https://github.com/marketplace/actions/gmc-google-merchant-center-cli"><img src="https://img.shields.io/badge/marketplace-gmc-1a73e8?style=for-the-badge&logo=github" alt="GitHub Marketplace"></a>
-  <img src="https://img.shields.io/badge/tests-passing-1a7f37?style=for-the-badge" alt="Tests passing">
+  <a href="https://github.com/yasserstudio/gmc/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/yasserstudio/gmc/ci.yml?branch=main&style=for-the-badge&label=tests&color=1a7f37" alt="CI status"></a>
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js" alt="Node.js 20+">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/yasserstudio/gmc?style=for-the-badge&color=1a73e8" alt="MIT License"></a>
@@ -163,7 +163,7 @@ Every command supports `--json` and uses classed exit codes, so pipelines can br
 
 ```yaml
 # GitHub Actions
-- run: npm install -g @gmc-cli/cli # (once published)
+- run: npm install -g @gmc-cli/cli
 - env:
     GMC_SERVICE_ACCOUNT: ${{ secrets.GMC_SERVICE_ACCOUNT }}
     GMC_ACCOUNT_ID: "123456789"
