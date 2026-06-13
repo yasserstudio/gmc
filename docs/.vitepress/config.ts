@@ -17,11 +17,12 @@ export default defineConfig({
     ["meta", { name: "theme-color", content: "#1a73e8" }],
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:site_name", content: "GMC — Google Merchant Center CLI" }],
-    // og:image. TODO: swap the square app icon for a dedicated 1200×630 social card,
-    // then switch twitter:card to "summary_large_image".
-    ["meta", { property: "og:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
-    ["meta", { name: "twitter:card", content: "summary" }],
-    ["meta", { name: "twitter:image", content: "https://yasserstudio.github.io/gmc/icon.png" }],
+    ["meta", { property: "og:image", content: "https://yasserstudio.github.io/gmc/og-card.jpg" }],
+    ["meta", { property: "og:image:width", content: "1200" }],
+    ["meta", { property: "og:image:height", content: "630" }],
+    ["meta", { property: "og:image:alt", content: "GMC — The Google Merchant Center CLI" }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    ["meta", { name: "twitter:image", content: "https://yasserstudio.github.io/gmc/og-card.jpg" }],
   ],
   // Per-page canonical + Open Graph (title/url/description) and a SoftwareApplication
   // JSON-LD on the homepage. Title/description fall back to the page title and the
