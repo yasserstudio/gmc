@@ -12,7 +12,7 @@ gmc doctor --json
 1. **Credentials resolved** — a credential is found and an identity read (offline).
 2. **Access token acquired** — the credential mints a valid token (network).
 3. **Account configured** — informational; warns if no account id is set.
-4. **Merchant API access** — probes the API and interprets the result, including the `SERVICE_DISABLED` ("API not enabled") and empty-result ("not linked") traps.
+4. **Merchant API access** — probes the API and interprets the result, including the `SERVICE_DISABLED` ("API not enabled"), empty-result ("not linked"), and "Cloud project not registered" (401) traps. The last points at [`gmc accounts developer-registration register`](/reference/accounts).
 
 ## Exit codes
 

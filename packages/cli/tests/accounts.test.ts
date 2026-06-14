@@ -24,6 +24,9 @@ const getBusinessIdentity = vi.fn();
 const updateBusinessIdentity = vi.fn();
 const getAutofeedSettings = vi.fn();
 const updateAutofeedSettings = vi.fn();
+const getDeveloperRegistration = vi.fn();
+const registerGcp = vi.fn();
+const unregisterGcp = vi.fn();
 const getShippingSettings = vi.fn();
 const insertShippingSettings = vi.fn();
 const listReturnPolicies = vi.fn();
@@ -71,6 +74,9 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       updateBusinessIdentity = updateBusinessIdentity;
       getAutofeedSettings = getAutofeedSettings;
       updateAutofeedSettings = updateAutofeedSettings;
+      getDeveloperRegistration = getDeveloperRegistration;
+      registerGcp = registerGcp;
+      unregisterGcp = unregisterGcp;
       getShippingSettings = getShippingSettings;
       insertShippingSettings = insertShippingSettings;
       listReturnPolicies = listReturnPolicies;
@@ -603,6 +609,63 @@ describe("gmc accounts", () => {
     const out = writes.join("");
     expect(out).toContain("Enable products");
     expect(out).toContain("Eligible");
+  });
+
+  it("developer-registration register passes --developer-email; omits it otherwise", async () => {
+    registerGcp.mockResolvedValue(undefined);
+
+    await run([
+      "accounts",
+      "developer-registration",
+      "register",
+      "123",
+      "--developer-email",
+      "dev@x.com",
+    ]);
+    expect(registerGcp).toHaveBeenCalledWith("123", { developerEmail: "dev@x.com" });
+    expect(writes.join("")).toContain("Registered the Cloud project with account 123.");
+
+    await run(["accounts", "developer-registration", "register", "123"]);
+    expect(registerGcp).toHaveBeenLastCalledWith("123", {});
+  });
+
+  it("developer-registration get renders the registered project ids", async () => {
+    getDeveloperRegistration.mockResolvedValue({
+      name: "accounts/123/developerRegistration",
+      gcpIds: ["999"],
+    });
+
+    await run(["accounts", "developer-registration", "get", "123"]);
+
+    const out = writes.join("");
+    expect(out).toContain("1 registered Cloud project(s):");
+    expect(out).toContain("999");
+  });
+
+  it("developer-registration get --json emits the resource", async () => {
+    getDeveloperRegistration.mockResolvedValue({
+      name: "accounts/123/developerRegistration",
+      gcpIds: ["999"],
+    });
+
+    await run(["accounts", "developer-registration", "get", "123", "--json"]);
+
+    expect(JSON.parse(writes.join(""))).toEqual({
+      name: "accounts/123/developerRegistration",
+      gcpIds: ["999"],
+    });
+  });
+
+  it("developer-registration unregister refuses without --yes, then calls the service", async () => {
+    await run(["accounts", "developer-registration", "unregister", "123"]);
+    expect(unregisterGcp).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(2);
+
+    process.exitCode = 0;
+    unregisterGcp.mockResolvedValue(undefined);
+    await run(["accounts", "developer-registration", "unregister", "123", "--yes"]);
+    expect(unregisterGcp).toHaveBeenCalledWith("123");
+    expect(writes.join("")).toContain("Unregistered the Cloud project from account 123.");
   });
 
   it("shipping set sends the --file body whole (etag preserved)", async () => {

@@ -106,6 +106,15 @@ export async function probeMerchantApi(
   });
 
   if (res.status === 401) {
+    // A 401 on an unregistered Cloud project carries a "not registered" message
+    // even though the token is perfectly valid — pointing at re-auth sends the
+    // user the wrong way. Detect that case and steer them to registration.
+    if (/not registered/i.test(body?.error?.message ?? "")) {
+      return failResult(
+        "Authenticated, but the Cloud project is not registered with this Merchant Center account (401).",
+        "Register it once with `gmc accounts developer-registration register --developer-email <you@example.com>`, then retry.",
+      );
+    }
     return failResult(
       "The Merchant API rejected the access token (401 Unauthorized).",
       "Re-authenticate (`gmc auth login`, or refresh your service-account key) and try again.",

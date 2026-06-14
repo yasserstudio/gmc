@@ -19,6 +19,7 @@ import {
   type IdentityAttribute,
   type AutofeedSettings,
   type AutofeedSettingsInput,
+  type DeveloperRegistration,
   type ShippingSettings,
   type OnlineReturnPolicy,
   type PostalAddress,
@@ -285,6 +286,16 @@ function renderBusinessIdentity(bi: BusinessIdentity): void {
 function renderAutofeed(af: AutofeedSettings): void {
   line("Enable products", af.enableProducts ? "yes" : "no");
   if (af.eligible !== undefined) line("Eligible", af.eligible ? "yes" : "no");
+}
+
+function renderDeveloperRegistration(reg: DeveloperRegistration): void {
+  const ids = reg.gcpIds ?? [];
+  if (ids.length === 0) {
+    process.stdout.write("No Cloud project is registered with this account.\n");
+    return;
+  }
+  process.stdout.write(`${ids.length} registered Cloud project(s):\n`);
+  for (const id of ids) process.stdout.write(`  ${id}\n`);
 }
 
 /** The bare return-policy id, preferring the resource `name` / `returnPolicyId`. */
@@ -878,6 +889,77 @@ export function registerAccountsCommands(program: Command): void {
         }
       },
     );
+
+  const devReg = accounts
+    .command("developer-registration")
+    .description("Register the Cloud project that calls the API with this account");
+
+  devReg
+    .command("get")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Show the registered Cloud project number(s)")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getDeveloperRegistration(account);
+        if (ctx.json) emitJson(result);
+        else renderDeveloperRegistration(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts developer-registration get");
+      }
+    });
+
+  devReg
+    .command("register")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option(
+      "--developer-email <email>",
+      "Developer contact email (defaults to the authenticated principal)",
+    )
+    .description('Register the calling Cloud project (clears the "not registered" 401)')
+    .action(async (accountId: string | undefined, opts: { developerEmail?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        await service.registerGcp(account, {
+          ...(opts.developerEmail ? { developerEmail: opts.developerEmail } : {}),
+        });
+        if (ctx.json) emitJson({ registered: account });
+        else process.stdout.write(`Registered the Cloud project with account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts developer-registration register");
+      }
+    });
+
+  devReg
+    .command("unregister")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--yes", "Confirm unregistering the Cloud project (required)")
+    .description("Unregister the calling Cloud project from this account")
+    .action(async (accountId: string | undefined, opts: { yes?: boolean }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        if (!opts.yes) {
+          throw new UsageError(
+            `Refusing to unregister the Cloud project from account ${account} without --yes.`,
+            "Unregistering revokes this project's API access to the account — pass --yes to confirm.",
+          );
+        }
+        const service = new AccountsService(await clientFor(ctx));
+        await service.unregisterGcp(account);
+        if (ctx.json) emitJson({ unregistered: account });
+        else process.stdout.write(`Unregistered the Cloud project from account ${account}.\n`);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts developer-registration unregister");
+      }
+    });
 
   const shipping = accounts
     .command("shipping")
