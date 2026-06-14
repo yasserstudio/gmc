@@ -1,5 +1,12 @@
 # @gmc-cli/preflight
 
+## 0.1.19
+
+### Patch Changes
+
+- Updated dependencies [8f0b94f]
+  - @gmc-cli/api@0.9.18
+
 ## 0.1.18
 
 ### Patch Changes
