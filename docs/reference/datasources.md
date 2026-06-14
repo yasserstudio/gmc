@@ -59,6 +59,10 @@ cat datasource.json | gmc datasources create
 
 Input precedence: `--file` → flags → piped stdin. Passing both `--file` and flags is an error. `--json` returns the created `DataSource`.
 
+::: tip Read-after-write
+`create` returns the source (with its `dataSourceId`) immediately, but the Merchant API is eventually consistent: a `get` / `update` / `delete` in the next instant may briefly return `404` until it propagates — usually a few seconds, up to ~20s. If you script `create` followed by another call on the new id, allow a short delay or retry.
+:::
+
 Then push products into the new source:
 
 ```sh

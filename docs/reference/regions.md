@@ -58,6 +58,10 @@ flags (output-only — a region must cover enough area to be usable). `--json` e
 result (`{ "regions": [...] }` for list, the resource for get/create/update, `{ "deleted": "<id>" }`
 for delete).
 
+::: tip Read-after-write
+`create` returns the region immediately, but the Merchant API is eventually consistent: a `get` / `update` / `delete` / `list` in the next instant may briefly return `404` (or omit it) until it propagates — usually a few seconds, up to ~20s. If you script `create` followed by another call on the new id, allow a short delay or retry.
+:::
+
 ## Exit codes
 
 `0` success · `2` usage (no/both areas, missing `--region-code`, unreadable `--file`, bad
