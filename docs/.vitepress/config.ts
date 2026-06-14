@@ -132,6 +132,7 @@ export default defineConfig({
             { text: "gmc quota", link: "/reference/quota" },
             { text: "gmc issues", link: "/reference/issues" },
             { text: "gmc reports", link: "/reference/reports" },
+            { text: "gmc conversions", link: "/reference/conversions" },
             { text: "gmc preflight", link: "/reference/preflight" },
             { text: "gmc migrate", link: "/reference/migrate" },
           ],
