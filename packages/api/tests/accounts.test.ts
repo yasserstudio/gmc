@@ -278,6 +278,37 @@ describe("AccountsService", () => {
     expect(upd.calls[0]?.body).toEqual({ enableProducts: false });
   });
 
+  it("getDeveloperRegistration GETs developerRegistration and parses gcpIds", async () => {
+    const get = capturing({ name: "accounts/123/developerRegistration", gcpIds: ["999"] });
+    const reg = await get.service.getDeveloperRegistration("123");
+    expect(get.calls[0]?.method).toBe("GET");
+    expect(get.calls[0]?.url).toBe(`${ACCT}/developerRegistration`);
+    expect(reg.gcpIds).toEqual(["999"]);
+  });
+
+  it("registerGcp POSTs :registerGcp with the developerEmail when given", async () => {
+    const { service, calls } = capturing({});
+    await service.registerGcp("123", { developerEmail: "dev@x.com" });
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(`${ACCT}/developerRegistration:registerGcp`);
+    expect(calls[0]?.body).toEqual({ developerEmail: "dev@x.com" });
+  });
+
+  it("registerGcp sends no body when no developerEmail is given", async () => {
+    const { service, calls } = capturing({});
+    await service.registerGcp("123");
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.body).toBeUndefined();
+  });
+
+  it("unregisterGcp POSTs :unregisterGcp with no body", async () => {
+    const { service, calls } = capturing({});
+    await service.unregisterGcp("123");
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(`${ACCT}/developerRegistration:unregisterGcp`);
+    expect(calls[0]?.body).toBeUndefined();
+  });
+
   it("getShippingSettings GETs; insertShippingSettings POSTs :insert with the body (incl. etag)", async () => {
     const get = capturing({ name: "accounts/123/shippingSettings", etag: "abc", services: [] });
     await get.service.getShippingSettings("123");

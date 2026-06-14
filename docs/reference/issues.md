@@ -17,11 +17,11 @@ gmc issues account --json | jq '.issues[] | { title, severity: .impact.severity 
 ```
 2 issue(s):
 
-  [DISAPPROVED] Misrepresentation of self or product
+  [ERROR] Misrepresentation of self or product
     Your account was flagged for a policy violation.
       • United States — Shopping ads
 
-  [DEMOTED] Missing shipping information
+  [ERROR] Missing shipping information
       • United States, United Kingdom — Free listings
 ```
 

@@ -1,6 +1,6 @@
 # gmc accounts
 
-Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `delete`. Settings: `business-identity`, `autofeed`, `shipping`, `return-policies`.
+Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `delete`. Settings: `business-identity`, `autofeed`, `developer-registration`, `shipping`, `return-policies`.
 
 ## `gmc accounts list`
 
@@ -208,6 +208,22 @@ gmc accounts autofeed update 123456789 --enable-products true
 
 `--enable-products <true|false>` toggles autofeed product crawling (the writable field; `eligible`
 is output-only). `--json` emits the `AutofeedSettings`.
+
+## `gmc accounts developer-registration` — `register` / `get` / `unregister`
+
+Register the **Cloud project** that calls the API with this Merchant Center account — the one-time
+setup that clears the `GCP project … is not registered with the merchant account` **401**. `gmc doctor`
+detects that trap and points here.
+
+```sh
+gmc accounts developer-registration register 123456789 --developer-email you@example.com
+gmc accounts developer-registration get 123456789
+gmc accounts developer-registration unregister 123456789 --yes
+```
+
+`--developer-email <email>` (on `register`) is an optional contact; it defaults to the authenticated
+principal. `get` shows the registered Cloud project number(s) (`gcpIds`). `unregister` revokes the
+project's access and requires `--yes`.
 
 ## `gmc accounts shipping` — `get` / `set`
 

@@ -214,6 +214,18 @@ export interface AutofeedSettings {
 export type AutofeedSettingsInput = Pick<AutofeedSettings, "enableProducts">;
 
 /**
+ * An account's developer registration (`accounts/{account}/developerRegistration`) — the
+ * link between this Merchant Center account and the Cloud project(s) calling the API. A
+ * fresh project must be registered before the API stops returning a "not registered" 401;
+ * `gmc doctor` detects that trap. `name` is output-only; `gcpIds` lists the registered
+ * Cloud project numbers.
+ */
+export interface DeveloperRegistration {
+  name?: string;
+  gcpIds?: string[];
+}
+
+/**
  * An account's shipping settings (`accounts/{account}/shippingSettings`) — a singleton
  * replaced wholesale by `insert`. The body is deeply nested (`services` / `warehouses`),
  * so it's typed loosely and round-trips via `--file`. `etag` guards against a concurrent
@@ -522,6 +534,38 @@ export class AccountsService {
       "PATCH",
       `${this.base(account)}/autofeedSettings`,
       { query: { updateMask }, body: input },
+    );
+  }
+
+  /** Fetch the account's developer registration (registered Cloud project numbers). */
+  getDeveloperRegistration(account: string): Promise<DeveloperRegistration> {
+    return this.client.get<DeveloperRegistration>(
+      "accounts",
+      `${this.base(account)}/developerRegistration`,
+    );
+  }
+
+  /**
+   * Register the calling Cloud project with this Merchant Center account
+   * (`developerRegistration:registerGcp`) — the one-time setup that clears the
+   * "GCP project not registered" 401. `developerEmail` (optional) defaults to the
+   * authenticated principal. Returns nothing (Empty).
+   */
+  async registerGcp(account: string, opts: { developerEmail?: string } = {}): Promise<void> {
+    await this.client.request<undefined>(
+      "accounts",
+      "POST",
+      `${this.base(account)}/developerRegistration:registerGcp`,
+      opts.developerEmail ? { body: { developerEmail: opts.developerEmail } } : {},
+    );
+  }
+
+  /** Unregister the calling Cloud project (`developerRegistration:unregisterGcp`). */
+  async unregisterGcp(account: string): Promise<void> {
+    await this.client.request<undefined>(
+      "accounts",
+      "POST",
+      `${this.base(account)}/developerRegistration:unregisterGcp`,
     );
   }
 

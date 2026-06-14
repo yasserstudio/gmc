@@ -33,6 +33,7 @@ export type {
   IdentityAttribute,
   AutofeedSettings,
   AutofeedSettingsInput,
+  DeveloperRegistration,
   ShippingSettings,
   OnlineReturnPolicy,
   PostalAddress,

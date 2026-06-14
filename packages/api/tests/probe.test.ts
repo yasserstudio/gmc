@@ -34,12 +34,29 @@ describe("probeMerchantApi", () => {
     expect(r.message).toContain("123");
   });
 
-  it("fails on a 401 (token rejected)", async () => {
+  it("fails on a 401 (token rejected) and points at re-authentication", async () => {
     const r = await probeMerchantApi("tok", {
       fetchImpl: fetchReturning(401, { error: { code: 401 } }),
     });
     expect(r.status).toBe("fail");
     expect(r.httpStatus).toBe(401);
+    expect(r.suggestion).toMatch(/re-authenticate/i);
+  });
+
+  it("maps a 401 'not registered' message to the registration remedy, not re-auth", async () => {
+    const r = await probeMerchantApi("tok", {
+      fetchImpl: fetchReturning(401, {
+        error: {
+          code: 401,
+          message: "GCP project 999 is not registered with the merchant account.",
+        },
+      }),
+    });
+    expect(r.status).toBe("fail");
+    expect(r.httpStatus).toBe(401);
+    expect(r.message).toMatch(/not registered/i);
+    expect(r.suggestion).toMatch(/developer-registration register/);
+    expect(r.suggestion).not.toMatch(/re-authenticate/i);
   });
 
   it("detects SERVICE_DISABLED and surfaces the activation URL and project", async () => {
