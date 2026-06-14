@@ -65,7 +65,7 @@ Most Merchant Center work is still done by hand in the web UI, and the Content A
 | Offline feed-compliance preflight          | ✅ `preflight` |         —          |           —           |
 | Content API → Merchant API migrate         |  ✅ `migrate`  |         —          |           —           |
 
-The differentiators — `doctor` and `preflight` (shipped), and `migrate` — are front-loaded over breadth. See the [roadmap](#roadmap).
+The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: **all 11 Merchant API sub-APIs are now covered**. See the [roadmap](#roadmap).
 
 ---
 
@@ -206,19 +206,19 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 
 GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches.
 
-| Phase | Versions        | Theme                                                                                      | Status |
-| ----- | --------------- | ------------------------------------------------------------------------------------------ | :----: |
-| 0     | v0.0            | Scaffold — monorepo, `gmc` shell, docs site                                                |   ✅   |
-| 1     | v0.1–v0.4       | Spike pt 1 — auth, CLI shell, `doctor`                                                     |   ✅   |
-| 2     | v0.5–v0.7       | Spike pt 2 — typed client, accounts, products                                              |   ✅   |
-| 3     | v0.8–v0.9.2     | Feeds as code — data sources, pull, push, diff                                             |   ✅   |
-| 4     | v0.9.3–v0.9.5   | **Preflight** — offline feed-compliance scanner                                            |   ✅   |
-| 5     | v0.9.6–v0.9.8   | **Migrate** — Content API → Merchant API assistant                                         |   ✅   |
-| 6     | v0.9.9–v0.9.10  | Inventories + promotions                                                                   |   ✅   |
-| 7     | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights                                          |   ✅   |
-| 8     | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening                                  |   ✅   |
-| 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                                                               |   ✅   |
-| 10    | v1.0.2+         | Feature surface — `regions`, `accounts`, `datasources`, `notifications`, `quota`, `issues` |   🚀   |
+| Phase | Versions        | Theme                                                                                                                                          | Status |
+| ----- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | :----: |
+| 0     | v0.0            | Scaffold — monorepo, `gmc` shell, docs site                                                                                                    |   ✅   |
+| 1     | v0.1–v0.4       | Spike pt 1 — auth, CLI shell, `doctor`                                                                                                         |   ✅   |
+| 2     | v0.5–v0.7       | Spike pt 2 — typed client, accounts, products                                                                                                  |   ✅   |
+| 3     | v0.8–v0.9.2     | Feeds as code — data sources, pull, push, diff                                                                                                 |   ✅   |
+| 4     | v0.9.3–v0.9.5   | **Preflight** — offline feed-compliance scanner                                                                                                |   ✅   |
+| 5     | v0.9.6–v0.9.8   | **Migrate** — Content API → Merchant API assistant                                                                                             |   ✅   |
+| 6     | v0.9.9–v0.9.10  | Inventories + promotions                                                                                                                       |   ✅   |
+| 7     | v0.9.11–v0.9.13 | Reports — performance, visibility, price insights                                                                                              |   ✅   |
+| 8     | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening                                                                                      |   ✅   |
+| 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                                                                                                                   |   ✅   |
+| 10    | v1.0.2–v1.0.14  | Feature surface — `regions`, account mgmt, `notifications`, `quota`, `issues`, `conversions`, `lfp` → **all 11 Merchant API sub-APIs covered** |   ✅   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

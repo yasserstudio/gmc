@@ -17,7 +17,7 @@ hero:
       link: https://github.com/yasserstudio/gmc
 features:
   - title: Typed Merchant API
-    details: A fully typed client for the whole Merchant API — accounts, products, data sources, inventory, promotions, regions, and reports. Rate limiting, retry/backoff, and pagination are built in, so you don't hand-roll them.
+    details: A fully typed client for the entire Merchant API — all 11 sub-APIs (accounts, products, data sources, inventory, promotions, regions, reports, notifications, quota, issues, conversions, and local feeds). Rate limiting, retry/backoff, and pagination are built in, so you don't hand-roll them.
   - title: gmc doctor
     details: Diagnoses the silent GCP-registration / API-not-enabled trap that quietly breaks Merchant API access.
   - title: Offline preflight
