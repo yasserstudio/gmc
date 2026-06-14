@@ -86,6 +86,15 @@ export type {
   RegisteredEvent,
 } from "./notifications.js";
 
+export { ConversionsService, conversionSourceSegment } from "./conversions.js";
+export type {
+  ConversionSource,
+  ConversionSourceInput,
+  MerchantCenterDestination,
+  GoogleAnalyticsLink,
+  AttributionSettings,
+} from "./conversions.js";
+
 export { RegionsService, regionSegment } from "./regions.js";
 export type {
   Region,

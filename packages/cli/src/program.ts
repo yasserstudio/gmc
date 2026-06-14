@@ -15,6 +15,7 @@ import { registerNotificationsCommands } from "./commands/notifications.js";
 import { registerQuotaCommands } from "./commands/quota.js";
 import { registerIssuesCommands } from "./commands/issues.js";
 import { registerReportsCommands } from "./commands/reports.js";
+import { registerConversionsCommands } from "./commands/conversions.js";
 
 /**
  * Build the root `gmc` command tree.
@@ -58,6 +59,7 @@ export function createProgram(): Command {
   registerQuotaCommands(program);
   registerIssuesCommands(program);
   registerReportsCommands(program);
+  registerConversionsCommands(program);
 
   return program;
 }
