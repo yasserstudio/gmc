@@ -23,7 +23,8 @@ export type SubApi =
   | "notifications"
   | "quota"
   | "issueresolution"
-  | "conversions";
+  | "conversions"
+  | "lfp";
 
 /** All sub-API keys, in a stable order. Mirrors `@gmc-cli/api` SUB_APIS. */
 export const SUB_APIS: readonly SubApi[] = [
@@ -37,6 +38,7 @@ export const SUB_APIS: readonly SubApi[] = [
   "quota",
   "issueresolution",
   "conversions",
+  "lfp",
 ];
 
 // Per-sub-API scope map. Every entry currently resolves to the content scope;
@@ -52,6 +54,7 @@ const SUB_API_SCOPES: Readonly<Record<SubApi, readonly string[]>> = {
   quota: [MERCHANT_API_SCOPE],
   issueresolution: [MERCHANT_API_SCOPE],
   conversions: [MERCHANT_API_SCOPE],
+  lfp: [MERCHANT_API_SCOPE],
 };
 
 /**

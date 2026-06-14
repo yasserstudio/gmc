@@ -26,6 +26,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc issues`](/reference/issues)               | Render account & product issues with resolution content (`account` / `product`)                                   |
 | [`gmc reports`](/reference/reports)             | Reports — `performance` / `competitive-visibility` / `price-competitiveness` / `check` (CI gate) / `query` (MCQL) |
 | [`gmc conversions`](/reference/conversions)     | Conversion sources — `list` / `get` / `create` / `update` / `delete` / `undelete`                                 |
+| [`gmc lfp`](/reference/lfp)                     | Local Feeds Partnership (provider) — `stores` / `inventory` / `sales` / `state`                                   |
 | [`gmc feeds`](/reference/feeds)                 | Feeds as code (`pull` / `push` / `diff`)                                                                          |
 | [`gmc preflight`](/reference/preflight)         | Offline feed-compliance scanner — catch disapprovals before upload                                                |
 | [`gmc migrate`](/reference/migrate)             | Content API → Merchant API assistant (`scopes` / `products` / `feed-labels`)                                      |

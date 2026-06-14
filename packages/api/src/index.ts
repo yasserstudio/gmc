@@ -95,6 +95,17 @@ export type {
   AttributionSettings,
 } from "./conversions.js";
 
+export { LfpService, lfpStoreSegment, lfpMerchantStateSegment } from "./lfp.js";
+export type {
+  LfpStore,
+  LfpStoreInput,
+  LfpInventory,
+  LfpInventoryInput,
+  LfpSale,
+  LfpSaleInput,
+  LfpMerchantState,
+} from "./lfp.js";
+
 export { RegionsService, regionSegment } from "./regions.js";
 export type {
   Region,

@@ -38,6 +38,7 @@ export const DEFAULT_RATE_LIMITS: RateLimitConfig = {
   quota: { capacity: 30, refillPerSecond: 5 },
   issueresolution: { capacity: 30, refillPerSecond: 5 },
   conversions: { capacity: 30, refillPerSecond: 5 },
+  lfp: { capacity: 30, refillPerSecond: 5 },
 };
 
 class TokenBucket {
