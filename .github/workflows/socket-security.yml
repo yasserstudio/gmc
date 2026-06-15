@@ -1,0 +1,56 @@
+name: Socket Security
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: socket-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Enforceable supply-chain policy gate. The Socket GitHub app posts the PR
+  # comments; this job is the required status check that fails on a policy
+  # violation. Needs a SOCKET_SECURITY_API_TOKEN repo secret (Socket dashboard
+  # → API tokens). Secrets aren't exposed to fork PRs, so skip there — the
+  # firewall job below still protects the install on forks.
+  gate:
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+      - run: npm install -g socket
+      - name: Socket policy gate
+        env:
+          SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+        run: socket ci
+
+  # Defense in depth: route the dependency install through Socket Firewall so a
+  # known-malware package version is blocked at install time. No token needed,
+  # so this runs on fork PRs too. Mirrors the CI install (frozen + no scripts).
+  firewall:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+      # No pnpm cache on purpose: a warm store satisfies installs locally, so
+      # Socket Firewall would see no registry traffic to inspect. A cold install
+      # routes every package fetch through the sfw proxy where it can be checked.
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+      - name: Install Socket Firewall
+        run: npm i -g sfw
+      - name: Install dependencies through Socket Firewall
+        run: sfw pnpm install --frozen-lockfile --ignore-scripts
