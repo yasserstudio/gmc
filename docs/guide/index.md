@@ -22,6 +22,6 @@ Most Merchant Center work is still done by hand in the web UI. A CLI makes it:
 
 ## Status
 
-gmc is **stable and feature-complete** (latest `v1.0.14`). **All 11 Merchant API sub-APIs are covered** — `accounts` (incl. developer-registration), `products`, `datasources`, `inventory`, `promotions`, `regions`, `reports`, `notifications`, `quota`, `issues`, `conversions`, and `lfp` (Local Feeds Partnership) — alongside the differentiators `doctor`, `preflight`, `migrate`, and feeds-as-code. The API layer tracks Merchant API `v1`. See the [roadmap](/guide/roadmap) for the phase breakdown and the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for what shipped in each release.
+gmc is **stable, feature-complete, and publicly launched** (latest `v1.0.14`) — see the [launch announcement](https://github.com/yasserstudio/gmc/discussions/100). **All 11 Merchant API sub-APIs are covered** — `accounts` (incl. developer-registration), `products`, `datasources`, `inventory`, `promotions`, `regions`, `reports`, `notifications`, `quota`, `issues`, `conversions`, and `lfp` (Local Feeds Partnership) — alongside the differentiators `doctor`, `preflight`, `migrate`, and feeds-as-code. The API layer tracks Merchant API `v1`. See the [roadmap](/guide/roadmap) for the phase breakdown and the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for what shipped in each release.
 
 Ready to try it? Head to [Getting started](/guide/getting-started).

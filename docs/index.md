@@ -29,3 +29,5 @@ features:
   - title: Built for CI
     details: "Block a bad feed from shipping: every command speaks --json and returns a classed exit code, so a GitHub Action or GitLab job can fail the build on a disapproval or a performance drop."
 ---
+
+> 🚀 **GMC v1.0 is now publicly launched** — stable, on npm, and covering all 11 Merchant API sub-APIs. [Read the announcement →](https://github.com/yasserstudio/gmc/discussions/100)
