@@ -32,7 +32,12 @@ jobs:
       - name: Socket policy gate
         env:
           SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
-        run: socket ci
+        run: |
+          if [ -z "$SOCKET_SECURITY_API_TOKEN" ]; then
+            echo "::warning::SOCKET_SECURITY_API_TOKEN not set — skipping policy gate"
+            exit 0
+          fi
+          socket ci
 
   # Defense in depth: route the dependency install through Socket Firewall so a
   # known-malware package version is blocked at install time. No token needed,
