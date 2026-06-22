@@ -64,6 +64,7 @@
     "@gmc-cli/config": "workspace:*",
     "@gmc-cli/core": "workspace:*",
     "@gmc-cli/migrate": "workspace:*",
+    "@gmc-cli/mcp": "workspace:*",
     "@gmc-cli/preflight": "workspace:*"
   },
   "repository": {

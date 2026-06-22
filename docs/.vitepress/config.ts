@@ -136,6 +136,7 @@ export default defineConfig({
             { text: "gmc lfp", link: "/reference/lfp" },
             { text: "gmc preflight", link: "/reference/preflight" },
             { text: "gmc migrate", link: "/reference/migrate" },
+            { text: "gmc mcp", link: "/reference/mcp" },
           ],
         },
         {
