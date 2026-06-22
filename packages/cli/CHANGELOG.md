@@ -1,5 +1,22 @@
 # @gmc-cli/cli
 
+## 1.0.15
+
+### Patch Changes
+
+- b157891: feat(action): preflight gate with inline PR annotations, job summary, and structured outputs
+
+  The GitHub Action (`uses: yasserstudio/gmc@v1`) now runs preflight with:
+
+  - Inline error/warning annotations on PR diffs, pinned to the source feed file
+  - A job-summary table of all findings in the Actions run summary tab
+  - Structured outputs (`ok`, `scanned`, `errors`, `warnings`, `report`) for downstream steps
+
+  Non-preflight commands continue to pass through directly.
+
+- 3e41613: Add `gmc mcp` — a Model Context Protocol server over stdio that exposes 12 tools (doctor, accounts, products, datasources, issues, quota, reports, preflight) to AI assistants like Claude Desktop, Cursor, and VS Code Copilot.
+- 9b737de: Add 7 SEO preflight rules (`seo.*`) — title length, brand in title, differentiating attributes, description length, title≠description, brand in description, placeholder image detection. All default to `info` severity (non-gating); tune in `.gmcpreflightrc`.
+
 ## 1.0.14
 
 ### Patch Changes
