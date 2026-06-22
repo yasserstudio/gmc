@@ -8,6 +8,12 @@ import type { Rule } from "../types.js";
 import { requiredRules } from "./required.js";
 import { formatRules } from "./format.js";
 import { policyRules } from "./policy.js";
+import { seoRules } from "./seo.js";
 
 /** All rules, concatenated family by family. */
-export const RULES: readonly Rule[] = [...requiredRules, ...formatRules, ...policyRules];
+export const RULES: readonly Rule[] = [
+  ...requiredRules,
+  ...formatRules,
+  ...policyRules,
+  ...seoRules,
+];

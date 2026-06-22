@@ -38,8 +38,15 @@ const GOOD = JSON.stringify({
   contentLanguage: "en",
   feedLabel: "US",
   productAttributes: {
-    title: "Trail Runner",
-    description: "A lightweight trail running shoe.",
+    title: "Acme Trail Runner — Lightweight Running Shoe, Black",
+    description:
+      "The Acme Trail Runner is a lightweight running shoe designed for trail and road use. " +
+      "Built with a breathable mesh upper and responsive cushioning, it delivers comfort on every stride. " +
+      "Features include a reinforced toe cap, anti-slip outsole, and reflective accents for low-light visibility. " +
+      "The midsole uses high-rebound foam to absorb impact without adding weight. " +
+      "Perfect for daily training, casual runs, and light hiking. " +
+      "Available in multiple sizes. Machine washable upper. Imported. Weight: 8.5 oz (men's size 10). " +
+      "Acme quality — trusted by runners since 2010.",
     link: "https://example.com/trail-runner",
     imageLink: "https://example.com/trail-runner.jpg",
     availability: "in_stock",
@@ -55,7 +62,14 @@ const MISSING_TITLE = JSON.stringify({
   contentLanguage: "en",
   feedLabel: "US",
   productAttributes: {
-    description: "A lightweight trail running shoe.",
+    description:
+      "The Acme Trail Runner is a lightweight running shoe designed for trail and road use. " +
+      "Built with a breathable mesh upper and responsive cushioning, it delivers comfort on every stride. " +
+      "Features include a reinforced toe cap, anti-slip outsole, and reflective accents for low-light visibility. " +
+      "The midsole uses high-rebound foam to absorb impact without adding weight. " +
+      "Perfect for daily training, casual runs, and light hiking. " +
+      "Available in multiple sizes. Machine washable upper. Imported. Weight: 8.5 oz (men's size 10). " +
+      "Acme quality — trusted by runners since 2010.",
     link: "https://example.com/trail-runner",
     imageLink: "https://example.com/trail-runner.jpg",
     availability: "in_stock",

@@ -198,8 +198,15 @@ const FULL_PRODUCT = {
   id: "online:en:US:SKU1",
   kind: "content#product",
   offerId: "SKU1",
-  title: "Running Shoe",
-  description: "A lightweight running shoe.",
+  title: "Acme Trail Runner — Lightweight Running Shoe",
+  description:
+    "The Acme Trail Runner is a lightweight running shoe designed for trail and road use. " +
+    "Built with a breathable mesh upper and responsive cushioning, it delivers comfort on every stride. " +
+    "Features include a reinforced toe cap, anti-slip outsole, and reflective accents for low-light visibility. " +
+    "The midsole uses high-rebound foam to absorb impact without adding weight. " +
+    "Perfect for daily training, casual runs, and light hiking. " +
+    "Available in multiple sizes. Machine washable upper. Imported. Weight: 8.5 oz (men's size 10). " +
+    "Acme quality — trusted by runners since 2010.",
   link: "https://example.com/sku1",
   imageLink: "https://example.com/sku1.jpg",
   contentLanguage: "en",
