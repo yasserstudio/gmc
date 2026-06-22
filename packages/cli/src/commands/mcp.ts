@@ -7,8 +7,7 @@ export function registerMcpCommand(program: Command): void {
       "Start an MCP (Model Context Protocol) server over stdio — exposes gmc tools to AI assistants",
     )
     .action(async () => {
-      const { createGmcMcpServer } = await import("@gmc-cli/mcp");
-      const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
+      const { createGmcMcpServer, StdioServerTransport } = await import("@gmc-cli/mcp");
 
       const opts = program.opts();
       const profile = opts["profile"] as string | undefined;

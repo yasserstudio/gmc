@@ -27,10 +27,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^14.0.3",
-    "google-auth-library": "^10.7.0",
-    "zod": "^3.25.67"
+    "google-auth-library": "^10.7.0"
   },
   "homepage": "https://yasserstudio.github.io/gmc/",
   "keywords": [

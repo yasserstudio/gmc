@@ -42,30 +42,30 @@ The server exposes 12 tools:
 
 ### Diagnostics
 
-| Tool | Description |
-|------|-------------|
-| `doctor` | Diagnose auth, GCP registration, and Merchant API access |
+| Tool        | Description                                                      |
+| ----------- | ---------------------------------------------------------------- |
+| `doctor`    | Diagnose auth, GCP registration, and Merchant API access         |
 | `preflight` | Validate feed files offline — catches disapprovals before upload |
 
 ### Account & catalog
 
-| Tool | Description |
-|------|-------------|
-| `accounts_list` | List accessible Merchant Center accounts |
-| `accounts_get` | Get account details |
-| `products_list` | List products with status and issues |
-| `products_get` | Get a single product by key |
-| `products_insert` | Insert or update a product |
-| `products_delete` | Delete a product |
+| Tool              | Description                              |
+| ----------------- | ---------------------------------------- |
+| `accounts_list`   | List accessible Merchant Center accounts |
+| `accounts_get`    | Get account details                      |
+| `products_list`   | List products with status and issues     |
+| `products_get`    | Get a single product by key              |
+| `products_insert` | Insert or update a product               |
+| `products_delete` | Delete a product                         |
 
 ### Feeds & reporting
 
-| Tool | Description |
-|------|-------------|
-| `datasources_list` | List data sources (feeds) |
-| `issues_account` | Get account-level issues and disapprovals |
-| `quota_list` | Check daily API quota and usage |
-| `reports_query` | Run an MCQL query (clicks, impressions, etc.) |
+| Tool               | Description                                   |
+| ------------------ | --------------------------------------------- |
+| `datasources_list` | List data sources (feeds)                     |
+| `issues_account`   | Get account-level issues and disapprovals     |
+| `quota_list`       | Check daily API quota and usage               |
+| `reports_query`    | Run an MCQL query (clicks, impressions, etc.) |
 
 ## Authentication
 

@@ -1,3 +1,5 @@
+import { readdir, readFile } from "node:fs/promises";
+import { join, resolve, relative } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createMerchantClient, runDoctor, type DoctorReport } from "@gmc-cli/core";
@@ -26,7 +28,7 @@ interface ResolvedContext {
 
 function resolveContext(opts: McpServerOptions): ResolvedContext {
   const configDir = getConfigDir();
-  const config = loadConfig(configDir);
+  const config = loadConfig();
   const resolved = resolveProfile(config, {
     profile: opts.profile,
     accountId: opts.accountId,
@@ -44,11 +46,35 @@ function accountOrThrow(ctx: ResolvedContext, accountId?: string): string {
     throw new Error(
       "account is required — pass it as a parameter or set a default via `gmc config`.",
     );
+  if (!/^\d+$/.test(id)) throw new Error("account must be a numeric Merchant Center account id.");
   return id;
 }
 
-const text = (s: string) => ({ content: [{ type: "text" as const, text: s }] });
-const json = (v: unknown) => text(JSON.stringify(v, null, 2));
+function textResult(s: string) {
+  return { content: [{ type: "text" as const, text: s }] };
+}
+
+function jsonResult(v: unknown) {
+  return textResult(JSON.stringify(v, null, 2));
+}
+
+function errorResult(message: string) {
+  return { content: [{ type: "text" as const, text: message }], isError: true as const };
+}
+
+function toError(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+async function buildClient(ctx: ResolvedContext, accountId?: string) {
+  const acct = accountOrThrow(ctx, accountId);
+  const client = await createMerchantClient({
+    configDir: ctx.configDir,
+    profile: ctx.profile,
+    accountId: acct,
+  });
+  return { acct, client };
+}
 
 export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
   const ctx = resolveContext(opts);
@@ -65,12 +91,16 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "Diagnose auth, GCP-project registration, and Merchant API access. Run this first to verify your setup works.",
     { account: z.string().optional().describe("Merchant Center account id") },
     async ({ account }) => {
-      const report: DoctorReport = await runDoctor({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: account ?? ctx.accountId,
-      });
-      return json(report);
+      try {
+        const report: DoctorReport = await runDoctor({
+          configDir: ctx.configDir,
+          profile: ctx.profile,
+          accountId: account ?? ctx.accountId,
+        });
+        return jsonResult(report);
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -81,10 +111,17 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "List Merchant Center accounts accessible by the current credential.",
     {},
     async () => {
-      const client = await createMerchantClient({ configDir: ctx.configDir, profile: ctx.profile });
-      const svc = new AccountsService(client);
-      const accounts = await svc.listAccounts();
-      return json({ accounts, count: accounts.length });
+      try {
+        const client = await createMerchantClient({
+          configDir: ctx.configDir,
+          profile: ctx.profile,
+        });
+        const svc = new AccountsService(client);
+        const accounts = await svc.listAccounts();
+        return jsonResult({ accounts, count: accounts.length });
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -93,14 +130,18 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "Get details for a specific Merchant Center account.",
     { account: z.string().describe("Merchant Center account id") },
     async ({ account }) => {
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: account,
-      });
-      const svc = new AccountsService(client);
-      const result = await svc.getAccount(account);
-      return json(result);
+      try {
+        const client = await createMerchantClient({
+          configDir: ctx.configDir,
+          profile: ctx.profile,
+          accountId: account,
+        });
+        const svc = new AccountsService(client);
+        const result = await svc.getAccount(account);
+        return jsonResult(result);
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -111,18 +152,23 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "List products in a Merchant Center account. Returns processed products with status and item-level issues.",
     {
       account: z.string().optional().describe("Merchant Center account id"),
-      page_size: z.number().optional().describe("Max products to return (default 50)"),
+      page_size: z
+        .number()
+        .int()
+        .min(1)
+        .max(250)
+        .optional()
+        .describe("Max products per page (default 50, max 250)"),
     },
     async ({ account, page_size }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new ProductsService(client);
-      const products = await svc.listProducts({ pageSize: page_size ?? 50 });
-      return json({ products, count: products.length });
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new ProductsService(client);
+        const products = await svc.listProducts({ pageSize: page_size ?? 50 });
+        return jsonResult({ products, count: products.length });
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -134,15 +180,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
       product_id: z.string().describe("Product key, e.g. 'en~US~SKU1'"),
     },
     async ({ account, product_id }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new ProductsService(client);
-      const product = await svc.getProduct(product_id);
-      return json(product);
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new ProductsService(client);
+        const product = await svc.getProduct(product_id);
+        return jsonResult(product);
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -155,15 +200,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
       product: z.record(z.unknown()).describe("ProductInput JSON object"),
     },
     async ({ account, data_source, product }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new ProductsService(client);
-      const result = await svc.insertProductInput(product as ProductInput, data_source);
-      return json(result);
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new ProductsService(client);
+        const result = await svc.insertProductInput(product as ProductInput, data_source);
+        return jsonResult(result);
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -176,15 +220,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
       data_source: z.string().describe("Data source id the product belongs to"),
     },
     async ({ account, product_id, data_source }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new ProductsService(client);
-      await svc.deleteProductInput(product_id, data_source);
-      return text(`Deleted product ${product_id} from data source ${data_source}.`);
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new ProductsService(client);
+        await svc.deleteProductInput(product_id, data_source);
+        return textResult(`Deleted product ${product_id} from data source ${data_source}.`);
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -195,15 +238,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "List data sources (feeds) for a Merchant Center account.",
     { account: z.string().optional().describe("Merchant Center account id") },
     async ({ account }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new DataSourcesService(client);
-      const dataSources = await svc.listDataSources();
-      return json({ dataSources, count: dataSources.length });
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new DataSourcesService(client);
+        const dataSources = await svc.listDataSources();
+        return jsonResult({ dataSources, count: dataSources.length });
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -214,15 +256,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "Get account-level issues (disapprovals, warnings) for a Merchant Center account.",
     { account: z.string().optional().describe("Merchant Center account id") },
     async ({ account }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new IssuesService(client);
-      const issues = await svc.renderAccountIssues();
-      return json({ issues, count: issues.length });
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new IssuesService(client);
+        const issues = await svc.renderAccountIssues();
+        return jsonResult({ issues, count: issues.length });
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -233,15 +274,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     "List daily Merchant API call quota and current usage.",
     { account: z.string().optional().describe("Merchant Center account id") },
     async ({ account }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new QuotaService(client);
-      const groups = await svc.listQuotas();
-      return json({ quotaGroups: groups, count: groups.length });
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new QuotaService(client);
+        const groups = await svc.listQuotas();
+        return jsonResult({ quotaGroups: groups, count: groups.length });
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -259,15 +299,14 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
         ),
     },
     async ({ account, query }) => {
-      const acct = accountOrThrow(ctx, account);
-      const client = await createMerchantClient({
-        configDir: ctx.configDir,
-        profile: ctx.profile,
-        accountId: acct,
-      });
-      const svc = new ReportsService(client);
-      const rows = await svc.search(query);
-      return json({ rows, count: rows.length });
+      try {
+        const { client } = await buildClient(ctx, account);
+        const svc = new ReportsService(client);
+        const rows = await svc.search(query);
+        return jsonResult({ rows, count: rows.length });
+      } catch (err) {
+        return errorResult(toError(err));
+      }
     },
   );
 
@@ -284,52 +323,51 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
       strict: z.boolean().optional().describe("Treat warnings as failures"),
     },
     async ({ dir, strict }) => {
-      const { readdir, readFile } = await import("node:fs/promises");
-      const { join } = await import("node:path");
-
-      const feedDir = dir ?? "feeds";
-      let entries: string[];
       try {
-        entries = await readdir(feedDir);
-      } catch {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error: could not read directory "${feedDir}". Run \`gmc feeds pull\` first or pass a valid directory.`,
-            },
-          ],
-          isError: true,
-        };
-      }
+        const feedDir = resolve(dir ?? "feeds");
+        const rel = relative(process.cwd(), feedDir);
+        if (rel.startsWith(".."))
+          return errorResult("dir must be within the current working directory.");
 
-      const jsonFiles = entries.filter((f) => f.endsWith(".json")).sort();
-      const products: ProductInput[] = [];
-      const parseErrors: string[] = [];
-
-      for (const file of jsonFiles) {
+        let entries: string[];
         try {
-          const raw = await readFile(join(feedDir, file), "utf8");
-          const parsed = JSON.parse(raw);
-          if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-            products.push(parsed as ProductInput);
-          } else {
-            parseErrors.push(`${file}: not a JSON object`);
-          }
+          entries = await readdir(feedDir);
         } catch {
-          parseErrors.push(`${file}: invalid JSON`);
+          return errorResult(
+            `Could not read directory "${feedDir}". Run \`gmc feeds pull\` first or pass a valid directory.`,
+          );
         }
+
+        const jsonFiles = entries.filter((f) => f.endsWith(".json")).sort();
+        const products: ProductInput[] = [];
+        const parseErrors: string[] = [];
+
+        for (const file of jsonFiles) {
+          try {
+            const raw = await readFile(join(feedDir, file), "utf8");
+            const parsed = JSON.parse(raw);
+            if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+              products.push(parsed as ProductInput);
+            } else {
+              parseErrors.push(`${file}: not a JSON object`);
+            }
+          } catch {
+            parseErrors.push(`${file}: invalid JSON`);
+          }
+        }
+
+        const loaded = loadPreflightConfig({ cwd: feedDir });
+        const effectiveConfig = strict !== undefined ? { ...loaded.config, strict } : loaded.config;
+        const report: PreflightReport = runPreflight(products, effectiveConfig);
+
+        return jsonResult({
+          ...report,
+          configPath: loaded.path,
+          parseErrors: parseErrors.length > 0 ? parseErrors : undefined,
+        });
+      } catch (err) {
+        return errorResult(toError(err));
       }
-
-      const loaded = loadPreflightConfig({ cwd: feedDir });
-      const effectiveConfig = strict !== undefined ? { ...loaded.config, strict } : loaded.config;
-      const report: PreflightReport = runPreflight(products, effectiveConfig);
-
-      return json({
-        ...report,
-        configPath: loaded.path,
-        parseErrors: parseErrors.length > 0 ? parseErrors : undefined,
-      });
     },
   );
 
