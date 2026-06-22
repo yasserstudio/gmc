@@ -17,6 +17,7 @@ import { registerIssuesCommands } from "./commands/issues.js";
 import { registerReportsCommands } from "./commands/reports.js";
 import { registerConversionsCommands } from "./commands/conversions.js";
 import { registerLfpCommands } from "./commands/lfp.js";
+import { registerMcpCommand } from "./commands/mcp.js";
 
 /**
  * Build the root `gmc` command tree.
@@ -62,6 +63,7 @@ export function createProgram(): Command {
   registerReportsCommands(program);
   registerConversionsCommands(program);
   registerLfpCommands(program);
+  registerMcpCommand(program);
 
   return program;
 }

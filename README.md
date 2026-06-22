@@ -193,6 +193,25 @@ A [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) and a 
 
 ---
 
+## MCP Server
+
+`gmc mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) server over stdio — AI assistants like Claude Desktop, Cursor, and VS Code Copilot can call gmc tools directly.
+
+```json
+{
+  "mcpServers": {
+    "gmc": {
+      "command": "gmc",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+12 tools: `doctor`, `accounts_list`, `accounts_get`, `products_list`, `products_get`, `products_insert`, `products_delete`, `datasources_list`, `issues_account`, `quota_list`, `reports_query`, `preflight`. See the [MCP reference](https://yasserstudio.github.io/gmc/reference/mcp).
+
+---
+
 ## Packages
 
 A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the packages as a typed Merchant API SDK.
@@ -206,6 +225,7 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 | [`@gmc-cli/config`](packages/config)       | Configuration loading and profiles                          |
 | [`@gmc-cli/preflight`](packages/preflight) | Offline feed-compliance rule engine + `.gmcpreflightrc`     |
 | [`@gmc-cli/migrate`](packages/migrate)     | Content API → Merchant API transform + feed-label checker   |
+| [`@gmc-cli/mcp`](packages/mcp)             | MCP server — expose gmc tools to AI assistants              |
 
 ---
 

@@ -30,6 +30,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc feeds`](/reference/feeds)                 | Feeds as code (`pull` / `push` / `diff`)                                                                          |
 | [`gmc preflight`](/reference/preflight)         | Offline feed-compliance scanner — catch disapprovals before upload                                                |
 | [`gmc migrate`](/reference/migrate)             | Content API → Merchant API assistant (`scopes` / `products` / `feed-labels`)                                      |
+| [`gmc mcp`](/reference/mcp)                     | MCP server — expose gmc tools to AI assistants (Claude, Cursor, VS Code Copilot)                                  |
 
 ## CI / CD
 
