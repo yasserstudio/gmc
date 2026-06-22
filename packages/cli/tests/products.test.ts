@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeFileSync, rmSync } from "node:fs";
+import { writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { Readable } from "node:stream";
 
 const getProduct = vi.fn();
@@ -46,7 +46,8 @@ function run(args: string[]): Promise<unknown> {
 }
 
 function tmpFile(name: string, contents: string): string {
-  const path = join(tmpdir(), name);
+  const dir = mkdtempSync(join(tmpdir(), "gmc-test-"));
+  const path = join(dir, name);
   writeFileSync(path, contents);
   return path;
 }

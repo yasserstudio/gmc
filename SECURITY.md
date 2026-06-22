@@ -4,10 +4,10 @@
 
 GMC ships small, frequent patch releases, and only the **latest published version** receives security updates — there are no long-term-support branches. Upgrade to the newest release to stay covered.
 
-| Version                                      | Supported          |
-| -------------------------------------------- | ------------------ |
+| Version                                         | Supported          |
+| ----------------------------------------------- | ------------------ |
 | Latest `@gmc-cli/cli` release (current `1.0.x`) | :white_check_mark: |
-| Any earlier release                          | :x:                |
+| Any earlier release                             | :x:                |
 
 Check your version with `gmc --version` and update with `npm install -g @gmc-cli/cli@latest`.
 

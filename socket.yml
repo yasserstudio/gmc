@@ -1,0 +1,31 @@
+# Socket.dev supply-chain security — https://docs.socket.dev/docs/socket-yml
+# Pairs with the Socket for GitHub app (https://github.com/apps/socket-security)
+# and the gate/firewall jobs in .github/workflows/socket-security.yml.
+version: 2
+
+# Re-evaluate only when a dependency manifest changes — keeps Socket quiet on
+# code-only PRs (defaults to every path otherwise).
+triggerPaths:
+  - "package.json"
+  - "packages/*/package.json"
+  - "pnpm-lock.yaml"
+
+# Build output isn't a dependency surface.
+projectIgnorePaths:
+  - "**/dist/**"
+  - "docs/.vitepress/dist/**"
+
+# Pin on the highest-signal supply-chain alerts explicitly (most are on by
+# default; this documents intent). Full slug list: https://socket.dev/npm/issues
+issueRules:
+  malware: true
+  installScripts: true
+  didYouMean: true # potential typosquats
+  telemetry: true
+  hasNativeCode: true
+
+githubApp:
+  enabled: true
+  pullRequestAlertsEnabled: true
+  dependencyOverviewEnabled: true
+  projectReportsEnabled: true

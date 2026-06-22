@@ -1,6 +1,6 @@
 # Devlog
 
-Building GMC in the open — notes on the design decisions, the Merchant API's sharp edges, and the Content API migration deadline driving it all.
+Built in the open — and now **publicly launched** ([announcement](https://github.com/yasserstudio/gmc/discussions/100)). Notes on the design decisions, the Merchant API's sharp edges, and the Content API migration deadline driving it all.
 
 ## Posts
 

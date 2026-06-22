@@ -162,14 +162,21 @@ Configure rule severities, ignores, and strict mode in a project-local `.gmcpref
 Every command supports `--json` and uses classed exit codes, so pipelines can branch on the failure type.
 
 ```yaml
-# GitHub Actions
-- run: npm install -g @gmc-cli/cli
-- env:
-    GMC_SERVICE_ACCOUNT: ${{ secrets.GMC_SERVICE_ACCOUNT }}
-    GMC_ACCOUNT_ID: "123456789"
-  run: |
-    gmc doctor --json                # fail the job on a broken setup
-    gmc products list --json | jq '.products | length'
+# GitHub Actions — preflight gate with annotations + job summary
+- uses: yasserstudio/gmc@v1
+  with:
+    args: "--dir feeds --strict"
+```
+
+The [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) runs `preflight` with **inline PR annotations**, a **job summary** of findings, and **structured outputs** (`ok`, `scanned`, `errors`, `warnings`, `report`). For authenticated commands:
+
+```yaml
+- uses: yasserstudio/gmc@v1
+  with:
+    command: reports check
+    account: "123456789"
+    credentials: ${{ secrets.GMC_SERVICE_ACCOUNT_KEY }}
+    args: "--metric clicks --threshold 100"
 ```
 
 | Code | Meaning                                  |
