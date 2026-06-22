@@ -31,6 +31,8 @@ export interface ProductAttributes {
   brand?: string;
   gtin?: string;
   mpn?: string;
+  color?: string;
+  size?: string;
 }
 
 /** A custom (non-standard) product attribute. */
