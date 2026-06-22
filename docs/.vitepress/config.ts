@@ -138,6 +138,10 @@ export default defineConfig({
             { text: "gmc migrate", link: "/reference/migrate" },
           ],
         },
+        {
+          text: "CI / CD",
+          items: [{ text: "GitHub Action", link: "/reference/action" }],
+        },
       ],
       "/devlog/": [
         {

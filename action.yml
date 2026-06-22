@@ -1,5 +1,5 @@
 name: "gmc — Google Merchant Center CLI"
-description: "Run gmc in CI — e.g. an offline feed-compliance preflight gate that fails the build on disapproval triggers."
+description: "Run gmc in CI — preflight gates feed files offline with inline annotations, job summaries, and structured outputs."
 author: "Yasser Studio"
 branding:
   icon: "shopping-cart"
@@ -31,11 +31,26 @@ inputs:
     required: false
     default: "."
 
+outputs:
+  ok:
+    description: "Whether preflight passed (true/false). Only set when command is preflight."
+    value: ${{ steps.run.outputs.ok }}
+  scanned:
+    description: "Number of products scanned. Only set when command is preflight."
+    value: ${{ steps.run.outputs.scanned }}
+  errors:
+    description: "Number of errors found. Only set when command is preflight."
+    value: ${{ steps.run.outputs.errors }}
+  warnings:
+    description: "Number of warnings found. Only set when command is preflight."
+    value: ${{ steps.run.outputs.warnings }}
+  report:
+    description: "Full preflight report as JSON. Only set when command is preflight."
+    value: ${{ steps.run.outputs.report }}
+
 runs:
   using: "composite"
   steps:
-    # Write the service-account key to a temp file and point ADC at it. Only runs
-    # when credentials are supplied (preflight on local files needs none).
     - name: Configure credentials
       if: ${{ inputs.credentials != '' }}
       shell: bash
@@ -47,10 +62,17 @@ runs:
         chmod 600 "$key_file"
         echo "GOOGLE_APPLICATION_CREDENTIALS=$key_file" >> "$GITHUB_ENV"
 
-    # Inputs flow through env (not `${{ }}` interpolated into the script) so a
-    # crafted `args`/`command` can't inject shell. gmc's exit code becomes the
-    # step's exit code — a failing preflight gate fails the workflow.
+    - name: Install gmc
+      shell: bash
+      env:
+        GMC_VERSION: ${{ inputs.version }}
+      run: npm install --global "@gmc-cli/cli@$GMC_VERSION"
+
+    # Preflight gets the enhanced flow: JSON parsing, inline annotations on
+    # PR diffs, a job-summary table, and structured outputs.  All other
+    # commands pass through directly.
     - name: Run gmc
+      id: run
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -58,4 +80,12 @@ runs:
         GMC_COMMAND: ${{ inputs.command }}
         GMC_ARGS: ${{ inputs.args }}
         GMC_ACCOUNT_ID: ${{ inputs.account }}
-      run: npx -y "@gmc-cli/cli@$GMC_VERSION" $GMC_COMMAND $GMC_ARGS
+      run: |
+        if [ "$GMC_COMMAND" = "preflight" ]; then
+          node "${{ github.action_path }}/action/run.mjs"
+        else
+          set -f
+          read -ra cmd <<< "$GMC_COMMAND"
+          read -ra extra <<< "$GMC_ARGS"
+          gmc "${cmd[@]}" "${extra[@]}"
+        fi

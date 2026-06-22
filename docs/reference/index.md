@@ -31,6 +31,12 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc preflight`](/reference/preflight)         | Offline feed-compliance scanner — catch disapprovals before upload                                                |
 | [`gmc migrate`](/reference/migrate)             | Content API → Merchant API assistant (`scopes` / `products` / `feed-labels`)                                      |
 
+## CI / CD
+
+| Integration                        | Description                                                                                               |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [GitHub Action](/reference/action) | Run `gmc` in GitHub Actions — preflight gate with inline annotations, job summary, and structured outputs |
+
 ## Global options
 
 | Flag                   | Description                        |
