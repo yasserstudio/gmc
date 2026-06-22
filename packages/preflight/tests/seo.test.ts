@@ -23,11 +23,7 @@ describe("seo.title-length", () => {
     expect(check("seo.title-length", product({ title: "A".repeat(29) }))).toHaveLength(1);
   });
 
-  it("flags titles that are too long", () => {
-    expect(check("seo.title-length", product({ title: "A".repeat(151) }))).toHaveLength(1);
-  });
-
-  it("passes titles in the optimal range", () => {
+  it("passes titles at or above the minimum", () => {
     expect(
       check(
         "seo.title-length",
@@ -36,6 +32,7 @@ describe("seo.title-length", () => {
     ).toHaveLength(0);
     expect(check("seo.title-length", product({ title: "A".repeat(30) }))).toHaveLength(0);
     expect(check("seo.title-length", product({ title: "A".repeat(150) }))).toHaveLength(0);
+    expect(check("seo.title-length", product({ title: "A".repeat(200) }))).toHaveLength(0);
   });
 
   it("skips absent/empty titles", () => {
@@ -98,18 +95,15 @@ describe("seo.description-length", () => {
     );
   });
 
-  it("flags very long descriptions", () => {
-    expect(
-      check("seo.description-length", product({ description: "A".repeat(5001) })),
-    ).toHaveLength(1);
-  });
-
-  it("passes descriptions in range", () => {
+  it("passes descriptions at or above the minimum", () => {
     expect(check("seo.description-length", product({ description: "A".repeat(500) }))).toHaveLength(
       0,
     );
     expect(
       check("seo.description-length", product({ description: "A".repeat(5000) })),
+    ).toHaveLength(0);
+    expect(
+      check("seo.description-length", product({ description: "A".repeat(10000) })),
     ).toHaveLength(0);
   });
 

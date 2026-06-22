@@ -1,12 +1,8 @@
 import type { Rule } from "../types.js";
-import { text, quote, SPEC } from "./_util.js";
-
-const SEO_DOC = "https://support.google.com/merchants/answer/6324415";
+import { text, quote, SPEC, EDITORIAL_DOC } from "./_util.js";
 
 const TITLE_MIN = 30;
-const TITLE_MAX = 150;
 const DESC_MIN = 500;
-const DESC_MAX = 5000;
 
 const PLACEHOLDER_IMAGE_RE =
   /\b(placeholder|no[_-]?image|default[_-]?image|coming[_-]?soon|temp)\b/i;
@@ -18,26 +14,15 @@ export const seoRules: Rule[] = [
     defaultSeverity: "info",
     check(product) {
       const t = text(product.productAttributes?.title);
-      if (t === undefined) return [];
-      if (t.length < TITLE_MIN)
-        return [
-          {
-            attribute: "title",
-            message: `Title is only ${t.length} characters — titles under ${TITLE_MIN} characters often lack key product details that help with search ranking.`,
-            suggestion: `Add key attributes (brand, color, size, material) to reach at least ${TITLE_MIN} characters.`,
-            documentation: SEO_DOC,
-          },
-        ];
-      if (t.length > TITLE_MAX)
-        return [
-          {
-            attribute: "title",
-            message: `Title is ${t.length} characters — Google Shopping truncates titles beyond ~${TITLE_MAX} characters.`,
-            suggestion: `Front-load the most important terms and trim to under ${TITLE_MAX} characters.`,
-            documentation: SEO_DOC,
-          },
-        ];
-      return [];
+      if (t === undefined || t.length >= TITLE_MIN) return [];
+      return [
+        {
+          attribute: "title",
+          message: `Title is only ${t.length} characters — titles under ${TITLE_MIN} characters often lack key product details that help with search ranking.`,
+          suggestion: `Add key attributes (brand, color, size, material) to reach at least ${TITLE_MIN} characters.`,
+          documentation: EDITORIAL_DOC,
+        },
+      ];
     },
   },
   {
@@ -54,7 +39,7 @@ export const seoRules: Rule[] = [
           attribute: "title",
           message: `Title does not contain the brand "${quote(brand)}" — branded titles rank higher in Shopping results.`,
           suggestion: `Include "${quote(brand)}" near the start of the title.`,
-          documentation: SEO_DOC,
+          documentation: EDITORIAL_DOC,
         },
       ];
     },
@@ -78,8 +63,8 @@ export const seoRules: Rule[] = [
         {
           attribute: "title",
           message: `Title is missing ${missing.join(" and ")} — including differentiating attributes in the title improves relevance.`,
-          suggestion: `Add ${missing.join(" and ")} to the title (e.g. "${quote(t)} — ${[color, size].filter(Boolean).join(", ")}").`,
-          documentation: SEO_DOC,
+          suggestion: `Add ${missing.join(" and ")} to the title (e.g. "${quote(t)} — ${missing.map((k) => (k === "color" ? color : size)).join(", ")}").`,
+          documentation: EDITORIAL_DOC,
         },
       ];
     },
@@ -90,26 +75,15 @@ export const seoRules: Rule[] = [
     defaultSeverity: "info",
     check(product) {
       const d = text(product.productAttributes?.description);
-      if (d === undefined) return [];
-      if (d.length < DESC_MIN)
-        return [
-          {
-            attribute: "description",
-            message: `Description is only ${d.length} characters — descriptions under ${DESC_MIN} characters may miss long-tail search queries.`,
-            suggestion: `Expand the description with materials, use cases, dimensions, and unique selling points to reach at least ${DESC_MIN} characters.`,
-            documentation: SPEC,
-          },
-        ];
-      if (d.length > DESC_MAX)
-        return [
-          {
-            attribute: "description",
-            message: `Description is ${d.length} characters — descriptions over ${DESC_MAX} characters are truncated and may dilute keyword relevance.`,
-            suggestion: `Tighten the description to under ${DESC_MAX} characters, keeping the most important terms early.`,
-            documentation: SPEC,
-          },
-        ];
-      return [];
+      if (d === undefined || d.length >= DESC_MIN) return [];
+      return [
+        {
+          attribute: "description",
+          message: `Description is only ${d.length} characters — descriptions under ${DESC_MIN} characters may miss long-tail search queries.`,
+          suggestion: `Expand the description with materials, use cases, dimensions, and unique selling points to reach at least ${DESC_MIN} characters.`,
+          documentation: SPEC,
+        },
+      ];
     },
   },
   {
@@ -147,7 +121,7 @@ export const seoRules: Rule[] = [
           attribute: "description",
           message: `Description does not mention the brand "${quote(brand)}" — including the brand in the description reinforces relevance.`,
           suggestion: `Mention "${quote(brand)}" naturally in the product description.`,
-          documentation: SEO_DOC,
+          documentation: EDITORIAL_DOC,
         },
       ];
     },
