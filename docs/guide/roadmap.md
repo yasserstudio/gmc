@@ -15,6 +15,7 @@ GMC launched at **`v1.0.0`** and now ships small, frequent **patch** releases (`
 | 8     | v0.9.14–v0.9.16 | CI/CD — JSON/exit-code hardening, GitHub Action, GitLab recipe                                                            | ✅ Done |
 | 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                                                                                              | ✅ Done |
 | 10    | v1.0.2–v1.0.14  | Feature surface — `regions`, account mgmt, `notifications`, `quota`, `issues`, `conversions`, `lfp` → **all 11 sub-APIs** | ✅ Done |
+| 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                  | ✅ Done |
 
 Phase 10 (post-launch) added the remaining API coverage as patches: `regions` (v1.0.2); the full
 `accounts` surface — profile writes, users/access, lifecycle, and the business-identity / autofeed /
@@ -23,6 +24,11 @@ shipping / return-policy sub-resources (v1.0.3–v1.0.6); completing `datasource
 rendered account & product issue resolution (v1.0.10); account `developer-registration` + a doctor
 registration hint (v1.0.12); `conversions` sources (v1.0.13); and `lfp` — Local Feeds Partnership
 (v1.0.14). With LFP, **all 11 Merchant API sub-APIs are now covered** — the API surface is complete.
+
+Phase 11 (v1.0.15) improved developer experience: a first-party **GitHub Action** (`uses: yasserstudio/gmc@v1`)
+with inline PR annotations, a findings summary table, and structured outputs; an **MCP server** (`gmc mcp`)
+exposing 12 tools to AI assistants like Claude Desktop and Cursor; and 7 **SEO preflight rules** (`seo.*`)
+that flag optimization opportunities like short titles, missing brand names, and placeholder images.
 
 Versions track [`@gmc-cli/cli`](https://github.com/yasserstudio/gmc/tree/main/packages/cli) (the `gmc` command); since the 1.0.0 launch every feature ships as a patch (`v1.0.2`, `v1.0.3`, …). Supporting packages version independently.
 

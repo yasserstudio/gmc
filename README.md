@@ -153,7 +153,7 @@ gmc preflight --dir feeds        # scan the pulled catalog
 gmc preflight --json             # full machine-readable report
 ```
 
-Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The engine checks required attributes, value formats, and policy / disapproval triggers.
+Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The engine checks required attributes, value formats, policy / disapproval triggers, and SEO optimization (30 rules across four families).
 
 ---
 
@@ -246,6 +246,7 @@ GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`)
 | 8     | v0.9.14–v0.9.16 | CI/CD — GitHub Action, GitLab recipe, exit-code hardening                                                                                      |   ✅   |
 | 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                                                                                                                   |   ✅   |
 | 10    | v1.0.2–v1.0.14  | Feature surface — `regions`, account mgmt, `notifications`, `quota`, `issues`, `conversions`, `lfp` → **all 11 Merchant API sub-APIs covered** |   ✅   |
+| 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                                       |   ✅   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 
