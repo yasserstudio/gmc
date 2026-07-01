@@ -150,6 +150,10 @@ export default defineConfig({
           text: "Devlog",
           items: [
             { text: "All posts", link: "/devlog/" },
+            {
+              text: "v1.0.16: ordertracking & docs alignment",
+              link: "/devlog/2026-07-01-ordertracking-and-docs-alignment",
+            },
             { text: "The Phase 2 spike", link: "/devlog/2026-06-08-phase-2-spike" },
           ],
         },
