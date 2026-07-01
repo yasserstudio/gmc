@@ -65,7 +65,7 @@ Most Merchant Center work is still done by hand in the web UI, and the Content A
 | Offline feed-compliance preflight          | ✅ `preflight` |         —          |           —           |
 | Content API → Merchant API migrate         |  ✅ `migrate`  |         —          |           —           |
 
-The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: **all 11 Merchant API sub-APIs are now covered**. See the [roadmap](#roadmap).
+The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: **all 12 GA (`v1`) Merchant API sub-APIs are now covered**. See the [roadmap](#roadmap).
 
 ---
 
@@ -247,6 +247,7 @@ GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`)
 | 9     | v0.9.17–v1.0.0  | Polish & launch → **v1.0.0**                                                                                                                   |   ✅   |
 | 10    | v1.0.2–v1.0.14  | Feature surface — `regions`, account mgmt, `notifications`, `quota`, `issues`, `conversions`, `lfp` → **all 11 Merchant API sub-APIs covered** |   ✅   |
 | 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                                       |   ✅   |
+| 12    | v1.0.16         | `ordertracking` — order tracking signals (last GA sub-API; **v1 surface complete**)                                                            |   ✅   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

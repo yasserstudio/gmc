@@ -1,6 +1,6 @@
 // Per-sub-API token-bucket rate limiter. The Merchant API meters quota per
-// sub-API, so the client carries one independent bucket per sub-API (9 buckets)
-// and acquires a token before every request to that sub-API.
+// sub-API, so the client carries one independent bucket per sub-API (one per
+// SubApi) and acquires a token before every request to that sub-API.
 
 import type { SubApi } from "./types.js";
 import { SUB_APIS } from "./types.js";
@@ -39,6 +39,7 @@ export const DEFAULT_RATE_LIMITS: RateLimitConfig = {
   issueresolution: { capacity: 30, refillPerSecond: 5 },
   conversions: { capacity: 30, refillPerSecond: 5 },
   lfp: { capacity: 30, refillPerSecond: 5 },
+  ordertracking: { capacity: 30, refillPerSecond: 5 },
 };
 
 class TokenBucket {

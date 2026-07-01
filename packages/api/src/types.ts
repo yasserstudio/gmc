@@ -13,7 +13,8 @@ export type SubApi =
   | "quota"
   | "issueresolution"
   | "conversions"
-  | "lfp";
+  | "lfp"
+  | "ordertracking";
 
 /** All sub-API keys, in a stable order. */
 export const SUB_APIS: readonly SubApi[] = [
@@ -28,4 +29,5 @@ export const SUB_APIS: readonly SubApi[] = [
   "issueresolution",
   "conversions",
   "lfp",
+  "ordertracking",
 ];
