@@ -31,7 +31,7 @@
     "@gmc-cli/core": "workspace:*",
     "@gmc-cli/preflight": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^3.25.67"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^25.9.3"
