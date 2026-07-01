@@ -115,6 +115,17 @@ export type {
   GeoTargetArea,
 } from "./regions.js";
 
+export { OrderTrackingService } from "./ordertracking.js";
+export type {
+  OrderTrackingSignal,
+  OrderTrackingSignalInput,
+  ShippingInfo,
+  LineItemDetails,
+  ShipmentLineItemMapping,
+  DateTime,
+  ShippingState,
+} from "./ordertracking.js";
+
 export { ReportsService } from "./reports.js";
 export type {
   ReportRow,

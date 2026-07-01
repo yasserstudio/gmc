@@ -17,6 +17,7 @@ import { registerIssuesCommands } from "./commands/issues.js";
 import { registerReportsCommands } from "./commands/reports.js";
 import { registerConversionsCommands } from "./commands/conversions.js";
 import { registerLfpCommands } from "./commands/lfp.js";
+import { registerOrderTrackingCommands } from "./commands/ordertracking.js";
 import { registerMcpCommand } from "./commands/mcp.js";
 
 /**
@@ -63,6 +64,7 @@ export function createProgram(): Command {
   registerReportsCommands(program);
   registerConversionsCommands(program);
   registerLfpCommands(program);
+  registerOrderTrackingCommands(program);
   registerMcpCommand(program);
 
   return program;

@@ -134,6 +134,7 @@ export default defineConfig({
             { text: "gmc reports", link: "/reference/reports" },
             { text: "gmc conversions", link: "/reference/conversions" },
             { text: "gmc lfp", link: "/reference/lfp" },
+            { text: "gmc ordertracking", link: "/reference/ordertracking" },
             { text: "gmc preflight", link: "/reference/preflight" },
             { text: "gmc migrate", link: "/reference/migrate" },
             { text: "gmc mcp", link: "/reference/mcp" },
