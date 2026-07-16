@@ -5,6 +5,8 @@ import {
   userSegment,
   accountResourceName,
   returnPolicySegment,
+  programSegment,
+  type Program,
   type Account,
   type AccountUpdate,
   type AccountInfo,
@@ -323,6 +325,53 @@ function renderReturnPolicy(p: OnlineReturnPolicy): void {
   if (p.label) line("Label", p.label);
   line("Countries", p.countries?.join(", ") ?? "—");
   if (p.returnPolicyUri) line("URI", p.returnPolicyUri);
+}
+
+/** The bare program id (`free-listings`), from the resource `name`. */
+function programIdOf(p: Program): string {
+  return p.name ? programSegment(p.name) : "—";
+}
+
+/** A short human label for a program's participation state. */
+function programState(p: Program): string {
+  switch (p.state) {
+    case "ENABLED":
+      return "enabled";
+    case "ELIGIBLE":
+      return "eligible (not enabled)";
+    case "NOT_ELIGIBLE":
+      return "not eligible";
+    default:
+      return "—";
+  }
+}
+
+function renderPrograms(programs: Program[]): void {
+  if (programs.length === 0) {
+    process.stdout.write("No programs for this account.\n");
+    return;
+  }
+  const width = Math.max(...programs.map((p) => programIdOf(p).length));
+  process.stdout.write(`${programs.length} program(s):\n`);
+  for (const p of programs) {
+    process.stdout.write(`  ${programIdOf(p).padEnd(width)}  ${programState(p)}\n`);
+  }
+}
+
+function renderProgram(p: Program): void {
+  line("Program", programIdOf(p));
+  line("State", programState(p));
+  if (p.activeRegionCodes?.length) line("Regions", p.activeRegionCodes.join(", "));
+  if (p.documentationUri) line("Docs", p.documentationUri);
+  const unmet = p.unmetRequirements ?? [];
+  if (unmet.length) {
+    process.stdout.write(`Unmet requirements (${unmet.length}):\n`);
+    for (const r of unmet) {
+      const regions = r.affectedRegionCodes?.length ? ` [${r.affectedRegionCodes.join(", ")}]` : "";
+      const docs = r.documentationUri ? ` — ${r.documentationUri}` : "";
+      process.stdout.write(`  • ${r.title ?? "—"}${regions}${docs}\n`);
+    }
+  }
 }
 
 interface AccountWriteOpts {
@@ -1084,6 +1133,98 @@ export function registerAccountsCommands(program: Command): void {
         else process.stdout.write(`Deleted return policy ${id}.\n`);
       } catch (err) {
         reportError(err, { json }, "gmc accounts return-policies delete");
+      }
+    });
+
+  const programs = accounts
+    .command("programs")
+    .description("Manage the account's program participation (free listings, shopping ads, …)");
+
+  programs
+    .command("list")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("List the programs the account can participate in")
+    .action(async (accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const list = await service.listPrograms(account);
+        if (ctx.json) emitJson({ programs: list });
+        else renderPrograms(list);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts programs list");
+      }
+    });
+
+  programs
+    .command("get")
+    .argument("<program>", "Program id (e.g. free-listings) or resource name")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Show a single program's state and unmet requirements")
+    .action(async (programId: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.getProgram(account, programId);
+        if (ctx.json) emitJson(result);
+        else renderProgram(result);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts programs get");
+      }
+    });
+
+  programs
+    .command("enable")
+    .argument("<program>", "Program id (e.g. free-listings) or resource name")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .description("Enable participation in a program")
+    .action(async (programId: string, accountId: string | undefined) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.enableProgram(account, programId);
+        if (ctx.json) emitJson(result);
+        else
+          process.stdout.write(
+            `Enabled program ${programIdOf(result)} (${programState(result)}).\n`,
+          );
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts programs enable");
+      }
+    });
+
+  programs
+    .command("disable")
+    .argument("<program>", "Program id (e.g. free-listings) or resource name")
+    .argument("[accountId]", "Account id (defaults to --account / profile)")
+    .option("--yes", "Confirm disabling the program (required)")
+    .description("Disable participation in a program")
+    .action(async (programId: string, accountId: string | undefined, opts: { yes?: boolean }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(accountId, ctx);
+        if (!opts.yes) {
+          throw new UsageError(
+            `Refusing to disable program ${programSegment(programId)} without --yes.`,
+            "Disabling removes the account from the program (e.g. pulls free listings) — pass --yes to confirm.",
+          );
+        }
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.disableProgram(account, programId);
+        if (ctx.json) emitJson(result);
+        else
+          process.stdout.write(
+            `Disabled program ${programIdOf(result)} (${programState(result)}).\n`,
+          );
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts programs disable");
       }
     });
 }

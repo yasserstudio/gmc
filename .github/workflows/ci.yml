@@ -10,9 +10,10 @@ permissions: {}
 
 # NOTE: a `dependency-review` job (license-denial + PR dep-diff) is intentionally
 # omitted — it requires the repo's Dependency Graph to be enabled (Settings → Code
-# security → Dependency graph). Supply-chain/vuln scanning is already covered by the
-# `pnpm audit --prod` step below + the Socket app. To add it back, enable Dependency
-# Graph, then restore the actions/dependency-review-action job (see RELEASING.md).
+# security → Dependency graph). Supply-chain/vuln scanning is covered by the Socket app
+# (socket-security.yml); the `pnpm audit --prod` step below is advisory only (see its
+# note). To add it back, enable Dependency Graph, then restore the
+# actions/dependency-review-action job (see RELEASING.md).
 
 jobs:
   check:
@@ -36,8 +37,13 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
       # Single-run gates on the primary Node; test + build run on every matrix version.
-      - name: Audit production dependencies
+      # Advisory only: npm retired its audit REST endpoint (HTTP 410) in mid-2026, so
+      # `pnpm audit` can no longer fetch advisory data — the Socket app (socket-security.yml)
+      # is the hard supply-chain gate. `continue-on-error` keeps CI green while surfacing the
+      # output; it resumes as a real check automatically if pnpm adopts npm's bulk endpoint.
+      - name: Audit production dependencies (advisory)
         if: matrix.node-version == 22
+        continue-on-error: true
         run: pnpm audit --prod --audit-level=high
 
       - name: Lint

@@ -33,6 +33,10 @@ const listReturnPolicies = vi.fn();
 const getReturnPolicy = vi.fn();
 const createReturnPolicy = vi.fn();
 const deleteReturnPolicy = vi.fn();
+const listPrograms = vi.fn();
+const getProgram = vi.fn();
+const enableProgram = vi.fn();
+const disableProgram = vi.fn();
 
 // resolveAuth is mocked so the real core.createMerchantClient builds a (dummy)
 // client without touching credentials; the Accounts service itself is stubbed.
@@ -83,6 +87,10 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       getReturnPolicy = getReturnPolicy;
       createReturnPolicy = createReturnPolicy;
       deleteReturnPolicy = deleteReturnPolicy;
+      listPrograms = listPrograms;
+      getProgram = getProgram;
+      enableProgram = enableProgram;
+      disableProgram = disableProgram;
     },
   };
 });
@@ -719,5 +727,93 @@ describe("gmc accounts", () => {
 
     expect(deleteReturnPolicy).toHaveBeenCalledWith("123", "accounts/123/onlineReturnPolicies/rp1");
     expect(JSON.parse(writes.join(""))).toEqual({ deleted: "rp1" });
+  });
+
+  it("programs list renders a human table of program states", async () => {
+    listPrograms.mockResolvedValue([
+      { name: "accounts/123/programs/free-listings", state: "ENABLED" },
+      { name: "accounts/123/programs/shopping-ads", state: "ELIGIBLE" },
+    ]);
+
+    await run(["accounts", "programs", "list", "123"]);
+
+    const out = writes.join("");
+    expect(listPrograms).toHaveBeenCalledWith("123");
+    expect(out).toContain("2 program(s):");
+    expect(out).toContain("free-listings");
+    expect(out).toContain("enabled");
+    expect(out).toContain("eligible (not enabled)");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("programs list --json emits a { programs } envelope", async () => {
+    listPrograms.mockResolvedValue([
+      { name: "accounts/123/programs/free-listings", state: "ENABLED" },
+    ]);
+
+    await run(["accounts", "programs", "list", "123", "--json"]);
+
+    const out = JSON.parse(writes.join("")) as { programs: { name: string }[] };
+    expect(out.programs).toHaveLength(1);
+    expect(out.programs[0]?.name).toBe("accounts/123/programs/free-listings");
+  });
+
+  it("programs get renders state and unmet requirements", async () => {
+    getProgram.mockResolvedValue({
+      name: "accounts/123/programs/shopping-ads",
+      state: "NOT_ELIGIBLE",
+      activeRegionCodes: ["US"],
+      documentationUri: "https://support.google.com/x",
+      unmetRequirements: [
+        {
+          title: "Verify your business",
+          affectedRegionCodes: ["US", "CA"],
+          documentationUri: "https://support.google.com/req",
+        },
+      ],
+    });
+
+    await run(["accounts", "programs", "get", "shopping-ads", "123"]);
+
+    const out = writes.join("");
+    expect(getProgram).toHaveBeenCalledWith("123", "shopping-ads");
+    expect(out).toContain("shopping-ads");
+    expect(out).toContain("not eligible");
+    expect(out).toContain("Verify your business [US, CA] — https://support.google.com/req");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("programs enable calls the service and confirms", async () => {
+    enableProgram.mockResolvedValue({
+      name: "accounts/123/programs/free-listings",
+      state: "ENABLED",
+    });
+
+    await run(["accounts", "programs", "enable", "free-listings", "123"]);
+
+    expect(enableProgram).toHaveBeenCalledWith("123", "free-listings");
+    expect(writes.join("")).toContain("Enabled program free-listings (enabled).");
+    expect(process.exitCode).toBe(0);
+  });
+
+  it("programs disable refuses without --yes", async () => {
+    await run(["accounts", "programs", "disable", "free-listings", "123"]);
+
+    expect(disableProgram).not.toHaveBeenCalled();
+    expect(errs.join("")).toContain("--yes");
+    expect(process.exitCode).toBe(2);
+  });
+
+  it("programs disable --yes calls the service and confirms", async () => {
+    disableProgram.mockResolvedValue({
+      name: "accounts/123/programs/free-listings",
+      state: "ELIGIBLE",
+    });
+
+    await run(["accounts", "programs", "disable", "free-listings", "123", "--yes"]);
+
+    expect(disableProgram).toHaveBeenCalledWith("123", "free-listings");
+    expect(writes.join("")).toContain("Disabled program free-listings (eligible (not enabled)).");
+    expect(process.exitCode).toBe(0);
   });
 });
