@@ -1,5 +1,11 @@
 # @gmc-cli/api
 
+## 0.9.22
+
+### Patch Changes
+
+- e155184: Add `gmc accounts programs` — `list` / `get` / `enable` / `disable` an account's participation in Merchant Center programs (Free listings, Shopping ads, …) on `accounts/v1`. `get` surfaces the participation state, active regions, and any unmet requirements; `disable` requires `--yes`.
+
 ## 0.9.21
 
 ### Patch Changes
