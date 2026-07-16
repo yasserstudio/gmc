@@ -1,6 +1,6 @@
 # gmc accounts
 
-Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `delete`. Settings: `business-identity`, `autofeed`, `developer-registration`, `shipping`, `return-policies`.
+Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `delete`. Settings: `business-identity`, `autofeed`, `developer-registration`, `shipping`, `return-policies`, `programs`.
 
 ## `gmc accounts list`
 
@@ -256,9 +256,28 @@ gmc accounts return-policies delete <policyId> 123456789
 change a policy). `--json` emits the raw resource (`{ returnPolicies }` for list,
 `{ "deleted": "<id>" }` for delete).
 
+## `gmc accounts programs` — `list` / `get` / `enable` / `disable`
+
+Manage the account's participation in Merchant Center programs (Free listings, Shopping ads, and
+others). The program id is the last path segment — e.g. `free-listings`, `shopping-ads`.
+
+```sh
+gmc accounts programs list 123456789
+gmc accounts programs get free-listings 123456789
+gmc accounts programs enable free-listings 123456789
+gmc accounts programs disable free-listings 123456789 --yes
+```
+
+`list` shows each program with its participation state (`enabled` / `eligible (not enabled)` /
+`not eligible`). `get` adds the active regions and any **unmet requirements** (with the regions
+they affect) that block eligibility. `enable` / `disable` toggle participation — there is no patch;
+`disable` requires `--yes` because it removes the account from the program (e.g. pulls its free
+listings). All program fields except the id are output-only. `--json` emits the raw `Program`
+resource (`{ programs }` for list).
+
 ## Exit codes
 
 `2` usage (no/non-numeric account id, nothing-to-update, a non-boolean `--adult-content`/
 `--enable-products`, an invalid identity/`--promotions-consent` value, a missing or invalid
-`--access-rights`, `create` without a name/service, `delete` without `--yes`, an unreadable/invalid
-`--file`) · `3` auth · `5` Merchant API.
+`--access-rights`, `create` without a name/service, `delete` / `programs disable` without `--yes`,
+an unreadable/invalid `--file`) · `3` auth · `5` Merchant API.

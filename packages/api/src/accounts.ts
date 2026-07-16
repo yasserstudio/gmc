@@ -5,7 +5,8 @@
 // homepage, full CRUD on account users / access rights, account lifecycle
 // (create-and-configure / delete), and the businessIdentity / autofeedSettings /
 // shippingSettings / onlineReturnPolicies sub-resources (mirroring `regions`' patch
-// shape). All calls run on the "accounts" rate-limit bucket. v0.7 adds ProductsService.
+// shape), plus the programs sub-resource (participation toggled via enable / disable,
+// not a patch). All calls run on the "accounts" rate-limit bucket. v0.7 adds ProductsService.
 
 import type { MerchantClient } from "./client.js";
 import { MerchantApiError } from "./errors.js";
@@ -258,12 +259,61 @@ interface ReturnPoliciesListPage {
   nextPageToken?: string;
 }
 
+/** Participation state of a program (all output-only). */
+export type ProgramState = "STATE_UNSPECIFIED" | "NOT_ELIGIBLE" | "ELIGIBLE" | "ENABLED";
+
+/**
+ * A requirement the account must meet to be eligible for a program
+ * (`Program.unmetRequirements[]`). All fields are output-only.
+ */
+export interface Requirement {
+  /** Human-readable name of the requirement. */
+  title?: string;
+  /** Link to Merchant Center Help explaining the requirement. */
+  documentationUri?: string;
+  /** The regions currently affected by this unmet requirement. */
+  affectedRegionCodes?: string[];
+}
+
+/**
+ * A Merchant Center program the account can participate in
+ * (`accounts/{account}/programs/{program}`, e.g. `free-listings`, `shopping-ads`).
+ * Only `name` is an identifier; `state` / `activeRegionCodes` / `unmetRequirements` /
+ * `documentationUri` are output-only. Participation is toggled with enable / disable,
+ * not a patch, so there is no writable input type.
+ */
+export interface Program {
+  name?: string;
+  /** Link to Merchant Center Help describing the program. */
+  documentationUri?: string;
+  /** Output-only participation state. */
+  state?: ProgramState;
+  /** Regions where the program is active for the account. */
+  activeRegionCodes?: string[];
+  /** Requirements the account has not yet met (blocks eligibility). */
+  unmetRequirements?: Requirement[];
+}
+
+/** One page of `accounts.programs.list`. */
+interface ProgramsListPage {
+  programs?: Program[];
+  nextPageToken?: string;
+}
+
 /**
  * Reduce a return-policy id or full resource name to its bare id, mirroring
  * {@link regionSegment} / {@link userSegment}.
  */
 export function returnPolicySegment(idOrName: string): string {
   return idOrName.replace(/^.*\/onlineReturnPolicies\//, "");
+}
+
+/**
+ * Reduce a program id or full resource name to its bare id (e.g. `free-listings`),
+ * mirroring {@link returnPolicySegment}.
+ */
+export function programSegment(idOrName: string): string {
+  return idOrName.replace(/^.*\/programs\//, "");
 }
 
 /**
@@ -622,6 +672,45 @@ export class AccountsService {
     await this.client.delete<undefined>(
       "accounts",
       `${this.base(account)}/onlineReturnPolicies/${encodeURIComponent(returnPolicySegment(returnPolicy))}`,
+    );
+  }
+
+  /** List the programs the account can participate in, following pagination. */
+  async listPrograms(account: string): Promise<Program[]> {
+    const programs: Program[] = [];
+    for await (const p of this.client.paginate<Program>(
+      "accounts",
+      `${this.base(account)}/programs`,
+      { select: (page) => (page as ProgramsListPage).programs ?? [] },
+    )) {
+      programs.push(p);
+    }
+    return programs;
+  }
+
+  /** Fetch a single program by id (e.g. `free-listings`) or full resource name. */
+  getProgram(account: string, program: string): Promise<Program> {
+    return this.client.get<Program>(
+      "accounts",
+      `${this.base(account)}/programs/${encodeURIComponent(programSegment(program))}`,
+    );
+  }
+
+  /** Enable participation in a program (`programs/{program}:enable`, empty body). */
+  enableProgram(account: string, program: string): Promise<Program> {
+    return this.client.request<Program>(
+      "accounts",
+      "POST",
+      `${this.base(account)}/programs/${encodeURIComponent(programSegment(program))}:enable`,
+    );
+  }
+
+  /** Disable participation in a program (`programs/{program}:disable`, empty body). */
+  disableProgram(account: string, program: string): Promise<Program> {
+    return this.client.request<Program>(
+      "accounts",
+      "POST",
+      `${this.base(account)}/programs/${encodeURIComponent(programSegment(program))}:disable`,
     );
   }
 }

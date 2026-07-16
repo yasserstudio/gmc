@@ -14,6 +14,7 @@ export {
   accountResourceName,
   userSegment,
   returnPolicySegment,
+  programSegment,
 } from "./accounts.js";
 export type {
   Account,
@@ -36,6 +37,9 @@ export type {
   DeveloperRegistration,
   ShippingSettings,
   OnlineReturnPolicy,
+  Program,
+  ProgramState,
+  Requirement,
   PostalAddress,
   Phone,
   CustomerService,

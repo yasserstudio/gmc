@@ -5,6 +5,7 @@ import {
   accountResourceName,
   userSegment,
   returnPolicySegment,
+  programSegment,
 } from "../src/accounts.js";
 import type { Clock } from "../src/rate-limiter.js";
 
@@ -360,6 +361,72 @@ describe("AccountsService", () => {
   it("returnPolicySegment reduces a full resource name to the bare id", () => {
     expect(returnPolicySegment("accounts/123/onlineReturnPolicies/rp1")).toBe("rp1");
     expect(returnPolicySegment("rp1")).toBe("rp1");
+  });
+
+  it("listPrograms follows nextPageToken and flattens every page", async () => {
+    const pages = [
+      {
+        programs: [{ name: "accounts/123/programs/free-listings", state: "ENABLED" }],
+        nextPageToken: "p2",
+      },
+      { programs: [{ name: "accounts/123/programs/shopping-ads", state: "ELIGIBLE" }] },
+    ];
+    const urls: string[] = [];
+    let call = 0;
+    const fetchImpl = (async (u: string) => {
+      urls.push(u);
+      return jsonResponse(200, pages[call++]);
+    }) as unknown as typeof fetch;
+
+    const programs = await service(fetchImpl).listPrograms("123");
+
+    expect(programs.map((p) => p.name)).toEqual([
+      "accounts/123/programs/free-listings",
+      "accounts/123/programs/shopping-ads",
+    ]);
+    expect(urls[0]).toBe(`${ACCT}/programs`);
+    expect(urls[1]).toContain("pageToken=p2");
+  });
+
+  it("getProgram GETs the program, percent-encoding the id segment", async () => {
+    const { service: svc, calls } = capturing({
+      name: "accounts/123/programs/free-listings",
+      state: "ENABLED",
+    });
+    const p = await svc.getProgram("123", "accounts/123/programs/free-listings");
+    expect(p.state).toBe("ENABLED");
+    expect(calls[0]?.method).toBe("GET");
+    // The full resource name is reduced to the bare id before building the path.
+    expect(calls[0]?.url).toBe(`${ACCT}/programs/free-listings`);
+  });
+
+  it("enableProgram POSTs :enable with no body and returns the Program", async () => {
+    const { service: svc, calls } = capturing({
+      name: "accounts/123/programs/free-listings",
+      state: "ENABLED",
+    });
+    const p = await svc.enableProgram("123", "free-listings");
+    expect(p.state).toBe("ENABLED");
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(`${ACCT}/programs/free-listings:enable`);
+    expect(calls[0]?.body).toBeUndefined();
+  });
+
+  it("disableProgram POSTs :disable with no body and returns the Program", async () => {
+    const { service: svc, calls } = capturing({
+      name: "accounts/123/programs/free-listings",
+      state: "ELIGIBLE",
+    });
+    const p = await svc.disableProgram("123", "free-listings");
+    expect(p.state).toBe("ELIGIBLE");
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(`${ACCT}/programs/free-listings:disable`);
+    expect(calls[0]?.body).toBeUndefined();
+  });
+
+  it("programSegment reduces a full resource name to the bare id", () => {
+    expect(programSegment("accounts/123/programs/free-listings")).toBe("free-listings");
+    expect(programSegment("free-listings")).toBe("free-listings");
   });
 
   it("userSegment reduces a full resource name to the bare email", () => {
