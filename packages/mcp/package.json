@@ -1,7 +1,7 @@
 {
   "name": "@gmc-cli/mcp",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP (Model Context Protocol) server for the Google Merchant Center CLI — exposes gmc tools to AI assistants.",
   "type": "module",
   "main": "./dist/index.js",
