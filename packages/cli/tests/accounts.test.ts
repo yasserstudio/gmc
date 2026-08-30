@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 
 // Shared per-test stubs for the AccountsService methods.
 const listAccounts = vi.fn();
+const listSubaccounts = vi.fn();
 const getAccount = vi.fn();
 const getInfo = vi.fn();
 const getHomepage = vi.fn();
@@ -19,6 +20,7 @@ const createUser = vi.fn();
 const updateUser = vi.fn();
 const deleteUser = vi.fn();
 const createAccount = vi.fn();
+const createTestAccount = vi.fn();
 const deleteAccount = vi.fn();
 const getBusinessIdentity = vi.fn();
 const updateBusinessIdentity = vi.fn();
@@ -59,6 +61,7 @@ vi.mock("@gmc-cli/api", async (importActual) => {
     },
     AccountsService: class {
       listAccounts = listAccounts;
+      listSubaccounts = listSubaccounts;
       getAccount = getAccount;
       getInfo = getInfo;
       getHomepage = getHomepage;
@@ -73,6 +76,7 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       updateUser = updateUser;
       deleteUser = deleteUser;
       createAccount = createAccount;
+      createTestAccount = createTestAccount;
       deleteAccount = deleteAccount;
       getBusinessIdentity = getBusinessIdentity;
       updateBusinessIdentity = updateBusinessIdentity;
@@ -167,6 +171,37 @@ describe("gmc accounts", () => {
     expect(out.accounts).toHaveLength(1);
     expect(out.accounts[0]?.accountId).toBe("123");
     expect(process.exitCode).toBe(0);
+  });
+
+  it("list composes the new access filter with a raw account filter", async () => {
+    listAccounts.mockResolvedValue([]);
+
+    await run([
+      "accounts",
+      "list",
+      "--filter",
+      'accountName = "*store*"',
+      "--access",
+      "direct",
+      "--page-size",
+      "500",
+    ]);
+
+    expect(listAccounts).toHaveBeenCalledWith({
+      filter: '(accountName = "*store*") AND access = "DIRECT"',
+      pageSize: 500,
+    });
+  });
+
+  it("subaccounts lists children of an advanced account", async () => {
+    listSubaccounts.mockResolvedValue([{ name: "accounts/456", accountId: "456" }]);
+
+    await run(["accounts", "subaccounts", "123", "--json"]);
+
+    expect(listSubaccounts).toHaveBeenCalledWith("123", {});
+    expect(JSON.parse(writes.join(""))).toEqual({
+      accounts: [{ name: "accounts/456", accountId: "456" }],
+    });
   });
 
   it("get <id> --json emits the account resource and targets that id", async () => {
@@ -520,6 +555,29 @@ describe("gmc accounts", () => {
       service: [{ accountAggregation: {}, provider: "accounts/123" }],
       user: [{ userId: "a@x.com", user: { accessRights: ["ADMIN"] } }],
     });
+  });
+
+  it("create-test builds the required Account body below its parent", async () => {
+    createTestAccount.mockResolvedValue({ accountId: "999", testAccount: true });
+
+    await run([
+      "accounts",
+      "create-test",
+      "123",
+      "--name",
+      "API sandbox",
+      "--time-zone",
+      "Europe/Paris",
+      "--language",
+      "en-US",
+    ]);
+
+    expect(createTestAccount).toHaveBeenCalledWith("123", {
+      accountName: "API sandbox",
+      timeZone: { id: "Europe/Paris" },
+      languageCode: "en-US",
+    });
+    expect(writes.join("")).toContain("Created test account 999");
   });
 
   it("delete refuses without --yes (exit 2) and never calls the API", async () => {

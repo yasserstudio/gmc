@@ -187,7 +187,14 @@ export function transformProduct(raw: unknown): ProductTransformResult {
         value = norm;
       }
     }
-    productAttributes[key] = value;
+    const targetKey = key === "gtin" && typeof value === "string" ? "gtins" : key;
+    if (targetKey === "gtins") {
+      const gtins = Array.isArray(value) ? value : [value];
+      productAttributes[targetKey] = gtins;
+      if (key === "gtin") remapped.push("gtin → gtins[]");
+    } else {
+      productAttributes[targetKey] = value;
+    }
   }
   if (Object.keys(productAttributes).length > 0) {
     // The Merchant API accepts more attributes than ProductAttributes models; the

@@ -128,11 +128,7 @@ export interface CreateAccountRequest {
 
 /** An access right a user can hold on an account. */
 export type AccessRight =
-  | "STANDARD"
-  | "READ_ONLY"
-  | "ADMIN"
-  | "PERFORMANCE_REPORTING"
-  | "API_DEVELOPER";
+  "STANDARD" | "READ_ONLY" | "ADMIN" | "PERFORMANCE_REPORTING" | "API_DEVELOPER";
 
 /**
  * A user with access to an account (`accounts/{account}/users/{email}`). `name` and
@@ -346,12 +342,36 @@ export class AccountsService {
    * an array (the CLI renders them together); for very large account trees a
    * caller wanting to stream should use {@link MerchantClient.paginate} directly.
    */
-  async listAccounts(): Promise<Account[]> {
+  async listAccounts(opts: { filter?: string; pageSize?: number } = {}): Promise<Account[]> {
     const accounts: Account[] = [];
     for await (const account of this.client.paginate<Account>(
       "accounts",
       `${ACCOUNTS_API}/accounts`,
       {
+        ...(opts.filter || opts.pageSize
+          ? {
+              query: {
+                ...(opts.filter ? { filter: opts.filter } : {}),
+                ...(opts.pageSize ? { pageSize: opts.pageSize } : {}),
+              },
+            }
+          : {}),
+        select: (page) => (page as AccountsListPage).accounts ?? [],
+      },
+    )) {
+      accounts.push(account);
+    }
+    return accounts;
+  }
+
+  /** List every sub-account below an advanced/aggregator account. */
+  async listSubaccounts(provider: string, opts: { pageSize?: number } = {}): Promise<Account[]> {
+    const accounts: Account[] = [];
+    for await (const account of this.client.paginate<Account>(
+      "accounts",
+      `${this.base(provider)}:listSubaccounts`,
+      {
+        ...(opts.pageSize ? { query: { pageSize: opts.pageSize } } : {}),
         select: (page) => (page as AccountsListPage).accounts ?? [],
       },
     )) {
@@ -526,6 +546,19 @@ export class AccountsService {
       "POST",
       `${ACCOUNTS_API}/accounts:createAndConfigure`,
       { body },
+    );
+  }
+
+  /**
+   * Create an isolated, non-serving test account below an advanced account.
+   * Test accounts are permanent test resources and cannot be converted to live accounts.
+   */
+  createTestAccount(parent: string, account: AccountUpdate): Promise<Account> {
+    return this.client.request<Account>(
+      "accounts",
+      "POST",
+      `${this.base(parent)}:createTestAccount`,
+      { body: account },
     );
   }
 

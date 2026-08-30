@@ -2,10 +2,14 @@ import type { Command } from "commander";
 import { emitJson, reportError, UsageError } from "@gmc-cli/core";
 import {
   InventoriesService,
+  normalizeLocalInventory,
+  normalizeRegionalInventory,
   toMicros,
   type LocalInventory,
+  type LocalInventoryAttributes,
   type Price,
   type RegionalInventory,
+  type RegionalInventoryAttributes,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
 import { clientFor, formatPrice, resolveAccount, readJsonObject } from "./_shared.js";
@@ -24,6 +28,26 @@ interface RegionalInsertOpts {
   price?: string;
   currency?: string;
   file?: string;
+}
+
+const LOCAL_AVAILABILITY = new Set([
+  "IN_STOCK",
+  "LIMITED_AVAILABILITY",
+  "ON_DISPLAY_TO_ORDER",
+  "OUT_OF_STOCK",
+]);
+const REGIONAL_AVAILABILITY = new Set(["IN_STOCK", "OUT_OF_STOCK"]);
+
+function parseAvailability(raw: string, regional = false): string {
+  const value = raw.trim().toUpperCase().replace(/[ -]+/g, "_");
+  const accepted = regional ? REGIONAL_AVAILABILITY : LOCAL_AVAILABILITY;
+  if (!accepted.has(value)) {
+    throw new UsageError(
+      `Invalid --availability "${raw}".`,
+      `Use one of: ${[...accepted].join(", ")}.`,
+    );
+  }
+  return value;
 }
 
 /** A non-negative integer quantity string for the API (int64-as-string), or throw. */
@@ -57,34 +81,46 @@ function buildPrice(
 /** Read the optional `--file` JSON base, then overlay the common-field flags. */
 async function buildLocalInventory(opts: LocalInsertOpts): Promise<LocalInventory> {
   const input: LocalInventory = opts.file
-    ? ((await readJsonObject(opts.file, "local inventory")) as LocalInventory)
+    ? normalizeLocalInventory(
+        (await readJsonObject(opts.file, "local inventory")) as LocalInventory,
+      )
     : {};
+  const attributes: LocalInventoryAttributes = { ...input.localInventoryAttributes };
   if (opts.storeCode) input.storeCode = opts.storeCode;
-  if (opts.availability) input.availability = opts.availability;
-  if (opts.quantity !== undefined) input.quantity = parseQuantity(opts.quantity);
-  if (opts.price !== undefined) input.price = buildPrice(opts.price, opts.currency, input.price);
+  if (opts.availability) attributes.availability = parseAvailability(opts.availability);
+  if (opts.quantity !== undefined) attributes.quantity = parseQuantity(opts.quantity);
+  if (opts.price !== undefined) {
+    attributes.price = buildPrice(opts.price, opts.currency, attributes.price);
+  }
   if (!input.storeCode) {
     throw new UsageError(
       "--store-code is required to insert a local inventory.",
       "Pass --store-code <code>, or include storeCode in --file.",
     );
   }
+  if (Object.keys(attributes).length > 0) input.localInventoryAttributes = attributes;
   return input;
 }
 
 async function buildRegionalInventory(opts: RegionalInsertOpts): Promise<RegionalInventory> {
   const input: RegionalInventory = opts.file
-    ? ((await readJsonObject(opts.file, "regional inventory")) as RegionalInventory)
+    ? normalizeRegionalInventory(
+        (await readJsonObject(opts.file, "regional inventory")) as RegionalInventory,
+      )
     : {};
+  const attributes: RegionalInventoryAttributes = { ...input.regionalInventoryAttributes };
   if (opts.region) input.region = opts.region;
-  if (opts.availability) input.availability = opts.availability;
-  if (opts.price !== undefined) input.price = buildPrice(opts.price, opts.currency, input.price);
+  if (opts.availability) attributes.availability = parseAvailability(opts.availability, true);
+  if (opts.price !== undefined) {
+    attributes.price = buildPrice(opts.price, opts.currency, attributes.price);
+  }
   if (!input.region) {
     throw new UsageError(
       "--region is required to insert a regional inventory.",
       "Pass --region <id> (an existing region for the account), or include region in --file.",
     );
   }
+  if (Object.keys(attributes).length > 0) input.regionalInventoryAttributes = attributes;
   return input;
 }
 
@@ -96,9 +132,10 @@ function renderLocal(items: LocalInventory[]): void {
   const width = Math.max(...items.map((i) => (i.storeCode ?? "—").length));
   process.stdout.write(`${items.length} local inventory(ies):\n`);
   for (const li of items) {
-    const parts = [li.availability ?? "—"];
-    if (li.quantity !== undefined) parts.push(`qty ${li.quantity}`);
-    if (li.price) parts.push(formatPrice(li.price));
+    const attributes = li.localInventoryAttributes ?? li;
+    const parts = [attributes.availability ?? "—"];
+    if (attributes.quantity !== undefined) parts.push(`qty ${attributes.quantity}`);
+    if (attributes.price) parts.push(formatPrice(attributes.price));
     process.stdout.write(`  ${(li.storeCode ?? "—").padEnd(width)}  ${parts.join(" · ")}\n`);
   }
 }
@@ -111,8 +148,9 @@ function renderRegional(items: RegionalInventory[]): void {
   const width = Math.max(...items.map((i) => (i.region ?? "—").length));
   process.stdout.write(`${items.length} regional inventory(ies):\n`);
   for (const ri of items) {
-    const parts = [ri.availability ?? "—"];
-    if (ri.price) parts.push(formatPrice(ri.price));
+    const attributes = ri.regionalInventoryAttributes ?? ri;
+    const parts = [attributes.availability ?? "—"];
+    if (attributes.price) parts.push(formatPrice(attributes.price));
     process.stdout.write(`  ${(ri.region ?? "—").padEnd(width)}  ${parts.join(" · ")}\n`);
   }
 }

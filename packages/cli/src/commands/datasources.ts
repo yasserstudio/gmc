@@ -172,6 +172,8 @@ const DATASOURCE_WRITABLE_FIELDS = [
   "localInventoryDataSource",
   "regionalInventoryDataSource",
   "promotionDataSource",
+  "productReviewDataSource",
+  "merchantReviewDataSource",
   "fileInput",
 ] as const satisfies readonly (keyof DataSource)[];
 
@@ -181,6 +183,8 @@ function dataSourceType(ds: DataSource): string {
   if (ds.localInventoryDataSource) return "local inventory";
   if (ds.regionalInventoryDataSource) return "regional inventory";
   if (ds.promotionDataSource) return "promotion";
+  if (ds.productReviewDataSource) return "product review";
+  if (ds.merchantReviewDataSource) return "merchant review";
   return "—";
 }
 

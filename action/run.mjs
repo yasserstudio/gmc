@@ -15,6 +15,17 @@ function escapeProperty(s) {
   return escapeData(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
 }
 
+// Values in the job-summary table can originate in feed files. Render them as
+// escaped HTML text so pipes, newlines, and markup cannot change the table.
+function escapeSummaryCell(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\|/g, "&#124;")
+    .replace(/\r\n|\r|\n/g, "<br>");
+}
+
 const { GMC_ARGS = "", GITHUB_OUTPUT = "", GITHUB_STEP_SUMMARY = "" } = process.env;
 
 const extraArgs = GMC_ARGS.split(/\s+/).filter(Boolean);
@@ -38,6 +49,13 @@ try {
 } catch {
   process.stderr.write(stdout || "(no output)\n");
   console.log("::error::gmc preflight did not produce JSON output.");
+  process.exit(exitCode || 1);
+}
+
+if (!Array.isArray(report?.findings)) {
+  const message = report?.error?.message ?? "gmc preflight produced unexpected JSON output.";
+  process.stderr.write(`${message}\n`);
+  console.log(`::error::${escapeData(message)}`);
   process.exit(exitCode || 1);
 }
 
@@ -88,10 +106,11 @@ if (report.ok) {
       "|----------|------|---------|---------|",
     );
     for (const f of report.findings) {
-      const esc = (s) => s.replace(/\|/g, "\\|");
-      const product = esc(f.offerId ?? f.productKey ?? "—");
-      const message = esc(f.message);
-      lines.push(`| ${f.severity} | \`${esc(f.ruleId)}\` | \`${product}\` | ${message} |`);
+      const product = escapeSummaryCell(f.offerId ?? f.productKey ?? "—");
+      const message = escapeSummaryCell(f.message);
+      lines.push(
+        `| ${escapeSummaryCell(f.severity)} | <code>${escapeSummaryCell(f.ruleId)}</code> | <code>${product}</code> | ${message} |`,
+      );
     }
   }
 }

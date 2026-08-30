@@ -40,14 +40,15 @@ Each rule has a stable dotted id and a default severity. Rules come in four fami
 | `required.availability`        | error   | Missing `availability`                                                       |
 | `required.price`               | error   | Missing `price` / missing amount                                             |
 | `required.condition`           | warning | Missing `condition` (recommended; required for used/refurbished)             |
-| `required.identifier-exists`   | warning | None of `gtin` / `mpn` / `brand` present                                     |
+| `required.identifier-exists`   | warning | None of `gtins` / deprecated `gtin` / `mpn` / `brand` present                |
 | `format.link-url`              | error   | `link` is not a valid http(s) URL                                            |
 | `format.image-link-url`        | error   | `image_link` is not a valid http(s) URL                                      |
+| `format.video-link-url`        | error   | One or more `videoLinks` values are not valid http(s) URLs                   |
 | `format.price-amount`          | error   | `amountMicros` is not a non-negative integer count of micros                 |
 | `format.price-currency`        | error   | A priced product's `currencyCode` is missing or not a 3-letter code          |
 | `format.availability-enum`     | error   | `availability` not in `in_stock` / `out_of_stock` / `preorder` / `backorder` |
 | `format.condition-enum`        | error   | `condition` not in `new` / `refurbished` / `used`                            |
-| `format.gtin-checksum`         | warning | `gtin` is the wrong length or fails its check digit                          |
+| `format.gtin-checksum`         | warning | A value in `gtins` (or deprecated `gtin`) has a bad length/check digit       |
 | `format.title-length`          | warning | `title` exceeds 150 characters                                               |
 | `format.description-length`    | warning | `description` exceeds 5000 characters                                        |
 | `policy.promotional-title`     | error   | Promotional text in `title` (e.g. "free shipping", "20% off", "best price")  |
@@ -66,7 +67,7 @@ Each rule has a stable dotted id and a default severity. Rules come in four fami
 The `policy.*` family predicts editorial **disapproval** triggers — these are heuristic, so all default to `warning` except `policy.promotional-title` (a well-known hard disapproval, an `error`). The `seo.*` family flags search-optimization opportunities — all default to `info` (non-gating even with `--strict`), so they surface as suggestions without blocking your pipeline. Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc); `warning` findings don't fail the run unless you pass `--strict`.
 
 ::: tip Related
-[`gmc migrate`](/reference/migrate) helps you move off the Content API for Shopping (retiring Aug 18, 2026); migrated feeds drop straight into `preflight`.
+[`gmc migrate`](/reference/migrate) helps you move off the Content API for Shopping (retired Aug 18, 2026); migrated feeds drop straight into `preflight`.
 :::
 
 ## Findings

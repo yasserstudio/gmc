@@ -1,6 +1,6 @@
 # Roadmap
 
-GMC launched at **`v1.0.0`** and now ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches, not minors. The phases below front-loaded the differentiators (`doctor`, `preflight`, `migrate`) on the way to 1.0; post-launch work expands API coverage.
+GMC launched at **`v1.0.0`** and shipped frequent `v1.0.x` patches. The August 2026 compatibility work is large enough to become the next minor release. The phases below front-loaded the differentiators (`doctor`, `preflight`, `migrate`) on the way to 1.0; post-launch work follows Google's stable API surface.
 
 | Phase | Versions        | Theme                                                                                                                     | Status  |
 | ----- | --------------- | ------------------------------------------------------------------------------------------------------------------------- | ------- |
@@ -17,6 +17,8 @@ GMC launched at **`v1.0.0`** and now ships small, frequent **patch** releases (`
 | 10    | v1.0.2–v1.0.14  | Feature surface — `regions`, account mgmt, `notifications`, `quota`, `issues`, `conversions`, `lfp` → **all 11 sub-APIs** | ✅ Done |
 | 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                  | ✅ Done |
 | 12    | v1.0.16         | `ordertracking` — order tracking signals (last GA sub-API; **v1 surface complete**)                                       | ✅ Done |
+| 13    | v1.0.17         | Account program participation — inspect and request program enrollment                                                    | ✅ Done |
+| 14    | v1.1.0 (next)   | August 2026 compatibility — Loyalty Customers GA, current product/inventory/account/quota contracts, security hardening   | 🚧 RC   |
 
 Phase 10 (post-launch) added the remaining API coverage as patches: `regions` (v1.0.2); the full
 `accounts` surface — profile writes, users/access, lifecycle, and the business-identity / autofeed /
@@ -33,10 +35,19 @@ that flag optimization opportunities like short titles, missing brand names, and
 
 Phase 12 (v1.0.16) added `ordertracking` — order tracking signals (`ordertracking/v1`), a write-only
 sub-API for reporting completed shipments so Google can show accurate delivery estimates. It was the
-last remaining GA (`v1`) Merchant API sub-API, so **all 12 GA sub-APIs are now covered** — the stable
-`v1` surface is complete. (The `reviews`, `productstudio`, and `youtube` sub-APIs remain pre-GA — only
+last remaining GA (`v1`) Merchant API sub-API at the time, so **all 12 GA sub-APIs were covered**.
+(The `reviews`, `productstudio`, and `youtube` sub-APIs remain pre-GA — only
 `v1beta`/`v1alpha` — and are deferred until they graduate to `v1`.)
 
-Versions track [`@gmc-cli/cli`](https://github.com/yasserstudio/gmc/tree/main/packages/cli) (the `gmc` command); since the 1.0.0 launch every feature ships as a patch (`v1.0.2`, `v1.0.3`, …). Supporting packages version independently.
+Phase 13 (v1.0.17) added account program participation: list a Merchant Center account's
+programs, inspect enrollment state, and request participation where the API allows it.
+
+Phase 14 tracks Google's August 2026 stable surface: the new Loyalty Customers GA manage operation,
+product-input patching and 2026 product attributes, base64url-safe product identifiers, the current
+nested inventory wire format, account filters/sub-account listing/test accounts, account limits, and
+CI/Action dependency and output hardening. See the [compatibility snapshot](/guide/google-2026-updates).
+This restores complete coverage across the now-13 stable sub-APIs.
+
+Versions track [`@gmc-cli/cli`](https://github.com/yasserstudio/gmc/tree/main/packages/cli) (the `gmc` command). Supporting packages version independently.
 
 See the [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md) for shipped work and the [devlog](/devlog/) for the story behind it.

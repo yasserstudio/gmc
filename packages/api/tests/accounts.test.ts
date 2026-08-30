@@ -83,6 +83,21 @@ describe("AccountsService", () => {
     expect(urls[1]).toContain("pageToken=p2");
   });
 
+  it("listAccounts forwards access filters and page size", async () => {
+    const { service, calls } = capturing({ accounts: [] });
+    await service.listAccounts({ filter: 'access = "DIRECT"', pageSize: 500 });
+    const url = new URL(calls[0]?.url ?? "");
+    expect(url.searchParams.get("filter")).toBe('access = "DIRECT"');
+    expect(url.searchParams.get("pageSize")).toBe("500");
+  });
+
+  it("listSubaccounts drains the advanced-account convenience endpoint", async () => {
+    const { service, calls } = capturing({ accounts: [{ name: "accounts/456" }] });
+    const accounts = await service.listSubaccounts("123", { pageSize: 100 });
+    expect(accounts).toEqual([{ name: "accounts/456" }]);
+    expect(calls[0]?.url).toBe(`${ACCT}:listSubaccounts?pageSize=100`);
+  });
+
   it("getInfo composes account+businessInfo+homepage and folds a 404 sub-resource to null", async () => {
     const fetchImpl = (async (u: string) => {
       if (u.endsWith("/businessInfo")) {
@@ -232,6 +247,24 @@ describe("AccountsService", () => {
     expect(calls[0]?.url).toBe(
       "https://merchantapi.googleapis.com/accounts/v1/accounts:createAndConfigure",
     );
+    expect(calls[0]?.body).toEqual(body);
+  });
+
+  it("createTestAccount POSTs an Account below the advanced account", async () => {
+    const { service, calls } = capturing({
+      name: "accounts/999",
+      accountId: "999",
+      testAccount: true,
+    });
+    const body = {
+      accountName: "API sandbox",
+      timeZone: { id: "Europe/Paris" },
+      languageCode: "en-US",
+    };
+    const result = await service.createTestAccount("123", body);
+    expect(result.testAccount).toBe(true);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(`${ACCT}:createTestAccount`);
     expect(calls[0]?.body).toEqual(body);
   });
 

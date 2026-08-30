@@ -20,6 +20,7 @@ describe("auditScopes", () => {
       "conversions",
       "lfp",
       "ordertracking",
+      "loyaltycustomers",
     ]);
     for (const m of report.mapping) expect(m.scopes).toEqual([MERCHANT_API_SCOPE]);
   });

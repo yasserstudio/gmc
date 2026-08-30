@@ -28,7 +28,7 @@ import {
   type CustomerService,
 } from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
-import { clientFor, resolveAccount, line, readJsonObject, pick } from "./_shared.js";
+import { clientFor, resolveAccount, line, readJsonObject, pick, parsePageSize } from "./_shared.js";
 
 function accountIdOf(account: Account): string {
   return account.accountId ?? account.name.replace(/^accounts\//, "");
@@ -412,6 +412,43 @@ interface AccountCreateOpts {
   file?: string;
 }
 
+interface TestAccountCreateOpts {
+  name?: string;
+  timeZone?: string;
+  language?: string;
+  adultContent?: string;
+  file?: string;
+}
+
+async function buildTestAccount(opts: TestAccountCreateOpts): Promise<AccountUpdate> {
+  const account: AccountUpdate = opts.file
+    ? pick<AccountUpdate>(await readJsonObject(opts.file, "test account"), ACCOUNT_FIELDS)
+    : {};
+  if (opts.name !== undefined) account.accountName = opts.name;
+  if (opts.timeZone !== undefined) account.timeZone = { id: opts.timeZone };
+  if (opts.language !== undefined) account.languageCode = opts.language;
+  if (opts.adultContent !== undefined) {
+    account.adultContent = parseBool(opts.adultContent, "--adult-content");
+  }
+  if (!account.accountName || !account.timeZone?.id || !account.languageCode) {
+    throw new UsageError(
+      "A test account needs a name, time zone, and language.",
+      "Pass --name, --time-zone, and --language (or provide them in --file).",
+    );
+  }
+  return account;
+}
+
+function accountFilter(filter: string | undefined, access: string | undefined): string | undefined {
+  if (access === undefined) return filter;
+  const value = access.toUpperCase();
+  if (!["DIRECT", "INDIRECT", "ALL"].includes(value)) {
+    throw new UsageError(`Invalid --access "${access}".`, "Use direct, indirect, or all.");
+  }
+  const accessFilter = `access = "${value}"`;
+  return filter ? `(${filter}) AND ${accessFilter}` : accessFilter;
+}
+
 /**
  * Build the `accounts:createAndConfigure` body from `--file` overlaid with the convenience
  * flags. Unlike a patch, the `--file` body is kept whole (it legitimately carries
@@ -468,17 +505,57 @@ export function registerAccountsCommands(program: Command): void {
 
   accounts
     .command("list")
+    .option("--filter <expression>", "Merchant API account filter expression")
+    .option("--access <level>", "direct | indirect | all (composes with --filter)")
+    .option("--page-size <n>", "Max accounts per API page (up to 500)")
     .description("List accounts your credential can access")
-    .action(async () => {
+    .action(async (opts: { filter?: string; access?: string; pageSize?: string }) => {
       const json = wantsJson(program);
       try {
         const ctx = contextFrom(program);
         const service = new AccountsService(await clientFor(ctx));
-        const list = await service.listAccounts();
+        const pageSize = parsePageSize(opts.pageSize);
+        if (pageSize !== undefined && pageSize > 500) {
+          throw new UsageError(
+            `Invalid --page-size "${opts.pageSize}".`,
+            "Accounts list accepts a page size up to 500.",
+          );
+        }
+        const filter = accountFilter(opts.filter, opts.access);
+        const list = await service.listAccounts({
+          ...(filter ? { filter } : {}),
+          ...(pageSize ? { pageSize } : {}),
+        });
         if (ctx.json) emitJson({ accounts: list });
         else renderAccounts(list);
       } catch (err) {
         reportError(err, { json }, "gmc accounts list");
+      }
+    });
+
+  accounts
+    .command("subaccounts")
+    .argument("[providerId]", "Advanced account id (defaults to --account / profile)")
+    .option("--page-size <n>", "Max sub-accounts per API page (up to 500)")
+    .description("List sub-accounts below an advanced account")
+    .action(async (providerId: string | undefined, opts: { pageSize?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const provider = resolveAccount(providerId, ctx);
+        const pageSize = parsePageSize(opts.pageSize);
+        if (pageSize !== undefined && pageSize > 500) {
+          throw new UsageError(
+            `Invalid --page-size "${opts.pageSize}".`,
+            "Sub-account listing accepts a page size up to 500.",
+          );
+        }
+        const service = new AccountsService(await clientFor(ctx));
+        const list = await service.listSubaccounts(provider, pageSize ? { pageSize } : {});
+        if (ctx.json) emitJson({ accounts: list });
+        else renderAccounts(list);
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts subaccounts");
       }
     });
 
@@ -797,6 +874,35 @@ export function registerAccountsCommands(program: Command): void {
         else process.stdout.write(`Created account ${accountIdOf(result)}.\n`);
       } catch (err) {
         reportError(err, { json }, "gmc accounts create");
+      }
+    });
+
+  accounts
+    .command("create-test")
+    .argument("[parentId]", "Advanced account id (defaults to --account / profile)")
+    .option("--name <name>", "Test account display name")
+    .option("--time-zone <id>", "IANA time zone id, e.g. Europe/Paris")
+    .option("--language <code>", "BCP-47 language code, e.g. en-US")
+    .option("--adult-content <bool>", "Whether the account offers adult content (true/false)")
+    .option("--file <path>", "Read the Account JSON body from this file")
+    .description("Create an isolated, permanently non-serving test account")
+    .action(async (parentId: string | undefined, opts: TestAccountCreateOpts) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const parent = resolveAccount(parentId, ctx);
+        const body = await buildTestAccount(opts);
+        const service = new AccountsService(await clientFor(ctx));
+        const result = await service.createTestAccount(parent, body);
+        if (ctx.json) emitJson(result);
+        else {
+          process.stdout.write(`Created test account ${accountIdOf(result)}.\n`);
+          process.stdout.write(
+            "Test accounts cannot serve products or be converted to live accounts.\n",
+          );
+        }
+      } catch (err) {
+        reportError(err, { json }, "gmc accounts create-test");
       }
     });
 

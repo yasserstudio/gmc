@@ -93,6 +93,38 @@ describe("DataSourcesService", () => {
     expect(url).toBe("https://merchantapi.googleapis.com/datasources/v1/accounts/123/dataSources");
   });
 
+  it("migrates deprecated default-rule primary references to self", async () => {
+    let requestBody: unknown;
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      requestBody = JSON.parse(init.body as string);
+      return jsonResponse(200, { dataSourceId: "55" });
+    }) as unknown as typeof fetch;
+
+    await service(fetchImpl).createDataSource({
+      displayName: "Primary",
+      primaryProductDataSource: {
+        defaultRule: {
+          takeFromDataSources: [
+            { supplementalDataSourceName: "accounts/123/dataSources/77" },
+            { primaryDataSourceName: "accounts/123/dataSources/55" },
+          ],
+        },
+      },
+    });
+
+    expect(requestBody).toEqual({
+      displayName: "Primary",
+      primaryProductDataSource: {
+        defaultRule: {
+          takeFromDataSources: [
+            { supplementalDataSourceName: "accounts/123/dataSources/77" },
+            { self: true },
+          ],
+        },
+      },
+    });
+  });
+
   it("deleteDataSource DELETEs the data source (204 → undefined)", async () => {
     let url = "";
     let method = "";

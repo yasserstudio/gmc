@@ -110,6 +110,12 @@ describe("transformProduct", () => {
     expect(input.customAttributes).toEqual([{ name: "size", value: "42" }]);
   });
 
+  it("moves the deprecated Content API gtin into Merchant API gtins[]", () => {
+    const result = ok({ offerId: "X", gtin: "4006381333931" });
+    expect(result.input.productAttributes?.gtins).toEqual(["4006381333931"]);
+    expect(result.remapped).toContain("gtin → gtins[]");
+  });
+
   it("derives identity from the Content API id when fields are absent, and drops id/kind", () => {
     const r = ok({ id: "online:en:US:SKU9", kind: "content#product", title: "T" });
     expect(r.input).toMatchObject({ offerId: "SKU9", contentLanguage: "en", feedLabel: "US" });

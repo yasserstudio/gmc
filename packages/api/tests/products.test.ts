@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { MerchantClient } from "../src/client.js";
-import { ProductsService, productSegment, toProductInput, productKey } from "../src/products.js";
+import {
+  ProductsService,
+  productSegment,
+  productPathSegment,
+  toProductInput,
+  productKey,
+} from "../src/products.js";
 import type { Clock } from "../src/rate-limiter.js";
 
 const auth = {
@@ -27,16 +33,16 @@ describe("ProductsService", () => {
     const fetchImpl = (async (u: string) => {
       url = u;
       return jsonResponse(200, {
-        name: "accounts/123/products/online~en~US~SKU1",
+        name: "accounts/123/products/en~US~SKU1",
         offerId: "SKU1",
       });
     }) as unknown as typeof fetch;
 
-    const product = await service(fetchImpl).getProduct("online~en~US~SKU1");
+    const product = await service(fetchImpl).getProduct("en~US~SKU1");
 
     expect(product.offerId).toBe("SKU1");
     expect(url).toBe(
-      "https://merchantapi.googleapis.com/products/v1/accounts/123/products/online~en~US~SKU1",
+      "https://merchantapi.googleapis.com/products/v1/accounts/123/products/en~US~SKU1",
     );
   });
 
@@ -47,10 +53,10 @@ describe("ProductsService", () => {
       return jsonResponse(200, { name: "x" });
     }) as unknown as typeof fetch;
 
-    await service(fetchImpl).getProduct("accounts/123/products/online~en~US~SKU1");
+    await service(fetchImpl).getProduct("accounts/123/products/en~US~SKU1");
 
     expect(url).toBe(
-      "https://merchantapi.googleapis.com/products/v1/accounts/123/products/online~en~US~SKU1",
+      "https://merchantapi.googleapis.com/products/v1/accounts/123/products/en~US~SKU1",
     );
   });
 
@@ -75,6 +81,11 @@ describe("ProductsService", () => {
             link: "https://example.com/p/sku1",
             availability: "in_stock",
             price: { amountMicros: "19990000", currencyCode: "GBP" },
+            gtins: ["4006381333931"],
+            videoLinks: ["https://example.com/product.mp4"],
+            pickupCost: { flatRate: { amountMicros: "5000000", currencyCode: "GBP" } },
+            returns: [{ countries: ["GB"], windowType: "FINITE_RETURN_WINDOW", windowDays: "30" }],
+            popularityRank: 72.5,
           },
           productStatus: {
             itemLevelIssues: [
@@ -101,6 +112,9 @@ describe("ProductsService", () => {
 
     expect(p?.productAttributes?.title).toBe("Sample Product");
     expect(p?.productAttributes?.price?.amountMicros).toBe("19990000");
+    expect(p?.productAttributes?.returns?.[0]?.windowDays).toBe("30");
+    expect(p?.productAttributes?.popularityRank).toBe(72.5);
+    expect(p?.productAttributes?.pickupCost?.flatRate?.currencyCode).toBe("GBP");
     const issue = p?.productStatus?.itemLevelIssues?.[0];
     expect(issue?.severity).toBe("DISAPPROVED");
     expect(issue?.reportingContext).toBe("SHOPPING_ADS");
@@ -134,7 +148,7 @@ describe("ProductsService", () => {
       url = u;
       init = i;
       return jsonResponse(200, {
-        name: "accounts/123/productInputs/online~en~US~SKU1",
+        name: "accounts/123/productInputs/en~US~SKU1",
         offerId: "SKU1",
       });
     }) as unknown as typeof fetch;
@@ -160,23 +174,62 @@ describe("ProductsService", () => {
 
     // Pass the data source as a full resource name to exercise normalization.
     const res = await service(fetchImpl).deleteProductInput(
-      "online~en~US~SKU1",
+      "en~US~SKU1",
       "accounts/123/dataSources/55",
     );
 
     expect(res).toBeUndefined();
     expect(method).toBe("DELETE");
     const u = new URL(url);
-    expect(u.pathname).toBe("/products/v1/accounts/123/productInputs/online~en~US~SKU1");
+    expect(u.pathname).toBe("/products/v1/accounts/123/productInputs/en~US~SKU1");
     expect(u.searchParams.get("dataSource")).toBe("accounts/123/dataSources/55");
   });
 
   it("productSegment reduces ids and resource names to the composite segment", () => {
-    expect(productSegment("online~en~US~SKU1")).toBe("online~en~US~SKU1");
-    expect(productSegment("accounts/123/products/online~en~US~SKU1")).toBe("online~en~US~SKU1");
-    expect(productSegment("accounts/123/productInputs/online~en~US~SKU1")).toBe(
-      "online~en~US~SKU1",
+    expect(productSegment("en~US~SKU1")).toBe("en~US~SKU1");
+    expect(productSegment("accounts/123/products/en~US~SKU1")).toBe("en~US~SKU1");
+    expect(productSegment("accounts/123/productInputs/en~US~SKU1")).toBe("en~US~SKU1");
+  });
+
+  it("base64url-encodes composite ids whose offer id contains path-sensitive characters", async () => {
+    let url = "";
+    const fetchImpl = (async (u: string) => {
+      url = u;
+      return jsonResponse(200, { name: "x" });
+    }) as unknown as typeof fetch;
+
+    await service(fetchImpl).getProduct("en~US~sku/12%~blue");
+
+    const encoded = Buffer.from("en~US~sku/12%~blue").toString("base64url");
+    expect(new URL(url).pathname).toBe(`/products/v1/accounts/123/products/${encoded}`);
+    expect(productPathSegment(`accounts/123/products/${encoded}`)).toBe(encoded);
+  });
+
+  it("patches a product input with dataSource and updateMask", async () => {
+    let url = "";
+    let init: RequestInit | undefined;
+    const fetchImpl = (async (u: string, i: RequestInit) => {
+      url = u;
+      init = i;
+      return jsonResponse(200, { name: "accounts/123/productInputs/en~US~SKU1" });
+    }) as unknown as typeof fetch;
+
+    await service(fetchImpl).updateProductInput(
+      "en~US~SKU1",
+      { productAttributes: { availability: "in_stock" } },
+      "55",
+      { updateMask: "availability" },
     );
+
+    expect(init?.method).toBe("PATCH");
+    expect(JSON.parse(init?.body as string)).toEqual({
+      name: "accounts/123/productInputs/en~US~SKU1",
+      productAttributes: { availability: "in_stock" },
+    });
+    const parsed = new URL(url);
+    expect(parsed.pathname).toBe("/products/v1/accounts/123/productInputs/en~US~SKU1");
+    expect(parsed.searchParams.get("dataSource")).toBe("accounts/123/dataSources/55");
+    expect(parsed.searchParams.get("updateMask")).toBe("availability");
   });
 });
 

@@ -32,6 +32,22 @@ describe("format.link-url / format.image-link-url", () => {
   });
 });
 
+describe("format.video-link-url", () => {
+  it("checks every 2026 video link", () => {
+    expect(check("format.video-link-url", { productAttributes: {} })).toHaveLength(0);
+    expect(
+      check("format.video-link-url", {
+        productAttributes: { videoLinks: ["https://cdn.example/video.mp4"] },
+      }),
+    ).toHaveLength(0);
+    const findings = check("format.video-link-url", {
+      productAttributes: { videoLinks: ["https://cdn.example/ok.mp4", "javascript:bad"] },
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.attribute).toBe("videoLinks[1]");
+  });
+});
+
 describe("format.price-amount", () => {
   const c = (amountMicros: unknown) =>
     check("format.price-amount", {
@@ -105,6 +121,11 @@ describe("format.gtin-checksum", () => {
     expect(c("036000291452")).toHaveLength(0); // valid UPC-A
     expect(c("4006381333930")).toHaveLength(1); // bad check digit
     expect(c("12345")).toHaveLength(1); // wrong length
+    expect(
+      check("format.gtin-checksum", {
+        productAttributes: { gtins: ["4006381333931", "12345"] },
+      }),
+    ).toMatchObject([{ attribute: "gtins[1]" }]);
   });
 });
 

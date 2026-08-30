@@ -197,7 +197,7 @@ export function createGmcMcpServer(opts: McpServerOptions = {}): McpServer {
     {
       account: z.string().optional().describe("Merchant Center account id"),
       data_source: z.string().describe("Data source id to insert into"),
-      product: z.record(z.unknown()).describe("ProductInput JSON object"),
+      product: z.record(z.string(), z.unknown()).describe("ProductInput JSON object"),
     },
     async ({ account, data_source, product }) => {
       try {

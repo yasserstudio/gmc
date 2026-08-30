@@ -50,7 +50,7 @@ function run(args: string[]): Promise<unknown> {
   return createProgram().parseAsync(["node", "gmc", ...args]);
 }
 
-const PROD = "online~en~US~SKU1";
+const PROD = "en~US~SKU1";
 
 describe("gmc inventory", () => {
   let writes: string[];
@@ -110,8 +110,10 @@ describe("gmc inventory", () => {
     ]);
     expect(insertLocal).toHaveBeenCalledWith(PROD, {
       storeCode: "S1",
-      availability: "out_of_stock",
-      quantity: "0",
+      localInventoryAttributes: {
+        availability: "OUT_OF_STOCK",
+        quantity: "0",
+      },
     });
     expect(out()).toContain("Set local inventory for store S1");
     expect(process.exitCode).toBe(0);
@@ -133,7 +135,9 @@ describe("gmc inventory", () => {
     ]);
     expect(insertLocal).toHaveBeenCalledWith(PROD, {
       storeCode: "S1",
-      price: { amountMicros: "19990000", currencyCode: "USD" },
+      localInventoryAttributes: {
+        price: { amountMicros: "19990000", currencyCode: "USD" },
+      },
     });
   });
 
@@ -144,7 +148,9 @@ describe("gmc inventory", () => {
     await run(["inventory", "local", "insert", PROD, "--file", file, "--price", "9.99"]);
     expect(insertLocal).toHaveBeenCalledWith(PROD, {
       storeCode: "S1",
-      price: { amountMicros: "9990000", currencyCode: "EUR" },
+      localInventoryAttributes: {
+        price: { amountMicros: "9990000", currencyCode: "EUR" },
+      },
     });
   });
 
@@ -155,8 +161,10 @@ describe("gmc inventory", () => {
     await run(["inventory", "local", "insert", PROD, "--file", file, "--availability", "in_stock"]);
     expect(insertLocal).toHaveBeenCalledWith(PROD, {
       storeCode: "S0",
-      pickupMethod: "ship",
-      availability: "in_stock",
+      localInventoryAttributes: {
+        pickupMethod: "SHIP_TO_STORE",
+        availability: "IN_STOCK",
+      },
     });
   });
 
@@ -174,8 +182,11 @@ describe("gmc inventory", () => {
 
   it("lists local inventories and renders them", async () => {
     listLocal.mockResolvedValue([
-      { storeCode: "S1", availability: "in_stock", quantity: "5" },
-      { storeCode: "S2", availability: "out_of_stock" },
+      {
+        storeCode: "S1",
+        localInventoryAttributes: { availability: "IN_STOCK", quantity: "5" },
+      },
+      { storeCode: "S2", localInventoryAttributes: { availability: "OUT_OF_STOCK" } },
     ]);
     await run(["inventory", "local", "list", PROD]);
     expect(listLocal).toHaveBeenCalledWith(PROD);
@@ -217,7 +228,7 @@ describe("gmc inventory", () => {
     ]);
     expect(insertRegional).toHaveBeenCalledWith(PROD, {
       region: "US-CA",
-      availability: "in_stock",
+      regionalInventoryAttributes: { availability: "IN_STOCK" },
     });
 
     await run(["inventory", "regional", "insert", PROD, "--availability", "in_stock"]);

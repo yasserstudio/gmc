@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { strict as assert } from "node:assert";
-import { describe, it, before, after } from "node:test";
+import { describe, it, before } from "node:test";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -146,6 +146,30 @@ describe("action/run.mjs", () => {
     }
   });
 
+  it("escapes feed-controlled values in the job summary", function () {
+    if (!checkGmc) {
+      this.skip();
+      return;
+    }
+
+    const maliciousOfferId = "SKU\\|BREAK\n| forged | <script>alert(1)</script>";
+    const { root, cleanup: cleanupFeeds } = makeFeedsDir({
+      "malicious.json": { ...BAD_PRODUCT, offerId: maliciousOfferId },
+    });
+    const result = runAction({ GMC_ARGS: `--dir ${join(root, "feeds")}` });
+
+    try {
+      assert.notEqual(result.exitCode, 0, "expected preflight findings");
+      assert.ok(result.summary.includes("SKU\\&#124;BREAK<br>&#124; forged &#124;"));
+      assert.ok(result.summary.includes("&lt;script&gt;alert(1)&lt;/script&gt;"));
+      assert.ok(!result.summary.includes("\n| forged |"));
+      assert.ok(!result.summary.includes("<script>"));
+    } finally {
+      result.cleanup();
+      cleanupFeeds();
+    }
+  });
+
   it("sets the scanned count output", function () {
     if (!checkGmc) {
       this.skip();
@@ -187,7 +211,7 @@ describe("action/run.mjs", () => {
     }
   });
 
-  it("exits with error when gmc produces no JSON", function () {
+  it("reports structured gmc errors without a runner stack trace", function () {
     if (!checkGmc) {
       this.skip();
       return;
@@ -199,6 +223,9 @@ describe("action/run.mjs", () => {
 
     try {
       assert.notEqual(result.exitCode, 0);
+      assert.ok(result.stdout.includes("::error::Could not read feed directory"));
+      assert.ok(result.stderr.includes("Could not read feed directory"));
+      assert.ok(!result.stderr.includes("TypeError"));
     } finally {
       result.cleanup();
     }

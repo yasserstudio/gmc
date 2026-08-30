@@ -109,6 +109,9 @@ describe("required.identifier-exists", () => {
     expect(check("required.identifier-exists", { productAttributes: { gtin: "x" } })).toHaveLength(
       0,
     );
+    expect(
+      check("required.identifier-exists", { productAttributes: { gtins: ["x"] } }),
+    ).toHaveLength(0);
     expect(check("required.identifier-exists", { productAttributes: { mpn: "x" } })).toHaveLength(
       0,
     );

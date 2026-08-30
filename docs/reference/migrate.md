@@ -1,10 +1,10 @@
 ---
-description: "Migrate from the Content API for Shopping to the Google Merchant API before the August 18, 2026 sunset: scope/auth audit, price-to-micros transform, and feed-label checks."
+description: "Migrate from the Content API for Shopping, retired August 18, 2026, to the Google Merchant API: scope/auth audit, price-to-micros transform, and feed-label checks."
 ---
 
 # gmc migrate
 
-**Content API for Shopping → Merchant API assistant.** Google retires the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API in three steps, all below: `migrate scopes` (auth-readiness audit), `migrate products` (transform to push-ready inputs), and `migrate feed-labels` (catch feed-label breaks).
+**Content API for Shopping → Merchant API assistant.** Google retired the Content API for Shopping on **August 18, 2026**; `migrate` helps you move to the Merchant API in three steps, all below: `migrate scopes` (auth-readiness audit), `migrate products` (transform to push-ready inputs), and `migrate feed-labels` (catch feed-label breaks).
 
 ```sh
 gmc migrate scopes                                   # audit auth readiness
@@ -114,6 +114,7 @@ The Merchant API keeps only _identity_ fields at the top level and nests everyth
 | `targetCountry: "US"`                                         | `feedLabel: "US"`                                                        | the key remap (an explicit `feedLabel` wins; `--feed-label` overrides)                      |
 | `id: "online:en:US:SKU1"`                                     | `offerId`/`contentLanguage`/`feedLabel`                                  | parsed to backfill missing identity, then dropped                                           |
 | `title`, `description`, `link`, `customLabel0`, `shipping`, … | `productAttributes.*`                                                    | moved as-is (names match)                                                                   |
+| `gtin`                                                        | `productAttributes.gtins: [gtin]`                                        | singular Content API identifier → current plural Merchant API field                         |
 | `customAttributes: [{name,value}]`                            | `customAttributes`                                                       | carried through                                                                             |
 | `id` / `kind` / `source` / `selfLink`                         | —                                                                        | output-only → dropped                                                                       |
 

@@ -57,7 +57,7 @@ function renderProduct(product: Product): void {
   }
 }
 
-/** Register the `gmc products` command group (list / get / insert / delete). */
+/** Register the `gmc products` command group (list / get / insert / update / delete). */
 export function registerProductsCommands(program: Command): void {
   const products = program.command("products").description("Manage Merchant Center products");
 
@@ -145,4 +145,39 @@ export function registerProductsCommands(program: Command): void {
         reportError(err, { json }, "gmc products delete");
       }
     });
+
+  products
+    .command("update")
+    .argument("<productId>", "Product input id or resource name")
+    .option("--data-source <id>", "Primary or supplemental API data source")
+    .option("--file <path>", "Read the partial ProductInput JSON from this file (else stdin)")
+    .option("--update-mask <fields>", "Comma-separated product attributes to update/delete")
+    .description("Patch selected fields on an existing product input")
+    .action(
+      async (
+        productId: string,
+        opts: { dataSource?: string; file?: string; updateMask?: string },
+      ) => {
+        const json = wantsJson(program);
+        try {
+          const ctx = contextFrom(program);
+          const account = resolveAccount(undefined, ctx);
+          const dataSource = requireDataSource(opts.dataSource, "update a product");
+          const input = (await readJsonObject(opts.file, "product update")) as ProductInput;
+          const service = new ProductsService(await clientFor(ctx, account));
+          const result = await service.updateProductInput(productId, input, dataSource, {
+            ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+          });
+          if (ctx.json) emitJson(result);
+          else {
+            process.stdout.write(`Updated ${productSegment(productId)}.\n`);
+            process.stdout.write(
+              "Processing is async; the processed product may take a few minutes to reflect the update.\n",
+            );
+          }
+        } catch (err) {
+          reportError(err, { json }, "gmc products update");
+        }
+      },
+    );
 }

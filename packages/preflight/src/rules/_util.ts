@@ -62,9 +62,7 @@ export function isHttpUrl(value: string): boolean {
 
 /** The outcome of classifying a `price.amountMicros` value. */
 export type MicrosParse =
-  | { kind: "absent" }
-  | { kind: "valid"; micros: number }
-  | { kind: "invalid"; raw: string };
+  { kind: "absent" } | { kind: "valid"; micros: number } | { kind: "invalid"; raw: string };
 
 /**
  * Defensively classify a `price.amountMicros` value. The field is typed `string`,

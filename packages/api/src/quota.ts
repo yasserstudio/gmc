@@ -1,7 +1,6 @@
-// Typed Quota service (Merchant API `quota/v1`, `accounts.quotas`). Read-only: lists
-// the daily Merchant API call quota and usage per method group for an account, so you
-// can see your rate-limit headroom. The only method is `list`. Runs on the "quota"
-// rate-limit bucket. Wraps a MerchantClient scoped to one account.
+// Typed Quota service (Merchant API `quota/v1`, `accounts.quotas` and
+// `accounts.limits`). Read-only: lists daily call usage and account resource limits.
+// Runs on the "quota" rate-limit bucket and wraps a client scoped to one account.
 
 import type { MerchantClient } from "./client.js";
 
@@ -44,6 +43,27 @@ interface QuotasListPage {
   nextPageToken?: string;
 }
 
+/** Product-count limit in an EEA/non-EEA ads scope. */
+export interface ProductLimit {
+  scope?: "SCOPE_UNSPECIFIED" | "ADS_NON_EEA" | "ADS_EEA";
+  limit?: string;
+}
+
+/** One account resource limit (`accounts/{account}/limits/{type}~{scope}`). */
+export interface AccountLimit {
+  name?: string;
+  products?: ProductLimit;
+}
+
+interface AccountLimitsListPage {
+  accountLimits?: AccountLimit[];
+  nextPageToken?: string;
+}
+
+export function accountLimitSegment(idOrName: string): string {
+  return idOrName.replace(/^.*\/limits\//, "");
+}
+
 /** Read-only access to the Merchant API Quota sub-API. */
 export class QuotaService {
   constructor(private readonly client: MerchantClient) {}
@@ -59,5 +79,29 @@ export class QuotaService {
       groups.push(g);
     }
     return groups;
+  }
+
+  /** List account limits matching Google's required type filter. */
+  async listLimits(filter = 'type = "products"'): Promise<AccountLimit[]> {
+    const limits: AccountLimit[] = [];
+    for await (const limit of this.client.paginate<AccountLimit>(
+      "quota",
+      `${QUOTA_API}/${this.client.accountResource}/limits`,
+      {
+        query: { filter },
+        select: (page) => (page as AccountLimitsListPage).accountLimits ?? [],
+      },
+    )) {
+      limits.push(limit);
+    }
+    return limits;
+  }
+
+  /** Fetch one account limit by id (for example `products~ADS_EEA`) or resource name. */
+  getLimit(idOrName: string): Promise<AccountLimit> {
+    return this.client.get<AccountLimit>(
+      "quota",
+      `${QUOTA_API}/${this.client.accountResource}/limits/${encodeURIComponent(accountLimitSegment(idOrName))}`,
+    );
   }
 }

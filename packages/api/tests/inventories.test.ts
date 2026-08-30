@@ -47,9 +47,9 @@ describe("InventoriesService — local", () => {
     const { service, calls } = capturing({
       localInventories: [{ storeCode: "S1" }, { storeCode: "S2" }],
     });
-    const items = await service.listLocal("online~en~US~SKU1");
+    const items = await service.listLocal("en~US~SKU1");
     expect(items.map((i) => i.storeCode)).toEqual(["S1", "S2"]);
-    expect(calls[0]?.url).toBe(`${BASE}/online~en~US~SKU1/localInventories`);
+    expect(calls[0]?.url).toBe(`${BASE}/en~US~SKU1/localInventories`);
   });
 
   it("follows pagination", async () => {
@@ -67,14 +67,42 @@ describe("InventoriesService — local", () => {
   });
 
   it("inserts via the :insert custom verb with the body", async () => {
-    const { service, calls } = capturing({ storeCode: "S1", availability: "out_of_stock" });
-    await service.insertLocal("online~en~US~SKU1", {
+    const { service, calls } = capturing({
       storeCode: "S1",
-      availability: "out_of_stock",
+      localInventoryAttributes: { availability: "OUT_OF_STOCK" },
+    });
+    await service.insertLocal("en~US~SKU1", {
+      storeCode: "S1",
+      availability: "OUT_OF_STOCK",
+      localShippingLabel: "same-day",
     });
     expect(calls[0]?.method).toBe("POST");
-    expect(calls[0]?.url).toBe(`${BASE}/online~en~US~SKU1/localInventories:insert`);
-    expect(calls[0]?.body).toEqual({ storeCode: "S1", availability: "out_of_stock" });
+    expect(calls[0]?.url).toBe(`${BASE}/en~US~SKU1/localInventories:insert`);
+    expect(calls[0]?.body).toEqual({
+      storeCode: "S1",
+      localInventoryAttributes: {
+        availability: "OUT_OF_STOCK",
+        localShippingLabel: "same-day",
+      },
+    });
+  });
+
+  it("normalizes legacy inventory enums to the current v1 values", async () => {
+    const { service, calls } = capturing({ storeCode: "S1" });
+    await service.insertLocal("en~US~SKU1", {
+      storeCode: "S1",
+      availability: "limited availability",
+      pickupMethod: "ship",
+      pickupSla: "2-day",
+    });
+    expect(calls[0]?.body).toEqual({
+      storeCode: "S1",
+      localInventoryAttributes: {
+        availability: "LIMITED_AVAILABILITY",
+        pickupMethod: "SHIP_TO_STORE",
+        pickupSla: "TWO_DAY",
+      },
+    });
   });
 
   it("deletes by store code, percent-encoding it", async () => {
@@ -86,8 +114,8 @@ describe("InventoriesService — local", () => {
 
   it("normalizes a full product resource name to its segment", async () => {
     const { service, calls } = capturing({ localInventories: [] });
-    await service.listLocal("accounts/123/products/online~en~US~SKU1");
-    expect(calls[0]?.url).toBe(`${BASE}/online~en~US~SKU1/localInventories`);
+    await service.listLocal("accounts/123/products/en~US~SKU1");
+    expect(calls[0]?.url).toBe(`${BASE}/en~US~SKU1/localInventories`);
   });
 });
 
@@ -101,10 +129,13 @@ describe("InventoriesService — regional", () => {
 
   it("inserts a regional inventory", async () => {
     const { service, calls } = capturing({ region: "US-CA" });
-    await service.insertRegional("p", { region: "US-CA", availability: "in_stock" });
+    await service.insertRegional("p", { region: "US-CA", availability: "IN_STOCK" });
     expect(calls[0]?.method).toBe("POST");
     expect(calls[0]?.url).toBe(`${BASE}/p/regionalInventories:insert`);
-    expect(calls[0]?.body).toEqual({ region: "US-CA", availability: "in_stock" });
+    expect(calls[0]?.body).toEqual({
+      region: "US-CA",
+      regionalInventoryAttributes: { availability: "IN_STOCK" },
+    });
   });
 
   it("deletes by region id, percent-encoding it", async () => {
@@ -116,7 +147,14 @@ describe("InventoriesService — regional", () => {
 
   it("normalizes a full product resource name to its segment (shared productBase)", async () => {
     const { service, calls } = capturing({ regionalInventories: [] });
-    await service.listRegional("accounts/123/products/online~en~US~SKU1");
-    expect(calls[0]?.url).toBe(`${BASE}/online~en~US~SKU1/regionalInventories`);
+    await service.listRegional("accounts/123/products/en~US~SKU1");
+    expect(calls[0]?.url).toBe(`${BASE}/en~US~SKU1/regionalInventories`);
+  });
+
+  it("base64url-encodes product ids with special characters", async () => {
+    const { service, calls } = capturing({ regionalInventories: [] });
+    await service.listRegional("en~US~sku/blue");
+    const encoded = Buffer.from("en~US~sku/blue").toString("base64url");
+    expect(calls[0]?.url).toBe(`${BASE}/${encoded}/regionalInventories`);
   });
 });

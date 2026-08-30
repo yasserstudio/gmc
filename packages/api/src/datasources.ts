@@ -15,12 +15,30 @@ const DATASOURCES_API = "datasources/v1";
 // these types are a compile-time view, not a runtime filter.
 
 /** A primary product data source config (`feedLabel`/`contentLanguage`/`legacyLocal`). */
+export interface Destination {
+  destination?: string;
+  state?: "STATE_UNSPECIFIED" | "ENABLED" | "DISABLED";
+}
+
+export interface DataSourceReference {
+  self?: boolean;
+  supplementalDataSourceName?: string;
+  /** @deprecated Google requires `self: true` for the primary source. */
+  primaryDataSourceName?: string;
+}
+
+export interface DefaultRule {
+  takeFromDataSources?: DataSourceReference[];
+}
+
 export interface PrimaryProductDataSource {
   feedLabel?: string;
   contentLanguage?: string;
   /** True for a legacy-local feed (Merchant API v1 replaced the `channel` field with this boolean). */
   legacyLocal?: boolean;
   countries?: string[];
+  destinations?: Destination[];
+  defaultRule?: DefaultRule;
 }
 
 /** Scheduled-fetch settings for a file-based data source. */
@@ -57,7 +75,30 @@ export interface DataSource {
   localInventoryDataSource?: Record<string, unknown>;
   regionalInventoryDataSource?: Record<string, unknown>;
   promotionDataSource?: Record<string, unknown>;
+  productReviewDataSource?: Record<string, unknown>;
+  merchantReviewDataSource?: Record<string, unknown>;
   fileInput?: FileInput;
+}
+
+/** Replace Google's deprecated primary-source rule reference with `self: true`. */
+export function normalizeDataSource(body: DataSource): DataSource {
+  const primary = body.primaryProductDataSource;
+  const references = primary?.defaultRule?.takeFromDataSources;
+  if (!primary || !references?.some((reference) => reference.primaryDataSourceName !== undefined)) {
+    return body;
+  }
+  return {
+    ...body,
+    primaryProductDataSource: {
+      ...primary,
+      defaultRule: {
+        ...primary.defaultRule,
+        takeFromDataSources: references.map(({ primaryDataSourceName, ...reference }) =>
+          primaryDataSourceName !== undefined ? { ...reference, self: true } : reference,
+        ),
+      },
+    },
+  };
 }
 
 /** One page of `dataSources.list`. */
@@ -107,7 +148,11 @@ export class DataSourcesService {
 
   /** Create a data source from a full DataSource body. */
   createDataSource(body: DataSource): Promise<DataSource> {
-    return this.client.post<DataSource>("datasources", `${this.base}/dataSources`, body);
+    return this.client.post<DataSource>(
+      "datasources",
+      `${this.base}/dataSources`,
+      normalizeDataSource(body),
+    );
   }
 
   /**
@@ -125,7 +170,7 @@ export class DataSourcesService {
       "datasources",
       "PATCH",
       `${this.base}/dataSources/${encodeURIComponent(dataSourceSegment(idOrName))}`,
-      { query: { updateMask }, body },
+      { query: { updateMask }, body: normalizeDataSource(body) },
     );
   }
 

@@ -1,6 +1,11 @@
 import type { Command } from "commander";
 import { emitJson, reportError } from "@gmc-cli/core";
-import { QuotaService, type QuotaGroup } from "@gmc-cli/api";
+import {
+  QuotaService,
+  accountLimitSegment,
+  type AccountLimit,
+  type QuotaGroup,
+} from "@gmc-cli/api";
 import { contextFrom, wantsJson } from "../context.js";
 import { clientFor, resolveAccount } from "./_shared.js";
 
@@ -29,7 +34,24 @@ function renderQuotas(groups: QuotaGroup[]): void {
   }
 }
 
-/** Register the `gmc quota` command group (read-only `list`). */
+function renderLimits(limits: AccountLimit[]): void {
+  if (limits.length === 0) {
+    process.stdout.write("No matching account limits.\n");
+    return;
+  }
+  const rows = limits.map((limit) => ({
+    id: limit.name ? accountLimitSegment(limit.name) : "—",
+    scope: limit.products?.scope ?? "—",
+    limit: limit.products?.limit ?? "—",
+  }));
+  const idWidth = Math.max(...rows.map((row) => row.id.length));
+  process.stdout.write(`${limits.length} account limit(s):\n`);
+  for (const row of rows) {
+    process.stdout.write(`  ${row.id.padEnd(idWidth)}  ${row.limit} products · ${row.scope}\n`);
+  }
+}
+
+/** Register the read-only `gmc quota` command group (usage and account limits). */
 export function registerQuotaCommands(program: Command): void {
   const quota = program
     .command("quota")
@@ -49,6 +71,44 @@ export function registerQuotaCommands(program: Command): void {
         else renderQuotas(groups);
       } catch (err) {
         reportError(err, { json }, "gmc quota list");
+      }
+    });
+
+  const limits = quota.command("limits").description("Inspect account resource limits");
+
+  limits
+    .command("list")
+    .option("--filter <expression>", 'Limit filter (default: type = "products")')
+    .description("List product-count limits for the account")
+    .action(async (opts: { filter?: string }) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(undefined, ctx);
+        const service = new QuotaService(await clientFor(ctx, account));
+        const list = await service.listLimits(opts.filter);
+        if (ctx.json) emitJson({ limits: list });
+        else renderLimits(list);
+      } catch (err) {
+        reportError(err, { json }, "gmc quota limits list");
+      }
+    });
+
+  limits
+    .command("get")
+    .argument("<limit>", "Limit id, e.g. products~ADS_EEA")
+    .description("Fetch one account limit")
+    .action(async (limit: string) => {
+      const json = wantsJson(program);
+      try {
+        const ctx = contextFrom(program);
+        const account = resolveAccount(undefined, ctx);
+        const service = new QuotaService(await clientFor(ctx, account));
+        const result = await service.getLimit(limit);
+        if (ctx.json) emitJson(result);
+        else renderLimits([result]);
+      } catch (err) {
+        reportError(err, { json }, "gmc quota limits get");
       }
     });
 }

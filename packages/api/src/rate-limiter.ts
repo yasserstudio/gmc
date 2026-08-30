@@ -40,6 +40,7 @@ export const DEFAULT_RATE_LIMITS: RateLimitConfig = {
   conversions: { capacity: 30, refillPerSecond: 5 },
   lfp: { capacity: 30, refillPerSecond: 5 },
   ordertracking: { capacity: 30, refillPerSecond: 5 },
+  loyaltycustomers: { capacity: 30, refillPerSecond: 5 },
 };
 
 class TokenBucket {

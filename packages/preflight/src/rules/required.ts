@@ -163,12 +163,13 @@ export const requiredRules: Rule[] = [
     defaultSeverity: "warning",
     check(product) {
       const a = product.productAttributes;
-      if (blank(a?.gtin) && blank(a?.mpn) && blank(a?.brand)) {
+      const hasGtin = (a?.gtins?.some((gtin) => !blank(gtin)) ?? false) || !blank(a?.gtin);
+      if (!hasGtin && blank(a?.mpn) && blank(a?.brand)) {
         return [
           {
             message:
-              "No product identifier — set at least one of gtin, mpn, or brand (most categories require one).",
-            suggestion: "Add a gtin (barcode), or an mpn plus brand, per your product category.",
+              "No product identifier — set gtins, mpn, or brand (most categories require one).",
+            suggestion: "Add gtins (barcodes), or an mpn plus brand, per your product category.",
             documentation: IDENTIFIER_DOC,
           },
         ];

@@ -44,6 +44,26 @@ export const formatRules: Rule[] = [
     },
   },
   {
+    id: "format.video-link-url",
+    title: "Video links are valid URLs",
+    defaultSeverity: "error",
+    check(product) {
+      const videos = product.productAttributes?.videoLinks ?? [];
+      return videos.flatMap((raw, index) => {
+        const video = text(raw);
+        if (video === undefined || isHttpUrl(video)) return [];
+        return [
+          {
+            attribute: `videoLinks[${index}]`,
+            message: `Video link "${quote(video)}" is not a valid http(s) URL.`,
+            suggestion: "Use an absolute product video URL beginning with http:// or https://.",
+            documentation: SPEC,
+          },
+        ];
+      });
+    },
+  },
+  {
     id: "format.image-link-url",
     title: "Image link is a valid URL",
     defaultSeverity: "error",
@@ -154,17 +174,21 @@ export const formatRules: Rule[] = [
     title: "GTIN check digit is valid",
     defaultSeverity: "warning",
     check(product) {
-      const gtin = text(product.productAttributes?.gtin);
-      if (gtin === undefined || isValidGtin(gtin)) return [];
-      return [
-        {
-          attribute: "gtin",
-          message: `GTIN "${quote(gtin)}" is not a valid GTIN-8/12/13/14 (wrong length or check digit).`,
-          suggestion:
-            "Verify the barcode: GTINs are 8, 12, 13, or 14 digits with a mod-10 check digit.",
-          documentation: IDENTIFIER_DOC,
-        },
-      ];
+      const attributes = product.productAttributes;
+      const gtins = attributes?.gtins?.length ? attributes.gtins : [attributes?.gtin];
+      return gtins.flatMap((raw, index) => {
+        const gtin = text(raw);
+        if (gtin === undefined || isValidGtin(gtin)) return [];
+        return [
+          {
+            attribute: attributes?.gtins?.length ? `gtins[${index}]` : "gtin",
+            message: `GTIN "${quote(gtin)}" is not a valid GTIN-8/12/13/14 (wrong length or check digit).`,
+            suggestion:
+              "Verify the barcode: GTINs are 8, 12, 13, or 14 digits with a mod-10 check digit.",
+            documentation: IDENTIFIER_DOC,
+          },
+        ];
+      });
     },
   },
   {

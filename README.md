@@ -11,7 +11,7 @@
 
 **GMC** is a command-line interface for the [Google Merchant API](https://developers.google.com/merchant/api) — the successor to the Content API for Shopping. It gives you typed, scriptable, CI-friendly access to your Merchant Center accounts and product catalog from a single binary, without a browser.
 
-It is built for the **Content API → Merchant API migration** (the Content API is being retired), and around the three things that API makes harder than it should: catching the _silent_ setup failures (`doctor`), validating feeds offline before they get disapproved (preflight), and moving off the Content API cleanly (migrate).
+It is built for the **Content API → Merchant API migration** (the Content API retired on August 18, 2026), and around the three things that API makes harder than it should: catching the _silent_ setup failures (`doctor`), validating feeds offline before they get disapproved (preflight), and moving off the Content API cleanly (migrate).
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@gmc-cli/cli"><img src="https://img.shields.io/npm/v/%40gmc-cli%2Fcli?style=for-the-badge&color=1a73e8&label=npm" alt="npm version"></a>
@@ -54,7 +54,7 @@ Set an account once in a [profile](https://yasserstudio.github.io/gmc/guide/conf
 
 ## Why GMC?
 
-Most Merchant Center work is still done by hand in the web UI, and the Content API that powered automation is being retired. GMC makes the move scriptable.
+Most Merchant Center work is still done by hand in the web UI, and the Content API that powered automation retired on August 18, 2026. GMC makes the move scriptable.
 
 |                                            |    **GMC**     | Merchant Center UI | Raw API / client libs |
 | ------------------------------------------ | :------------: | :----------------: | :-------------------: |
@@ -65,7 +65,7 @@ Most Merchant Center work is still done by hand in the web UI, and the Content A
 | Offline feed-compliance preflight          | ✅ `preflight` |         —          |           —           |
 | Content API → Merchant API migrate         |  ✅ `migrate`  |         —          |           —           |
 
-The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: **all 12 GA (`v1`) Merchant API sub-APIs are now covered**. See the [roadmap](#roadmap).
+The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: the source tree covers **all 13 GA (`v1`) Merchant API sub-APIs**, including Loyalty Customers (GA August 2026). See the [roadmap](#roadmap).
 
 ---
 
@@ -106,6 +106,8 @@ gmc accounts delete 987654321 --yes        # irreversible (--yes required)
 gmc accounts autofeed update 123456789 --enable-products true
 gmc accounts shipping get 123456789 --json > shipping.json   # edit, then `shipping set --file`
 gmc accounts return-policies list 123456789
+gmc accounts list --access direct --filter 'accountName = "*store*"'
+gmc accounts create-test 123456789 --name "Test" --time-zone Europe/Paris --language en-US
 ```
 
 ## Products
@@ -117,6 +119,7 @@ gmc products list --page-size 50              # processed products (status + iss
 gmc products get en~US~SKU1            # one product, with item-level issues
 gmc products insert --data-source 11223344 --file product.json   # create/replace
 cat product.json | gmc products insert --data-source 11223344    # …or from stdin
+gmc products update en~US~SKU1 --data-source 11223344 --file patch.json --update-mask price,availability
 gmc products delete en~US~SKU1 --data-source 11223344
 ```
 
@@ -130,6 +133,15 @@ gmc datasources list
 gmc datasources update <id> --name "Renamed feed"
 gmc datasources fetch <id>          # trigger an immediate pull (scheduled feeds)
 gmc datasources delete <id>
+```
+
+## Loyalty customers
+
+Manage tier associations through Google's privacy-preserving, write-only GA API. Customer identifiers
+are read from a protected file or stdin, never from command-line flags.
+
+```bash
+gmc loyalty-customers manage --file customer.json
 ```
 
 ## Feeds as code
@@ -248,6 +260,8 @@ GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`)
 | 10    | v1.0.2–v1.0.14  | Feature surface — `regions`, account mgmt, `notifications`, `quota`, `issues`, `conversions`, `lfp` → **all 11 Merchant API sub-APIs covered** |   ✅   |
 | 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                                       |   ✅   |
 | 12    | v1.0.16         | `ordertracking` — order tracking signals (last GA sub-API; **v1 surface complete**)                                                            |   ✅   |
+| 13    | v1.0.17         | Account program participation — inspect and request program enrollment                                                                         |   ✅   |
+| 14    | v1.1.0 (next)   | August 2026 API compatibility — Loyalty Customers GA, product patch/attributes, current inventory wire format, account filters/test accounts   |   🚧   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

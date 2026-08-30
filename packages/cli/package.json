@@ -1,7 +1,7 @@
 {
   "name": "@gmc-cli/cli",
   "version": "1.0.17",
-  "description": "Free, open-source CLI for the Google Merchant API. Migrate off the retiring Content API, diagnose silent setup failures (gmc doctor), and preflight feeds offline to catch disapprovals before upload — typed, --json, CI-native. Provides the gmc command.",
+  "description": "Free, open-source CLI for the Google Merchant API. Migrate off the retired Content API, diagnose silent setup failures (gmc doctor), and preflight feeds offline to catch disapprovals before upload — typed, --json, CI-native. Provides the gmc command.",
   "type": "module",
   "bin": {
     "gmc": "./dist/bin.js"
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "commander": "^14.0.3",
-    "google-auth-library": "^10.7.0"
+    "google-auth-library": "^10.9.1"
   },
   "homepage": "https://yasserstudio.github.io/gmc/",
   "keywords": [
@@ -58,14 +58,14 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
     "@gmc-cli/api": "workspace:*",
     "@gmc-cli/auth": "workspace:*",
     "@gmc-cli/config": "workspace:*",
     "@gmc-cli/core": "workspace:*",
-    "@gmc-cli/migrate": "workspace:*",
     "@gmc-cli/mcp": "workspace:*",
-    "@gmc-cli/preflight": "workspace:*"
+    "@gmc-cli/migrate": "workspace:*",
+    "@gmc-cli/preflight": "workspace:*",
+    "@types/node": "^25.9.3"
   },
   "repository": {
     "type": "git",

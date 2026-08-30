@@ -22,27 +22,45 @@ gmc inventory regional delete en~US~SKU1 --region US-CA
 `insert` builds the entry from convenience flags — or a `--file` JSON base with flags layered on top
 for full control:
 
-| Flag                                     | Applies to | Notes                                                                         |
-| ---------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
-| `--store-code <code>`                    | local      | The local inventory's id (required unless in `--file`)                        |
-| `--region <id>`                          | regional   | The regional inventory's id; must already exist for the account               |
-| `--availability <value>`                 | both       | e.g. `in_stock` / `out_of_stock`                                              |
-| `--quantity <n>`                         | local      | Non-negative integer stock at the store                                       |
-| `--price <amount>` + `--currency <code>` | both       | Decimal price → `{amountMicros, currencyCode}`                                |
-| `--file <path>`                          | both       | A `LocalInventory` / `RegionalInventory` JSON base; flags override its fields |
+| Flag                                     | Applies to | Notes                                                                                          |
+| ---------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| `--store-code <code>`                    | local      | The local inventory's id (required unless in `--file`)                                         |
+| `--region <id>`                          | regional   | The regional inventory's id; must already exist for the account                                |
+| `--availability <value>`                 | both       | `in_stock` / `out_of_stock`; local also accepts `limited_availability` / `on_display_to_order` |
+| `--quantity <n>`                         | local      | Non-negative integer stock at the store                                                        |
+| `--price <amount>` + `--currency <code>` | both       | Decimal price → `{amountMicros, currencyCode}`                                                 |
+| `--file <path>`                          | both       | A `LocalInventory` / `RegionalInventory` JSON base; flags override its fields                  |
 
 ```sh
 # full control via JSON, with a flag override
 gmc inventory local insert en~US~SKU1 --file store1.json --availability out_of_stock
 ```
 
+Google's current v1 JSON nests mutable fields under an attributes object:
+
+```json
+{
+  "storeCode": "STORE1",
+  "localInventoryAttributes": {
+    "availability": "IN_STOCK",
+    "quantity": "5",
+    "pickupMethod": "BUY",
+    "pickupSla": "SAME_DAY",
+    "localShippingLabel": "same-day"
+  }
+}
+```
+
+Regional files use `regionalInventoryAttributes`. Pre-1.1 GMC files with flattened `price`,
+`availability`, `quantity`, pickup, loyalty, or custom-attribute fields remain accepted and are
+normalized to the current nested shape. Known legacy enum spellings are normalized to v1 enums.
+
 Insert is an **upsert** keyed by `storeCode` / `region` — re-inserting replaces. There's no `get` or
 `patch`; use `list` to read and `insert` to change.
 
 ::: tip Regions
-A regional inventory's `--region` must reference a region already defined for the account (region
-_definition_ lives under the Accounts sub-API; CLI support for it is a separate follow-up). Define
-regions in Merchant Center, then reference their ids here.
+A regional inventory's `--region` must reference a region already defined for the account. Create or
+manage it with [`gmc regions`](/reference/regions), then reference its id here.
 :::
 
 ## Output

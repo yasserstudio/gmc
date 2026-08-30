@@ -1,7 +1,7 @@
 // Typed Products sub-API service (Merchant API `products/v1`). The API splits
 // products in two: the read-only *processed* `products` resource (get/list, with
 // status + item-level issues) and the writable `productInputs` resource
-// (insert/delete only). This service wraps a MerchantClient scoped to one account
+// (insert/update/delete). This service wraps a MerchantClient scoped to one account
 // (it reads `client.accountResource`) and exposes both halves under one surface.
 
 import type { MerchantClient } from "./client.js";
@@ -12,6 +12,79 @@ const PRODUCTS_API = "products/v1";
 export interface Price {
   amountMicros?: string;
   currencyCode?: string;
+}
+
+/** Product-level order cutoff configuration (2026 product data specification). */
+export interface HandlingCutoffTime {
+  country?: string;
+  cutoffTime?: string;
+  cutoffTimezone?: string;
+  disableDeliveryAfterCutoff?: boolean;
+}
+
+/** Minimum cart value before checkout is permitted for a country/service. */
+export interface ProductMinimumOrderValue {
+  country?: string;
+  service?: string;
+  surface?: "SURFACE_UNSPECIFIED" | "ONLINE" | "LOCAL" | "ONLINE_LOCAL";
+  price?: Price;
+}
+
+/** Product-level in-store pickup cost added to the 2026 specification. */
+export interface PickupCost {
+  flatRate?: Price;
+  freeThreshold?: Price;
+}
+
+/** Product-level shipping option (subset, including the 2026 loyalty fields). */
+export interface Shipping {
+  country?: string;
+  region?: string;
+  postalCode?: string;
+  locationId?: string;
+  locationGroupName?: string;
+  service?: string;
+  price?: Price;
+  minHandlingTime?: string;
+  maxHandlingTime?: string;
+  minTransitTime?: string;
+  maxTransitTime?: string;
+  handlingCutoffTime?: string;
+  handlingCutoffTimezone?: string;
+  loyaltyProgramLabel?: string;
+  loyaltyTierLabel?: string;
+}
+
+/** Offer-level return-policy override added to Products v1 in July 2026. */
+export interface ProductReturns {
+  countries?: string[];
+  policyUrl?: string;
+  windowType?:
+    "RETURN_WINDOW_TYPE_UNSPECIFIED" | "FINITE_RETURN_WINDOW" | "NO_RETURNS" | "LIFETIME";
+  windowDays?: string;
+  itemConditions?: string[];
+  methods?: string[];
+  outcomes?: string[];
+  shippingFeeType?: string;
+  shippingFee?: Price;
+  restockingFee?: Price;
+  restockingPercentageFee?: number;
+}
+
+export interface QuestionAndAnswer {
+  question?: string;
+  answer?: string;
+}
+
+export interface RelatedProduct {
+  id?: string;
+  idType?: "ID_TYPE_UNSPECIFIED" | "GTIN" | "ID";
+  relationshipType?: string;
+}
+
+export interface VariantOption {
+  name?: string;
+  value?: string;
 }
 
 // The interfaces below model only the fields the CLI reads; the Merchant API
@@ -29,10 +102,26 @@ export interface ProductAttributes {
   condition?: string;
   price?: Price;
   brand?: string;
+  /** @deprecated Google replaced the singular field with `gtins`. */
   gtin?: string;
+  gtins?: string[];
   mpn?: string;
   color?: string;
   size?: string;
+  additionalImageLinks?: string[];
+  videoLinks?: string[];
+  returnPolicyLabel?: string;
+  returns?: ProductReturns[];
+  handlingCutoffTimes?: HandlingCutoffTime[];
+  minimumOrderValues?: ProductMinimumOrderValue[];
+  pickupCost?: PickupCost;
+  shipping?: Shipping[];
+  questionsAndAnswers?: QuestionAndAnswer[];
+  documentLinks?: string[];
+  relatedProducts?: RelatedProduct[];
+  itemGroupTitle?: string;
+  variantOptions?: VariantOption[];
+  popularityRank?: number;
 }
 
 /** A custom (non-standard) product attribute. */
@@ -46,11 +135,17 @@ export interface CustomAttribute {
 export interface ProductInput {
   name?: string;
   product?: string;
+  /** Output-only encoded resource name, safe for identifiers containing `/`, `%`, or `~`. */
+  base64EncodedName?: string;
+  /** Output-only encoded processed-product name. */
+  base64EncodedProduct?: string;
   offerId?: string;
   contentLanguage?: string;
   feedLabel?: string;
   /** True for products sold exclusively in physical stores (Merchant API v1 replaced `channel` with this). */
   legacyLocal?: boolean;
+  /** Freshness guard for inserts into primary data sources (int64 as a string). */
+  versionNumber?: string;
   productAttributes?: ProductAttributes;
   customAttributes?: CustomAttribute[];
 }
@@ -80,6 +175,8 @@ export interface ProductStatus {
 /** A processed, read-only product (`accounts/{account}/products/{product}`). */
 export interface Product {
   name: string;
+  /** Output-only encoded resource name, safe to pass back to get/delete/update calls. */
+  base64EncodedName?: string;
   offerId?: string;
   contentLanguage?: string;
   feedLabel?: string;
@@ -88,6 +185,8 @@ export interface Product {
   productAttributes?: ProductAttributes;
   customAttributes?: CustomAttribute[];
   productStatus?: ProductStatus;
+  versionNumber?: string;
+  archived?: boolean;
 }
 
 /** One page of `products.list`. */
@@ -104,6 +203,25 @@ interface ProductsListPage {
  */
 export function productSegment(idOrName: string): string {
   return idOrName.replace(/^.*\/(?:products|productInputs)\//, "");
+}
+
+/**
+ * Convert a product identifier to the path form required by Merchant API v1.
+ * Plain composite ids are accepted when they contain exactly the structural `~`
+ * separators. If an identity component itself contains `/`, `%`, or `~`, Google
+ * requires the entire composite id to be unpadded base64url encoded.
+ *
+ * A segment with no `~` is treated as an already encoded id (for example the
+ * `base64EncodedName` returned by Google) and passed through unchanged.
+ */
+export function productPathSegment(idOrName: string): string {
+  const segment = productSegment(idOrName);
+  if (!segment.includes("~")) return segment;
+
+  const expectedParts = segment.startsWith("local~") ? 4 : 3;
+  const mustEncode =
+    segment.includes("/") || segment.includes("%") || segment.split("~").length !== expectedParts;
+  return mustEncode ? Buffer.from(segment, "utf8").toString("base64url") : segment;
 }
 
 /**
@@ -124,8 +242,8 @@ export function productKey(input: ProductInput): string {
 /**
  * Map a processed Product to a push-ready ProductInput. Intentional allowlist:
  * output-only data (`name`, `productStatus`, `dataSource`, …) can never leak into
- * a file that will later be pushed, at the cost of dropping edge writable fields
- * (e.g. `versionNumber`). `productAttributes`/`customAttributes` are kept by
+ * a file that will later be pushed. `versionNumber`, `productAttributes`, and
+ * `customAttributes` are kept by
  * reference — the caller must not mutate the result.
  */
 export function toProductInput(product: Product): ProductInput {
@@ -134,6 +252,7 @@ export function toProductInput(product: Product): ProductInput {
   if (product.contentLanguage !== undefined) input.contentLanguage = product.contentLanguage;
   if (product.feedLabel !== undefined) input.feedLabel = product.feedLabel;
   if (product.legacyLocal !== undefined) input.legacyLocal = product.legacyLocal;
+  if (product.versionNumber !== undefined) input.versionNumber = product.versionNumber;
   if (product.productAttributes !== undefined) input.productAttributes = product.productAttributes;
   if (product.customAttributes !== undefined) input.customAttributes = product.customAttributes;
   return input;
@@ -160,7 +279,7 @@ export class ProductsService {
   getProduct(productId: string): Promise<Product> {
     return this.client.get<Product>(
       "products",
-      `${this.base}/products/${encodeURIComponent(productSegment(productId))}`,
+      `${this.base}/products/${encodeURIComponent(productPathSegment(productId))}`,
     );
   }
 
@@ -195,6 +314,37 @@ export class ProductsService {
   }
 
   /**
+   * Patch selected attributes on an existing product input. Unlike `insert`, this
+   * can update price/availability without resending every required product field.
+   * The optional mask uses Product attributes (for example `price,availability`);
+   * when omitted Google updates the populated fields in `input`.
+   */
+  updateProductInput(
+    productId: string,
+    input: ProductInput,
+    dataSource: string,
+    opts: { updateMask?: string } = {},
+  ): Promise<ProductInput> {
+    const segment = productPathSegment(productId);
+    const body: ProductInput = {
+      ...input,
+      name: `${this.client.accountResource}/productInputs/${segment}`,
+    };
+    return this.client.request<ProductInput>(
+      "products",
+      "PATCH",
+      `${this.base}/productInputs/${encodeURIComponent(segment)}`,
+      {
+        query: {
+          dataSource: dataSourceName(this.client.accountResource, dataSource),
+          ...(opts.updateMask ? { updateMask: opts.updateMask } : {}),
+        },
+        body,
+      },
+    );
+  }
+
+  /**
    * Delete a product input from the given data source. Uses `client.request`
    * directly (not `delete`) to attach the required `dataSource` query param.
    */
@@ -202,7 +352,7 @@ export class ProductsService {
     await this.client.request<undefined>(
       "products",
       "DELETE",
-      `${this.base}/productInputs/${encodeURIComponent(productSegment(productId))}`,
+      `${this.base}/productInputs/${encodeURIComponent(productPathSegment(productId))}`,
       { query: { dataSource: dataSourceName(this.client.accountResource, dataSource) } },
     );
   }

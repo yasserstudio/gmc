@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const { resolveAuth, listQuotas } = vi.hoisted(() => ({
+const { resolveAuth, listQuotas, listLimits, getLimit } = vi.hoisted(() => ({
   resolveAuth: vi.fn(),
   listQuotas: vi.fn(),
+  listLimits: vi.fn(),
+  getLimit: vi.fn(),
 }));
 
 vi.mock("@gmc-cli/auth", async (importActual) => {
@@ -21,6 +23,8 @@ vi.mock("@gmc-cli/api", async (importActual) => {
     },
     QuotaService: class {
       listQuotas = listQuotas;
+      listLimits = listLimits;
+      getLimit = getLimit;
     },
   };
 });
@@ -98,5 +102,32 @@ describe("gmc quota", () => {
     listQuotas.mockResolvedValue([]);
     await run(["quota", "list"]);
     expect(out()).toContain("No quota groups");
+  });
+
+  it("lists product account limits", async () => {
+    listLimits.mockResolvedValue([
+      {
+        name: "accounts/123/limits/products~ADS_EEA",
+        products: { scope: "ADS_EEA", limit: "500000" },
+      },
+    ]);
+
+    await run(["quota", "limits", "list"]);
+
+    expect(listLimits).toHaveBeenCalledWith(undefined);
+    expect(out()).toContain("products~ADS_EEA");
+    expect(out()).toContain("500000 products");
+  });
+
+  it("gets one product account limit as JSON", async () => {
+    getLimit.mockResolvedValue({
+      name: "accounts/123/limits/products~ADS_NON_EEA",
+      products: { scope: "ADS_NON_EEA", limit: "1000000" },
+    });
+
+    await run(["-j", "quota", "limits", "get", "products~ADS_NON_EEA"]);
+
+    expect(getLimit).toHaveBeenCalledWith("products~ADS_NON_EEA");
+    expect(JSON.parse(out()).products.limit).toBe("1000000");
   });
 });

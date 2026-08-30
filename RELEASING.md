@@ -12,7 +12,7 @@ cli's `dist`.
 | **npm Trusted Publisher** for `@gmc-cli/cli` | npmjs.com → package → Settings → Trusted Publisher → add this repo + `release.yml` | Lets CI **stage** publishes via OIDC — no long-lived npm token, and you approve the final publish with your passkey.                                                      |
 | **`HOMEBREW_TAP_TOKEN`**                     | repo → Settings → Secrets → Actions                                                | A PAT with `contents:write` on `yasserstudio/homebrew-tap` so `release-binaries.yml` can dispatch the formula bump (the default `GITHUB_TOKEN` can't reach another repo). |
 | npm **≥ 11.15**                              | local + CI (handled)                                                               | Staged publishing. `release.yml` upgrades CI automatically.                                                                                                               |
-| _(optional)_ **Dependency Graph**            | repo → Settings → Code security                                                    | Re-enables the `dependency-review` CI job (license + PR dep-diff gate). Vulns are already gated by `pnpm audit --prod` + the Socket app.                                  |
+| _(optional)_ **Dependency Graph**            | repo → Settings → Code security                                                    | Enables dependency insights and a future `dependency-review` CI job. Vulnerabilities are gated by `pnpm audit --prod` + the Socket app.                                   |
 
 ## The flow
 
@@ -33,7 +33,8 @@ cli's `dist`.
    gh release create vX.Y.Z --title "vX.Y.Z — Google Merchant Center CLI" --notes-file notes.md
    ```
    `release-binaries.yml` then builds the 4 standalone binaries, attaches them +
-   `checksums.txt`, and dispatches `gmc-release-published` to the tap, whose
+   `checksums.txt`, moves the major Action tag (`v1`, `v2`, …) to the release commit,
+   and dispatches `gmc-release-published` to the tap, whose
    `update-gmc-formula.yml` rebuilds `Formula/gmc.rb` from those checksums.
 
 That's it — npm, the standalone binaries, and `brew install yasserstudio/tap/gmc` all land

@@ -8,7 +8,25 @@ List accounts your credential can access.
 
 ```sh
 gmc accounts list
+gmc accounts list --access direct --page-size 500
+gmc accounts list --filter 'accountName = "*store*"'
 gmc accounts list --json   # { "accounts": [ … ] }
+```
+
+| Option                  | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `--access <level>`      | `direct`, `indirect`, or `all`; composes with `--filter`   |
+| `--filter <expression>` | Merchant API account filter expression                     |
+| `--page-size <n>`       | Maximum per page (up to 500; all pages are still followed) |
+
+## `gmc accounts subaccounts [providerId]`
+
+List the client accounts directly below an advanced/aggregator account. The provider defaults to the
+resolved account.
+
+```sh
+gmc accounts subaccounts 123456789
+gmc accounts subaccounts --page-size 500 --json
 ```
 
 ## `gmc accounts get [accountId]`
@@ -164,6 +182,20 @@ users afterward with [`gmc accounts users add`](#gmc-accounts-users-list-get-add
   "service": [{ "accountAggregation": {}, "provider": "accounts/123456789" }]
 }
 ```
+
+## `gmc accounts create-test [parentId]`
+
+Create an isolated, permanently non-serving test account under an advanced account.
+
+```sh
+gmc accounts create-test 123456789 --name "Integration test" \
+  --time-zone Europe/Paris --language en-US
+gmc accounts create-test --file test-account.json
+```
+
+The name, time zone, and language are required. Test accounts cannot be converted into live accounts,
+their products never serve on Google, and Google currently limits each Google Account to five test
+accounts. They use normal Merchant API quota and do not support every account feature.
 
 ## `gmc accounts delete`
 

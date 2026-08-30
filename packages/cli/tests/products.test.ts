@@ -7,6 +7,7 @@ import { Readable } from "node:stream";
 const getProduct = vi.fn();
 const listProducts = vi.fn();
 const insertProductInput = vi.fn();
+const updateProductInput = vi.fn();
 const deleteProductInput = vi.fn();
 // Captures the options each MerchantClient is built with, to assert the scoped
 // (accountId-bearing) client the products commands rely on.
@@ -33,6 +34,7 @@ vi.mock("@gmc-cli/api", async (importActual) => {
       getProduct = getProduct;
       listProducts = listProducts;
       insertProductInput = insertProductInput;
+      updateProductInput = updateProductInput;
       deleteProductInput = deleteProductInput;
     },
   };
@@ -210,6 +212,39 @@ describe("gmc products", () => {
 
     expect(insertProductInput).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
+  });
+
+  it("update patches selected product attributes", async () => {
+    updateProductInput.mockResolvedValue({ name: "accounts/123/productInputs/en~US~SKU1" });
+    const file = tmpFile(
+      "gmc-prod-update.json",
+      JSON.stringify({ productAttributes: { availability: "in_stock" } }),
+    );
+
+    try {
+      await run([
+        "products",
+        "update",
+        "en~US~SKU1",
+        "--data-source",
+        "55",
+        "--update-mask",
+        "availability",
+        "--file",
+        file,
+      ]);
+    } finally {
+      rmSync(file, { force: true });
+    }
+
+    expect(updateProductInput).toHaveBeenCalledWith(
+      "en~US~SKU1",
+      { productAttributes: { availability: "in_stock" } },
+      "55",
+      { updateMask: "availability" },
+    );
+    expect(writes.join("")).toContain("Updated en~US~SKU1");
+    expect(process.exitCode).toBe(0);
   });
 
   it("delete removes the product input and reports it in --json", async () => {

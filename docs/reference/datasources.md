@@ -90,6 +90,11 @@ from `datasources get` re-applies cleanly. When you pass both `--file` and `--na
 (it overrides the body's `displayName`). A field named in the `updateMask` but absent from the body
 is **deleted** by the API. `--json` emits the updated `DataSource`.
 
+For primary-source default rules, use `{ "self": true }` inside `takeFromDataSources` to reference
+the primary source itself. GMC converts Google's deprecated `primaryDataSourceName` form to `self`
+on create/update. Full JSON files can also create or update product-review and merchant-review data
+source types supported by the current v1 schema.
+
 ## `gmc datasources fetch <dataSourceId>`
 
 Trigger an immediate fetch of a **scheduled file feed**, outside its normal schedule. Only works on

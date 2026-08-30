@@ -46,7 +46,13 @@ export type {
   TimeZone,
 } from "./accounts.js";
 
-export { ProductsService, productSegment, toProductInput, productKey } from "./products.js";
+export {
+  ProductsService,
+  productSegment,
+  productPathSegment,
+  toProductInput,
+  productKey,
+} from "./products.js";
 export type {
   Product,
   ProductInput,
@@ -55,24 +61,46 @@ export type {
   Price,
   ProductStatus,
   ItemLevelIssue,
+  HandlingCutoffTime,
+  ProductMinimumOrderValue,
+  PickupCost,
+  Shipping,
+  ProductReturns,
+  QuestionAndAnswer,
+  RelatedProduct,
+  VariantOption,
 } from "./products.js";
 
-export { DataSourcesService, dataSourceSegment } from "./datasources.js";
+export { DataSourcesService, dataSourceSegment, normalizeDataSource } from "./datasources.js";
 export type {
   DataSource,
   PrimaryProductDataSource,
+  Destination,
+  DataSourceReference,
+  DefaultRule,
   FileInput,
   FetchSettings,
 } from "./datasources.js";
 
-export { InventoriesService } from "./inventories.js";
-export type { LocalInventory, RegionalInventory, TimePeriod } from "./inventories.js";
+export {
+  InventoriesService,
+  normalizeLocalInventory,
+  normalizeRegionalInventory,
+} from "./inventories.js";
+export type {
+  LocalInventory,
+  LocalInventoryAttributes,
+  RegionalInventory,
+  RegionalInventoryAttributes,
+  InventoryLoyaltyProgram,
+  TimePeriod,
+} from "./inventories.js";
 
 export { PromotionsService, promotionSegment } from "./promotions.js";
 export type { Promotion, PromotionAttributes } from "./promotions.js";
 
-export { QuotaService } from "./quota.js";
-export type { QuotaGroup, MethodDetail } from "./quota.js";
+export { QuotaService, accountLimitSegment } from "./quota.js";
+export type { QuotaGroup, MethodDetail, AccountLimit, ProductLimit } from "./quota.js";
 
 export { IssuesService } from "./issues.js";
 export type {
@@ -129,6 +157,16 @@ export type {
   DateTime,
   ShippingState,
 } from "./ordertracking.js";
+
+export { LoyaltyCustomersService } from "./loyaltycustomers.js";
+export type {
+  AddressInfo as LoyaltyCustomerAddress,
+  UserIdentifier as LoyaltyCustomerIdentifier,
+  LoyaltyTier,
+  LoyaltyCustomer,
+  ManageLoyaltyCustomerMatchRequest,
+  ManageLoyaltyCustomerMatchResponse,
+} from "./loyaltycustomers.js";
 
 export { ReportsService } from "./reports.js";
 export type {

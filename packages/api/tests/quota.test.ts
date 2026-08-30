@@ -59,4 +59,38 @@ describe("QuotaService", () => {
     expect(urls[0]).toBe(BASE);
     expect(urls[1]).toContain("pageToken=p2");
   });
+
+  it("lists account limits with Google's required type filter", async () => {
+    let url = "";
+    const fetchImpl = (async (u: string) => {
+      url = u;
+      return jsonResponse(200, {
+        accountLimits: [
+          {
+            name: "accounts/123/limits/products~ADS_EEA",
+            products: { scope: "ADS_EEA", limit: "500000" },
+          },
+        ],
+      });
+    }) as unknown as typeof fetch;
+
+    const limits = await service(fetchImpl).listLimits();
+
+    expect(limits[0]?.products?.limit).toBe("500000");
+    const parsed = new URL(url);
+    expect(parsed.pathname).toBe("/quota/v1/accounts/123/limits");
+    expect(parsed.searchParams.get("filter")).toBe('type = "products"');
+  });
+
+  it("gets one account limit by id", async () => {
+    let url = "";
+    const fetchImpl = (async (u: string) => {
+      url = u;
+      return jsonResponse(200, { name: "accounts/123/limits/products~ADS_NON_EEA" });
+    }) as unknown as typeof fetch;
+
+    await service(fetchImpl).getLimit("products~ADS_NON_EEA");
+
+    expect(url).toBe(`${BASE.replace(/\/quotas$/, "")}/limits/products~ADS_NON_EEA`);
+  });
 });
