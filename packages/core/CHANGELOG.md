@@ -1,5 +1,13 @@
 # @gmc-cli/core
 
+## 0.7.26
+
+### Patch Changes
+
+- Updated dependencies [8034874]
+  - @gmc-cli/api@0.10.0
+  - @gmc-cli/auth@0.7.4
+
 ## 0.7.25
 
 ### Patch Changes
