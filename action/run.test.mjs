@@ -29,7 +29,10 @@ function runAction(env, cwd) {
     GITHUB_OUTPUT: outputFile,
     GITHUB_STEP_SUMMARY: summaryFile,
     GMC_ARGS: "",
-    PATH: `${dirname(process.execPath)}:${process.env.PATH}`,
+    // Keep the suite hermetic: the Action must use this checkout's built CLI,
+    // never a globally installed `gmc` that happens to be on the developer's PATH.
+    GMC_CLI_ENTRYPOINT: GMC_BIN,
+    PATH: tmp,
     ...env,
   };
 

@@ -26,15 +26,25 @@ function escapeSummaryCell(s) {
     .replace(/\r\n|\r|\n/g, "<br>");
 }
 
-const { GMC_ARGS = "", GITHUB_OUTPUT = "", GITHUB_STEP_SUMMARY = "" } = process.env;
+const {
+  GMC_ARGS = "",
+  GMC_CLI_ENTRYPOINT = "",
+  GITHUB_OUTPUT = "",
+  GITHUB_STEP_SUMMARY = "",
+} = process.env;
 
 const extraArgs = GMC_ARGS.split(/\s+/).filter(Boolean);
 const args = ["preflight", "--json", ...extraArgs];
+// Tests point this at the CLI built from the current checkout, keeping their
+// result independent of any globally installed `gmc`. The Action itself leaves
+// it unset and uses the package installed by action.yml.
+const command = GMC_CLI_ENTRYPOINT ? process.execPath : "gmc";
+const commandArgs = GMC_CLI_ENTRYPOINT ? [GMC_CLI_ENTRYPOINT, ...args] : args;
 
 let stdout = "";
 let exitCode = 0;
 try {
-  stdout = execFileSync("gmc", args, {
+  stdout = execFileSync(command, commandArgs, {
     encoding: "utf8",
     maxBuffer: 50 * 1024 * 1024,
   });
