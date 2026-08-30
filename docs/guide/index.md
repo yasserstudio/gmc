@@ -24,6 +24,6 @@ Most Merchant Center work is still done by hand in the web UI. A CLI makes it:
 
 ## Status
 
-gmc is **stable and publicly launched** (latest released version `v1.0.17`) — see the [launch announcement](https://github.com/yasserstudio/gmc/discussions/100). The next compatibility release tracks the August 2026 stable (`v1`) Merchant API surface, including Loyalty Customers GA, alongside `doctor`, `preflight` (including SEO rules), `migrate`, feeds-as-code, an [MCP server](/reference/mcp) for AI assistants, and a first-party [GitHub Action](/guide/github-action) for CI. See the [Google compatibility snapshot](/guide/google-2026-updates), [roadmap](/guide/roadmap), and [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md).
+gmc is **stable and publicly released at `v1.1.0`**. It covers all 13 stable (`v1`) Merchant API sub-APIs, including Loyalty Customers, alongside `doctor`, `preflight` (including SEO and video-link rules), `migrate`, feeds-as-code, an [MCP server](/reference/mcp) for AI assistants, and a first-party [GitHub Action](/guide/github-action) for CI. See the [Google compatibility snapshot](/guide/google-2026-updates), [release](https://github.com/yasserstudio/gmc/releases/tag/v1.1.0), [roadmap](/guide/roadmap), and [changelog](https://github.com/yasserstudio/gmc/blob/main/CHANGELOG.md).
 
 Ready to try it? Head to [Getting started](/guide/getting-started).

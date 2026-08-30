@@ -65,7 +65,7 @@ Most Merchant Center work is still done by hand in the web UI, and the Content A
 | Offline feed-compliance preflight          | ✅ `preflight` |         —          |           —           |
 | Content API → Merchant API migrate         |  ✅ `migrate`  |         —          |           —           |
 
-The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: the source tree covers **all 13 GA (`v1`) Merchant API sub-APIs**, including Loyalty Customers (GA August 2026). See the [roadmap](#roadmap).
+The differentiators — `doctor`, `preflight`, and `migrate` — were front-loaded, and breadth has since caught up: `v1.1.0` covers **all 13 GA (`v1`) Merchant API sub-APIs**, including Loyalty Customers. See the [roadmap](#roadmap).
 
 ---
 
@@ -165,7 +165,7 @@ gmc preflight --dir feeds        # scan the pulled catalog
 gmc preflight --json             # full machine-readable report
 ```
 
-Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The engine checks required attributes, value formats, policy / disapproval triggers, and SEO optimization (30 rules across four families).
+Configure rule severities, ignores, and strict mode in a project-local `.gmcpreflightrc`. The engine checks required attributes, value formats, policy / disapproval triggers, and SEO optimization (31 rules across four families).
 
 ---
 
@@ -188,7 +188,7 @@ The [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) runs
     command: reports check
     account: "123456789"
     credentials: ${{ secrets.GMC_SERVICE_ACCOUNT_KEY }}
-    args: "--metric clicks --threshold 100"
+    args: "--metric clicks --min 100"
 ```
 
 | Code | Meaning                                  |
@@ -226,7 +226,7 @@ A [GitHub Action](https://yasserstudio.github.io/gmc/guide/github-action) and a 
 
 ## Packages
 
-A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the packages as a typed Merchant API SDK.
+A TypeScript monorepo (pnpm + Turborepo). Only `@gmc-cli/cli` is published; its release bundle contains the internal workspace packages, which remain available to contributors as typed modules inside the monorepo.
 
 | Package                                    | Description                                                 |
 | ------------------------------------------ | ----------------------------------------------------------- |
@@ -243,7 +243,7 @@ A TypeScript monorepo (pnpm + Turborepo). Use the `gmc` command, or import the p
 
 ## Roadmap
 
-GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`) — new commands land as patches.
+GMC launched at `v1.0.0` and follows semantic versioning: fixes ship as patches, while substantial backward-compatible API coverage can ship as a minor release.
 
 | Phase | Versions        | Theme                                                                                                                                          | Status |
 | ----- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | :----: |
@@ -261,7 +261,7 @@ GMC launched at `v1.0.0` and ships small, frequent **patch** releases (`v1.0.x`)
 | 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                                       |   ✅   |
 | 12    | v1.0.16         | `ordertracking` — order tracking signals (last GA sub-API; **v1 surface complete**)                                                            |   ✅   |
 | 13    | v1.0.17         | Account program participation — inspect and request program enrollment                                                                         |   ✅   |
-| 14    | v1.1.0 (next)   | August 2026 API compatibility — Loyalty Customers GA, product patch/attributes, current inventory wire format, account filters/test accounts   |   🚧   |
+| 14    | v1.1.0          | August 2026 API compatibility — Loyalty Customers GA, product patch/attributes, current inventory wire format, account filters/test accounts   |   ✅   |
 
 Full detail in the [roadmap](https://yasserstudio.github.io/gmc/guide/roadmap) · shipped work in the [changelog](CHANGELOG.md) · the story in the [devlog](https://yasserstudio.github.io/gmc/devlog/).
 

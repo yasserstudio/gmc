@@ -25,13 +25,22 @@ npx @gmc-cli/cli doctor
 brew install yasserstudio/tap/gmc
 ```
 
-(The formula installs the published npm package and links the `gmc` binary; Homebrew pulls in Node.)
+The formula installs the matching standalone binary for your platform; Node.js is not required.
 
 ## Standalone binary
 
 Each release attaches prebuilt, self-contained binaries (no Node required) to its
-[GitHub release](https://github.com/yasserstudio/gmc/releases) — `gmc-darwin-arm64`,
-`gmc-darwin-x64`, `gmc-linux-x64`, `gmc-linux-arm64`. Download the one for your platform, then:
+[GitHub release](https://github.com/yasserstudio/gmc/releases). Choose the asset that matches your
+machine:
+
+| Platform             | Asset              |
+| -------------------- | ------------------ |
+| macOS, Apple silicon | `gmc-darwin-arm64` |
+| macOS, Intel         | `gmc-darwin-x64`   |
+| Linux, x86-64        | `gmc-linux-x64`    |
+| Linux, ARM64         | `gmc-linux-arm64`  |
+
+For example, on an Apple-silicon Mac:
 
 ```sh
 chmod +x gmc-darwin-arm64
@@ -44,7 +53,7 @@ gmc --version
 Don't install — use [`npx @gmc-cli/cli`](/guide/github-action) directly, or the
 [GitHub Action](/guide/github-action) / [GitLab recipe](/guide/gitlab-ci).
 
-## Next
+## Verify and continue
 
 Run [`gmc doctor`](/reference/doctor) to verify auth and Merchant API access, then see
 [Getting started](/guide/getting-started).

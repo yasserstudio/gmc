@@ -46,7 +46,7 @@ reports-gate:
 JSON — but a File-type variable keeps the key off the command line and out of logs.)
 
 ::: tip Pin a version
-Use `@gmc-cli/cli@<version>` (e.g. `@1.0.0`) instead of `@latest` for reproducible pipelines.
+Use `@gmc-cli/cli@<version>` (e.g. `@1.1.0`) instead of `@latest` for reproducible pipelines.
 :::
 
 See [Authentication](/guide/authentication) for the full credential-resolution order.

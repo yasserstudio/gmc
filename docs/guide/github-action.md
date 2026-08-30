@@ -14,7 +14,7 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: yasserstudio/gmc@v1
         with:
           args: "--dir feeds --strict"
@@ -45,13 +45,13 @@ For `preflight` runs, the action provides three layers of feedback:
 
 When `command` is `preflight`, these outputs are set on the step:
 
-| Output     | Description                                                        |
-| ---------- | ------------------------------------------------------------------ |
-| `ok`       | `"true"` if preflight passed                                       |
-| `scanned`  | Number of products scanned                                         |
-| `errors`   | Number of errors found                                             |
-| `warnings` | Number of warnings found                                           |
-| `report`   | Full [`PreflightReport`](/reference/preflight#json-output) as JSON |
+| Output     | Description                                                     |
+| ---------- | --------------------------------------------------------------- |
+| `ok`       | `"true"` if preflight passed                                    |
+| `scanned`  | Number of products scanned                                      |
+| `errors`   | Number of errors found                                          |
+| `warnings` | Number of warnings found                                        |
+| `report`   | Full [`PreflightReport`](/reference/preflight#findings) as JSON |
 
 ```yaml
 - uses: yasserstudio/gmc@v1
@@ -83,7 +83,7 @@ so a crafted `args` can't inject shell. The key file is written `0600` and lives
 temp dir.
 
 ::: tip Pin a version
-`@v1` tracks the latest v1.x. Pin an exact release tag (e.g. `@v1.0.14`) for fully reproducible CI.
+`@v1` tracks the latest v1.x. Pin an exact release tag (e.g. `@v1.1.0`) for fully reproducible CI.
 :::
 
 See the full [action reference](/reference/action) for more examples.

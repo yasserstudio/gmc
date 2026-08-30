@@ -64,7 +64,7 @@ Each rule has a stable dotted id and a default severity. Rules come in four fami
 | `seo.description-has-brand`    | info    | Description doesn't mention the brand                                        |
 | `seo.image-placeholder`        | info    | Image URL matches a placeholder pattern (e.g. "no-image", "coming-soon")     |
 
-The `policy.*` family predicts editorial **disapproval** triggers — these are heuristic, so all default to `warning` except `policy.promotional-title` (a well-known hard disapproval, an `error`). The `seo.*` family flags search-optimization opportunities — all default to `info` (non-gating even with `--strict`), so they surface as suggestions without blocking your pipeline. Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuring-rules-gmcpreflightrc); `warning` findings don't fail the run unless you pass `--strict`.
+The `policy.*` family predicts editorial **disapproval** triggers — these are heuristic, so all default to `warning` except `policy.promotional-title` (a well-known hard disapproval, an `error`). The `seo.*` family flags search-optimization opportunities — all default to `info` (non-gating even with `--strict`), so they surface as suggestions without blocking your pipeline. Override any rule's level — or turn it off — in [`.gmcpreflightrc`](#configuration); `warning` findings don't fail the run unless you pass `--strict`.
 
 ::: tip Related
 [`gmc migrate`](/reference/migrate) helps you move off the Content API for Shopping (retired Aug 18, 2026); migrated feeds drop straight into `preflight`.
@@ -111,7 +111,7 @@ Failed.
 }
 ```
 
-## Configuring rules — `.gmcpreflightrc`
+## Configuration
 
 Drop a project-local `.gmcpreflightrc` next to your feeds (commit it — it's part of the feed-as-code workflow). preflight discovers it by walking up from the scanned directory, the same way ESLint/Prettier find their config; `--config <path>` overrides discovery.
 

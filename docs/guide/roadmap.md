@@ -1,6 +1,6 @@
 # Roadmap
 
-GMC launched at **`v1.0.0`** and shipped frequent `v1.0.x` patches. The August 2026 compatibility work is large enough to become the next minor release. The phases below front-loaded the differentiators (`doctor`, `preflight`, `migrate`) on the way to 1.0; post-launch work follows Google's stable API surface.
+GMC launched at **`v1.0.0`** and follows semantic versioning. The August 2026 compatibility work shipped as `v1.1.0`. The phases below front-loaded the differentiators (`doctor`, `preflight`, `migrate`) on the way to 1.0; post-launch work follows Google's stable API surface.
 
 | Phase | Versions        | Theme                                                                                                                     | Status  |
 | ----- | --------------- | ------------------------------------------------------------------------------------------------------------------------- | ------- |
@@ -18,7 +18,7 @@ GMC launched at **`v1.0.0`** and shipped frequent `v1.0.x` patches. The August 2
 | 11    | v1.0.15         | DX — GitHub Action (annotations + summary), MCP server (12 tools for AI assistants), SEO preflight rules                  | ✅ Done |
 | 12    | v1.0.16         | `ordertracking` — order tracking signals (last GA sub-API; **v1 surface complete**)                                       | ✅ Done |
 | 13    | v1.0.17         | Account program participation — inspect and request program enrollment                                                    | ✅ Done |
-| 14    | v1.1.0 (next)   | August 2026 compatibility — Loyalty Customers GA, current product/inventory/account/quota contracts, security hardening   | 🚧 RC   |
+| 14    | v1.1.0          | August 2026 compatibility — Loyalty Customers GA, current product/inventory/account/quota contracts, security hardening   | ✅ Done |
 
 Phase 10 (post-launch) added the remaining API coverage as patches: `regions` (v1.0.2); the full
 `accounts` surface — profile writes, users/access, lifecycle, and the business-identity / autofeed /
@@ -42,11 +42,12 @@ last remaining GA (`v1`) Merchant API sub-API at the time, so **all 12 GA sub-AP
 Phase 13 (v1.0.17) added account program participation: list a Merchant Center account's
 programs, inspect enrollment state, and request participation where the API allows it.
 
-Phase 14 tracks Google's August 2026 stable surface: the new Loyalty Customers GA manage operation,
+Phase 14 (`v1.1.0`) aligned GMC with Google's August 2026 stable surface: the new Loyalty Customers GA manage operation,
 product-input patching and 2026 product attributes, base64url-safe product identifiers, the current
 nested inventory wire format, account filters/sub-account listing/test accounts, account limits, and
 CI/Action dependency and output hardening. See the [compatibility snapshot](/guide/google-2026-updates).
-This restores complete coverage across the now-13 stable sub-APIs.
+This restored complete coverage across the now-13 stable sub-APIs. See the
+[`v1.1.0` release](https://github.com/yasserstudio/gmc/releases/tag/v1.1.0).
 
 Versions track [`@gmc-cli/cli`](https://github.com/yasserstudio/gmc/tree/main/packages/cli) (the `gmc` command). Supporting packages version independently.
 

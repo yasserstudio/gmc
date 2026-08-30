@@ -15,7 +15,7 @@ gmc [global options] <command> [subcommand] [args]
 | [`gmc doctor`](/reference/doctor)                       | Diagnose auth, GCP registration, and Merchant API access                                                          |
 | [`gmc auth`](/reference/auth)                           | Authenticate (`login` / `logout` / `whoami` / `test`)                                                             |
 | [`gmc config`](/reference/config)                       | Inspect configuration and profiles (`path` / `list` / `current`)                                                  |
-| [`gmc accounts`](/reference/accounts)                   | Inspect & manage accounts — profile, users, lifecycle, identity, autofeed, shipping, return-policies              |
+| [`gmc accounts`](/reference/accounts)                   | Accounts, filters, subaccounts, test accounts, users, profile, programs, shipping, and lifecycle                  |
 | [`gmc products`](/reference/products)                   | Manage products (`list` / `get` / `insert` / `update` / `delete`)                                                 |
 | [`gmc datasources`](/reference/datasources)             | Manage data sources / feeds (`list` / `get` / `create` / `update` / `fetch` / `delete`)                           |
 | [`gmc inventory`](/reference/inventory)                 | Local + regional inventory overrides (`local` / `regional` · `list` / `insert` / `delete`)                        |

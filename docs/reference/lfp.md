@@ -42,6 +42,43 @@ needs `--currency <code>` (the decimal is converted to the API's micros). Invent
 a non-negative integer; sales `--quantity` may be negative (a return). Pass `--file <path>` (or pipe
 stdin) for the full `Lfp*` JSON body; the convenience flags overlay it.
 
+## Insert flags
+
+### Stores
+
+| Flag                     | Description                                   |
+| ------------------------ | --------------------------------------------- |
+| `--target-account <id>`  | Target merchant account (required)            |
+| `--store-code <code>`    | Store code (required)                         |
+| `--store-name <name>`    | Store display name                            |
+| `--store-address <addr>` | Single-line store address                     |
+| `--phone <number>`       | Store phone number                            |
+| `--website <uri>`        | Store website URI                             |
+| `--place-id <id>`        | Google Place ID                               |
+| `--gcid-category <list>` | Comma-separated Google category IDs           |
+| `--file <path>`          | Base `LfpStore` JSON object to read and amend |
+
+### Inventory and sales
+
+| Flag                        | Applies to | Description                                  |
+| --------------------------- | ---------- | -------------------------------------------- |
+| `--target-account <id>`     | Both       | Target merchant account (required)           |
+| `--store-code <code>`       | Both       | Store code (required)                        |
+| `--offer-id <id>`           | Both       | Product offer ID (required)                  |
+| `--region-code <cc>`        | Both       | CLDR territory code, such as `US`            |
+| `--content-language <lang>` | Both       | Content language, such as `en`               |
+| `--feed-label <label>`      | Both       | Feed label                                   |
+| `--gtin <gtin>`             | Both       | Product GTIN                                 |
+| `--quantity <n>`            | Both       | Stock or sale quantity                       |
+| `--price <amount>`          | Both       | Decimal price; pair with `--currency`        |
+| `--currency <code>`         | Both       | Three-letter currency code for `--price`     |
+| `--availability <value>`    | Inventory  | Availability, such as `in_stock`             |
+| `--pickup-method <value>`   | Inventory  | Pickup method                                |
+| `--pickup-sla <value>`      | Inventory  | Pickup service level                         |
+| `--collection-time <ts>`    | Inventory  | Collection timestamp in RFC 3339 format      |
+| `--sale-time <ts>`          | Sales      | Sale timestamp in RFC 3339 format            |
+| `--file <path>`             | Both       | Base `LfpInventory` or `LfpSale` JSON object |
+
 `--json` emits the raw API result (`{ "lfpStores": [...] }` for the stores list, the resource for
 get/insert, `{ "deleted": "<id>" }` for delete).
 

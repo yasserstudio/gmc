@@ -2,12 +2,12 @@
 
 ## Supported Versions
 
-GMC ships small, frequent patch releases, and only the **latest published version** receives security updates — there are no long-term-support branches. Upgrade to the newest release to stay covered.
+GMC ships regular semantic-versioned releases, and only the **latest published version** receives security updates — there are no long-term-support branches. Upgrade to the newest release to stay covered.
 
-| Version                                         | Supported          |
-| ----------------------------------------------- | ------------------ |
-| Latest `@gmc-cli/cli` release (current `1.0.x`) | :white_check_mark: |
-| Any earlier release                             | :x:                |
+| Version               | Supported          |
+| --------------------- | ------------------ |
+| npm `latest` dist-tag | :white_check_mark: |
+| Any earlier release   | :x:                |
 
 Check your version with `gmc --version` and update with `npm install -g @gmc-cli/cli@latest`.
 

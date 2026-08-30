@@ -4,7 +4,7 @@ description: "GMC's August 2026 Google Merchant API compatibility baseline, API 
 
 # Google Merchant updates — August 2026
 
-This release candidate was checked against Google's live Merchant API discovery documents at
+`GMC v1.1.0` was checked against Google's live Merchant API discovery documents at
 revision **`20260826`** and the official release notes available on August 30, 2026. It does not add
 `v1alpha`-only surfaces unless Google promoted them to stable `v1`.
 

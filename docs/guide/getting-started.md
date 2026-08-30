@@ -6,9 +6,9 @@ description: "Install GMC, authenticate, run gmc doctor, and make your first Goo
 
 ## Prerequisites
 
-- **Node.js 20+**
-- A **Google Cloud project** with the **Merchant API enabled**
-- A **Merchant Center account** your credential can access
+- **Node.js 20+** when installing through npm or npx (Homebrew and standalone binaries include the runtime)
+- A **Google Cloud project** with the **Merchant API enabled** for authenticated commands
+- A **Merchant Center account** your credential can access for live API commands
 
 ## Install
 
@@ -17,7 +17,7 @@ npm install -g @gmc-cli/cli
 gmc --version
 ```
 
-See the [Installation](/guide/installation) guide for other methods (local build from source, pnpm, etc.).
+See the [Installation](/guide/installation) guide for npx, Homebrew, and standalone-binary options.
 
 ## Authenticate
 

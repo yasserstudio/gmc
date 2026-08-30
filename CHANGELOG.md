@@ -2,10 +2,35 @@
 
 The public progress log for **gmc** — the Google Merchant Center CLI.
 
-`0.x` is the pre-release series through the spike and build-out; `1.0.0` lands at
+`0.x` is the pre-release series through the spike and build-out; `1.0.0` landed at
 public launch. Versions track [`@gmc-cli/cli`](packages/cli) (the `gmc` command);
 supporting packages version independently. From v0.8 on, each release is driven by
-[Changesets](.changeset) and tagged.
+[Changesets](.changeset) and tagged. The generated
+[`@gmc-cli/cli` changelog](packages/cli/CHANGELOG.md) is the complete per-release record.
+
+## v1.1.0 — August 2026 Merchant API alignment
+
+- **Stable API coverage** — added the Loyalty Customers `v1` manage operation, restoring complete
+  coverage across all 13 stable Merchant API sub-APIs.
+- **Current contracts** — added product-input patching, current product attributes, base64url-safe
+  product identifiers, nested local/regional inventory attributes, account filters and subaccounts,
+  isolated test accounts, account product limits, and current data-source default rules.
+- **Migration and preflight** — normalized plural `gtins` during migration and added video-link URL
+  validation to the offline preflight scanner (31 rules total).
+- **Security and CI** — escaped feed-controlled Markdown in GitHub Action summaries, made Action
+  tests hermetic, pinned CI actions, and refreshed patched dependencies while retaining Node 20/22/24.
+- **Distribution** — published `@gmc-cli/cli@1.1.0` with provenance, four standalone binaries,
+  checksums, the moving `v1` Action tag, and the Homebrew formula.
+
+_`@gmc-cli/cli` → 1.1.0. [Release notes](https://github.com/yasserstudio/gmc/releases/tag/v1.1.0)._
+
+## v1.0.1–v1.0.17 — stable surface expansion
+
+The post-launch `v1.0.x` series added regions; full account profile, access, lifecycle, settings,
+developer-registration, and program management; data-source update/fetch; notifications; quota;
+issue resolution; conversions; Local Feeds Partnership; order tracking; the MCP server; GitHub Action
+annotations and structured outputs; and SEO preflight rules. See the
+[`@gmc-cli/cli` changelog](packages/cli/CHANGELOG.md) for the version-by-version history.
 
 ## v1.0.0 — first stable release 🎉
 

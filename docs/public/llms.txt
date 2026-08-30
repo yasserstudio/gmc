@@ -2,6 +2,8 @@
 
 > A free, open-source command-line interface for the Google Merchant API (the successor to the Content API for Shopping). It gives developers typed, scriptable, CI-friendly access to Merchant Center accounts and product feeds — and leads with three things the API makes harder than it should: diagnosing the silent GCP-registration failure, validating feeds offline before products get disapproved, and migrating off the retired Content API. MIT-licensed and free ($0).
 
+Current release: v1.1.0. GMC covers all 13 stable Merchant API sub-APIs. npm/npx installs require Node.js 20+ and are tested on Node.js 20, 22, and 24; Homebrew and standalone binaries include their runtime.
+
 ## Start here
 
 - [What is GMC?](https://yasserstudio.github.io/gmc/guide/): overview and concepts
@@ -14,7 +16,9 @@
 - [gmc preflight](https://yasserstudio.github.io/gmc/reference/preflight): validate a Google Shopping feed offline (no API call, no auth) against required-attribute, format, and disapproval-trigger rules
 - [gmc migrate](https://yasserstudio.github.io/gmc/reference/migrate): move off the Content API for Shopping — scope/auth audit, product transform (price→micros, field remap), and feed-label safety check
 - [gmc loyalty-customers](https://yasserstudio.github.io/gmc/reference/loyalty-customers): privacy-preserving, write-only customer loyalty-tier association management
-- [CLI reference](https://yasserstudio.github.io/gmc/reference/): every command (accounts, products, datasources, feeds, inventory, promotions, regions, notifications, quota, issues, reports, loyalty customers)
+- [Google Merchant updates — August 2026](https://yasserstudio.github.io/gmc/guide/google-2026-updates): compatibility baseline, deadlines, product requirements, and policy changes
+- [CLI reference](https://yasserstudio.github.io/gmc/reference/): all 21 top-level commands, including accounts, products, datasources, feeds, inventory, promotions, regions, notifications, quota and limits, issues, reports, conversions, LFP, order tracking, loyalty customers, preflight, migrate, and MCP
+- [MCP server](https://yasserstudio.github.io/gmc/reference/mcp): 12 tools for diagnostics, catalog operations, reporting, quota, and preflight
 
 ## CI usage
 

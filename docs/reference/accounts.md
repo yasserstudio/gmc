@@ -1,6 +1,6 @@
 # gmc accounts
 
-Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `get` / `info` (+ `business-info`/`homepage` `get`). Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `delete`. Settings: `business-identity`, `autofeed`, `developer-registration`, `shipping`, `return-policies`, `programs`.
+Inspect **and manage** Merchant Center accounts. Every command targets the account given as an argument, or the one resolved from `--account` / `GMC_ACCOUNT_ID` / your profile. Reads: `list` / `subaccounts` / `get` / `info` / `homepage get`. Profile writes: `update`, `business-info update`, and `homepage set` / `claim` / `unclaim`. Access: `users list` / `get` / `add` / `update` / `remove`. Lifecycle: `create` / `create-test` / `delete`. Settings: `business-identity`, `autofeed`, `developer-registration`, `shipping`, `return-policies`, `programs`.
 
 ## `gmc accounts list`
 
@@ -80,15 +80,15 @@ gmc accounts update --adult-content false        # uses --account / profile
 
 `--json` emits the updated `Account`.
 
-## `gmc accounts business-info` — `get` / `update`
+## `gmc accounts business-info update`
 
-`get` reads the business info on its own (the same data `info` folds in). `update` patches it from a
-JSON body — `address` and `customerService` are nested objects, so pass them via `--file`. The
+`update` patches business info from a JSON body — `address` and `customerService` are nested objects,
+so pass them via `--file`. Use [`gmc accounts info`](#gmc-accounts-info-accountid) to read the current
+business info together with the account and homepage. The
 business `phone` is **output-only** (set/verified in Merchant Center) and is ignored on write, as are
-`name` and `phoneVerificationState`, so a body saved from `info`/`get` re-applies cleanly.
+`name` and `phoneVerificationState`, so a body saved from `info` re-applies cleanly.
 
 ```sh
-gmc accounts business-info get 123456789
 gmc accounts business-info update 123456789 --file business-info.json
 gmc accounts business-info update 123456789 --korean-brn 1234567890
 ```
@@ -120,7 +120,7 @@ gmc accounts homepage unclaim 123456789
 `set` sets the URI (`updateHomepage`). `claim` claims it for this account — pass `--overwrite` to
 take a claim another account currently holds. `--json` emits the resulting `Homepage`.
 
-## `gmc accounts users` — `list` / `get` / `add` / `update` / `remove`
+## `gmc accounts users`
 
 Manage **who can access the account** and their access rights. The user's email is the id (`me`
 resolves to the calling user).
@@ -170,7 +170,7 @@ gmc accounts create --file account-request.json   # full body (users, aliases, o
 The `--file` body is kept whole (it can carry `account`, `service`, `user`, `setAlias`); the flags
 build/override `account` and append the `--aggregator` service. A create needs an `accountName` and
 at least one service (from `--aggregator` or `--file`). `--json` emits the created `Account`. Add
-users afterward with [`gmc accounts users add`](#gmc-accounts-users-list-get-add-update-remove).
+users afterward with [`gmc accounts users add`](#gmc-accounts-users).
 
 ```json
 {

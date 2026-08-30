@@ -21,7 +21,7 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: yasserstudio/gmc@v1
         with:
           args: "--dir feeds --strict"
@@ -81,7 +81,7 @@ For commands that need Merchant API access (e.g. `products list`, `reports check
     command: reports check
     account: "123456789"
     credentials: ${{ secrets.GMC_SERVICE_ACCOUNT_KEY }}
-    args: "--metric clicks --threshold 100 --window 7"
+    args: "--metric clicks --min 100 --days 7"
 ```
 
 The action writes the key to a temp file and sets `GOOGLE_APPLICATION_CREDENTIALS`. The key is never logged.

@@ -25,7 +25,7 @@ features:
   - title: Content API → Merchant API
     details: gmc migrate moves you off the retired Content API — scope/auth audit, product transform (price→micros, field remap), and a feed-label safety check.
   - title: Feeds as code
-    details: Pull your catalog to version-controllable JSON, review the diff, and push it back — products, inventory, and promotions. Your feed lives in Git.
+    details: Pull your product catalog to version-controllable JSON, review the diff, and push it back. Your product feed lives in Git.
   - title: GitHub Action
     details: "The first-party GitHub Action (uses: yasserstudio/gmc@v1) runs preflight in CI with inline PR annotations on diffs, a findings summary table in the Actions tab, and structured outputs for downstream steps."
   - title: MCP server
@@ -34,4 +34,4 @@ features:
     details: "Block a bad feed from shipping: every command speaks --json and returns a classed exit code, so a GitHub Action or GitLab job can fail the build on a disapproval or a performance drop."
 ---
 
-> 🚀 **GMC v1.0 is publicly launched** — stable and on npm. The next source release tracks all 13 GA Merchant API sub-APIs, including Loyalty Customers. [Read the announcement →](https://github.com/yasserstudio/gmc/discussions/100)
+> 🚀 **GMC v1.1.0 is live** — all 13 stable Merchant API sub-APIs are covered, including Loyalty Customers, with the August 2026 product, inventory, account, quota, and data-source contracts. [See the release →](https://github.com/yasserstudio/gmc/releases/tag/v1.1.0)
