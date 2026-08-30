@@ -1,6 +1,6 @@
 {
   "name": "@gmc-cli/cli",
-  "version": "1.0.17",
+  "version": "1.1.0",
   "description": "Free, open-source CLI for the Google Merchant API. Migrate off the retired Content API, diagnose silent setup failures (gmc doctor), and preflight feeds offline to catch disapprovals before upload — typed, --json, CI-native. Provides the gmc command.",
   "type": "module",
   "bin": {
